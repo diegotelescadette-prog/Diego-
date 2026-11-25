@@ -123,3 +123,23 @@ export async function reportJob(_: SimpleState, form: FormData): Promise<SimpleS
   }
   return { ok: true, message: 'Denúncia enviada. A moderação vai avaliar.' };
 }
+
+/** Banco de currículos: ocultar/mostrar ou apagar (apaga também o arquivo). */
+export async function manageTalent(form: FormData) {
+  const { supabase, user } = await requireUser('/vagas/meu-curriculo');
+  const op = String(form.get('op'));
+  let msg = '';
+  if (op === 'ocultar' || op === 'mostrar') {
+    const { error } = await supabase.from('talent_profiles').update({ visible: op === 'mostrar' }).eq('user_id', user.id);
+    msg = error ? 'Não foi possível alterar.' : op === 'mostrar' ? 'Seu currículo voltou a aparecer para quem está contratando (por mais 6 meses).' : 'Currículo oculto. Ninguém mais consegue vê-lo no banco.';
+  } else if (op === 'apagar') {
+    const { data: t } = await supabase.from('talent_profiles').select('resume_path').eq('user_id', user.id).maybeSingle();
+    if (t) {
+      await supabase.storage.from('curriculos').remove([t.resume_path]);
+      await supabase.from('talent_profiles').delete().eq('user_id', user.id);
+    }
+    msg = 'Currículo apagado do banco.';
+  }
+  revalidatePath('/vagas/meu-curriculo');
+  redirect(`/vagas/meu-curriculo?msg=${encodeURIComponent(msg)}`);
+}

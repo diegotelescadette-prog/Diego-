@@ -84,6 +84,17 @@ async function main() {
     }), `vaga ${j.title}`);
     console.log(`✓ vaga ${j.title}`);
   }
+
+  // Currículo de demonstração no banco de currículos.
+  const candidata = await create('candidata');
+  const cvPath = `${candidata.id}/banco-demo.pdf`;
+  await must(sb.storage.from('curriculos').upload(cvPath, Buffer.from('%PDF-1.4\n% curriculo de demonstracao\n%%EOF\n'), { contentType: 'application/pdf', upsert: true }), 'pdf demo');
+  await must(sb.from('talent_profiles').insert({
+    user_id: candidata.id, full_name: 'Joana Exemplo (demo)', desired_role: 'Auxiliar administrativo', email: email('candidata'), phone: '67988887777',
+    summary: 'Currículo de demonstração. 2 anos como recepcionista, pacote Office, disponível em horário comercial.',
+    neighborhood_id: nb('centro'), resume_path: cvPath, resume_filename: 'curriculo-joana.pdf', resume_size: 40, consent_at: new Date().toISOString(),
+  }), 'banco de currículos');
+  console.log('✓ currículo Joana Exemplo (demo)');
   console.log(`\nAdmin: ${email(demo.admin.email)} / ${demo.password}`);
   console.log(`Cliente: ${email(demo.clients[0].email)} / ${demo.password}`);
   console.log(`Prestadores: prestador-<chave>@${demo.emailDomain} / ${demo.password}`);

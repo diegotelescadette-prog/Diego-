@@ -38,13 +38,28 @@ export default async function Vagas({ searchParams }: { searchParams: Promise<SP
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold">Vagas de emprego</h1>
-          <p className="text-stone-700">Oportunidades em Campo Grande. Candidate-se enviando seu currículo em PDF.</p>
-        </div>
-        <Link href={user ? '/vagas/nova' : '/entrar?next=/vagas/nova'} className="btn-primary">Anunciar uma vaga</Link>
+      <h1 className="text-2xl font-extrabold">Vagas de emprego</h1>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <section aria-labelledby="oferecer-titulo" className="card p-5" data-testid="area-oferecer">
+          <h2 id="oferecer-titulo" className="text-xl font-bold">Oferecer trabalho</h2>
+          <p className="mt-1 text-stone-700">Está contratando? Anuncie grátis, receba currículos e consulte o banco de currículos.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href={user ? '/vagas/nova' : '/entrar?next=/vagas/nova'} className="btn-primary">Anunciar uma vaga</Link>
+            {user && <Link href="/minhas-vagas" className="btn-outline">Vagas que publiquei</Link>}
+            <Link href={user ? '/vagas/banco' : '/entrar?next=/vagas/banco'} className="btn-ghost">Banco de currículos</Link>
+          </div>
+        </section>
+        <section aria-labelledby="enviar-titulo" className="card p-5" data-testid="area-curriculo">
+          <h2 id="enviar-titulo" className="text-xl font-bold">Enviar currículo</h2>
+          <p className="mt-1 text-stone-700">Procurando trabalho? Candidate-se às vagas abaixo ou deixe seu currículo para empresas encontrarem você.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href={user ? '/vagas/meu-curriculo' : '/entrar?next=/vagas/meu-curriculo'} className="btn-primary">Deixar meu currículo</Link>
+            <a href="#vagas-abertas" className="btn-outline">Ver vagas abertas</a>
+            {user && <Link href="/minhas-candidaturas" className="btn-ghost">Minhas candidaturas</Link>}
+          </div>
+        </section>
       </div>
+      <h2 id="vagas-abertas" className="pt-2 text-xl font-bold">Vagas abertas em Campo Grande</h2>
 
       <form action="/vagas" method="get" role="search" className="card grid gap-3 p-4 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
         <div>
@@ -68,12 +83,6 @@ export default async function Vagas({ searchParams }: { searchParams: Promise<SP
         <button className="btn-outline" type="submit">Buscar vagas</button>
       </form>
 
-      {user && (
-        <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <Link className="underline" href="/minhas-candidaturas">Minhas candidaturas</Link>
-          <Link className="underline" href="/minhas-vagas">Vagas que publiquei</Link>
-        </p>
-      )}
 
       {error && <p role="alert" className="card p-4 text-red-800">Não foi possível carregar as vagas. Tente novamente.</p>}
       {!error && (
