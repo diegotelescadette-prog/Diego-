@@ -26,6 +26,14 @@ async function avatar(name: string, color: string) {
   return sharp(Buffer.from(svg)).webp({ quality: 80 }).toBuffer();
 }
 
+/** Foto de trabalho fictícia (gradiente com legenda), para o feed da tela inicial. */
+async function workPhoto(label: string, a: string, b: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="800" height="600" fill="url(#g)"/>
+    <text x="40" y="560" font-size="40" font-family="Arial, sans-serif" font-weight="bold" fill="#fff">${label}</text></svg>`;
+  return sharp(Buffer.from(svg)).webp({ quality: 75 }).toBuffer();
+}
+
 async function main() {
   // remove demo anterior
   const { data: list } = await sb.auth.admin.listUsers({ perPage: 1000 });
@@ -63,6 +71,11 @@ async function main() {
       provider_id: u.id, phone: `6790000${n}`, whatsapp: `6790000${n}`,
       ref_cep: '79002000', ref_street: 'Rua Fictícia', ref_number: String(100 + i), ref_neighborhood: p.ref, ref_city: 'Campo Grande', ref_uf: 'MS',
     }), 'privado');
+    for (const [k, label] of (p.work ?? []).entries()) {
+      const path = `${u.id}/work-demo-${k}.webp`;
+      await sb.storage.from('profile-photos').upload(path, await workPhoto(label, p.color, '#0f172a'), { contentType: 'image/webp', upsert: true });
+      await must(sb.from('provider_work_photos').insert({ provider_id: u.id, path, sort: k }), 'foto de trabalho');
+    }
     await must(sb.from('provider_profiles').update({ status: p.status ?? 'published', published_at: new Date().toISOString() }).eq('id', u.id), 'status');
     if (p.today && (p.status ?? 'published') === 'published') {
       const inPerson = p.services.map(sv);

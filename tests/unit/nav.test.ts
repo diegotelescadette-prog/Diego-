@@ -19,7 +19,7 @@ test('área pelo caminho e barra inferior só na busca', () => {
 
 test('menu por perfil: visitante, prestador e admin só veem a área permitida', () => {
   const labels = (a: Parameters<typeof navItems>[0], v: typeof visitor) => navItems(a, v).map((i) => i.label);
-  assert.deepEqual(labels('busca', visitor), ['Início', 'Preciso para hoje', 'Buscar serviços', 'Categorias', 'Favoritos', 'Vagas de emprego', 'Sou prestador']);
+  assert.deepEqual(labels('busca', visitor), ['Início', 'Preciso para hoje', 'Prestadores de serviço', 'Favoritos', 'Procurar vaga', 'Cadastrar currículo', 'Anunciar vaga', 'Quero oferecer serviços']);
   assert.ok(labels('busca', provider).includes('Painel do prestador'));
   assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Meu perfil', 'Serviços e fotos', 'Onde atendo', 'Disponibilidade', 'Prévia do perfil', 'Minha conta', 'Buscar serviços']);
   // sem permissão, a área administrativa mostra o menu de busca
@@ -31,7 +31,9 @@ test('menu por perfil: visitante, prestador e admin só veem a área permitida',
 test('item ativo: exato, prefixo e seção do admin', () => {
   const busca = navItems('busca', visitor);
   assert.equal(activeHref(busca, '/'), '/');
-  assert.equal(activeHref(busca, '/hoje'), '/#preciso-para-hoje');
+  assert.equal(activeHref(busca, '/hoje'), '/hoje');
+  assert.equal(activeHref(busca, '/vagas/nova'), '/vagas/nova');
+  assert.equal(activeHref(busca, '/vagas/meu-curriculo'), '/vagas/meu-curriculo');
   assert.equal(activeHref(busca, '/p/carlos-demo'), '/buscar');
   assert.equal(activeHref(busca, '/favoritos'), '/favoritos');
   assert.equal(activeHref(busca, '/vagas/123'), '/vagas');

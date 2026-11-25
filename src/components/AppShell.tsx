@@ -9,24 +9,39 @@ import { activeHref, areaFor, NAV_ICONS, navItems, screenTitle, showBottomNav, t
 
 const AREA_LABEL: Record<NavArea, string> = { busca: 'Para quem busca', prestador: 'Painel do prestador', admin: 'Administração' };
 
-/** Lista de botões laterais. Usada no menu do computador e na gaveta do celular. */
-function NavList({ items, active, onNavigate }: { items: NavItem[]; active: string | null; onNavigate?: () => void }) {
+function NavLink({ it, on, onNavigate }: { it: NavItem; on: boolean; onNavigate?: () => void }) {
   return (
-    <ul className="space-y-1">
-      {items.map((it) => {
-        const on = it.href === active;
-        return (
-          <li key={it.href}>
-            <Link href={it.href} onClick={onNavigate} aria-current={on ? 'page' : undefined}
-              className={`side-link${it.urgent ? ' side-urgent' : ''}`}>
-              <Glyph d={NAV_ICONS[it.icon]} size={20} />
-              <span className="flex-1">{it.label}</span>
-              {on && <span className="side-on">atual</span>}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <li>
+      <Link href={it.href} onClick={onNavigate} aria-current={on ? 'page' : undefined}
+        className={`side-link${it.urgent ? ' side-urgent' : ''}`}>
+        <Glyph d={NAV_ICONS[it.icon]} size={20} />
+        <span className="min-w-0 flex-1">
+          <span className="block">{it.label}</span>
+          {it.hint && <span className="side-hint">{it.hint}</span>}
+        </span>
+        {on && <span className="side-on">atual</span>}
+      </Link>
+    </li>
+  );
+}
+
+/** Lista de botões laterais. Usada no menu do computador e na gaveta do celular. Com `group`, separa por assunto. */
+function NavList({ items, active, onNavigate }: { items: NavItem[]; active: string | null; onNavigate?: () => void }) {
+  const groups = [...new Set(items.map((it) => it.group))];
+  if (groups.length === 1 && !groups[0]) {
+    return <ul className="space-y-1">{items.map((it) => <NavLink key={it.href} it={it} on={it.href === active} onNavigate={onNavigate} />)}</ul>;
+  }
+  return (
+    <div className="space-y-4">
+      {groups.map((g) => (
+        <div key={g ?? ''}>
+          {g && <p className="side-heading">{g}</p>}
+          <ul className="space-y-1">
+            {items.filter((it) => it.group === g).map((it) => <NavLink key={it.href} it={it} on={it.href === active} onNavigate={onNavigate} />)}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -51,7 +66,7 @@ function Navigation({ viewer, onNavigate, section }: { viewer: NavViewer; onNavi
   const items = navItems(area, viewer);
   return (
     <nav aria-label={AREA_LABEL[area]}>
-      <p className="side-heading">{AREA_LABEL[area]}</p>
+      {!items.some((it) => it.group) && <p className="side-heading">{AREA_LABEL[area]}</p>}
       <NavList items={items} active={activeHref(items, path, section)} onNavigate={onNavigate} />
       <OtherAreas area={area} viewer={viewer} onNavigate={onNavigate} />
     </nav>

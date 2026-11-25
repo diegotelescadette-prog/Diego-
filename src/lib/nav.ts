@@ -16,6 +16,10 @@ export interface NavItem {
   match?: string[];
   /** Destaque de urgência (laranja). */
   urgent?: boolean;
+  /** Assunto do menu de busca (título acima do grupo). */
+  group?: string;
+  /** Frase curta embaixo do nome, explicando a opção. */
+  hint?: string;
 }
 
 export const NAV_ICONS = {
@@ -40,6 +44,8 @@ export const NAV_ICONS = {
   gear: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
   back: 'M15 18l-6-6 6-6',
   briefcase: 'M4 8h16v11H4zM9 8V5h6v3M4 13h16',
+  file: 'M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6',
+  megaphone: 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10',
 } as const;
 
 /** Área em uso a partir do caminho. */
@@ -49,17 +55,21 @@ export function areaFor(pathname: string): NavArea {
   return 'busca';
 }
 
+export const SEARCH_GROUPS = ['Preciso de alguém', 'Trabalho', 'Sou prestador'] as const;
+
 export function searchItems(v: NavViewer): NavItem[] {
+  const [need, work, pro] = SEARCH_GROUPS;
   return [
-    { href: '/', label: 'Início', icon: 'home', match: [] },
-    { href: '/#preciso-para-hoje', label: 'Preciso para hoje', icon: 'bolt', urgent: true, match: ['/hoje'] },
-    { href: '/buscar', label: 'Buscar serviços', icon: 'search', match: ['/buscar', '/p/'] },
-    { href: '/#categorias', label: 'Categorias', icon: 'grid', match: [] },
-    { href: '/favoritos', label: 'Favoritos', icon: 'heart', match: ['/favoritos'] },
-    { href: '/vagas', label: 'Vagas de emprego', icon: 'briefcase', match: ['/vagas', '/minhas-vagas', '/minhas-candidaturas'] },
+    { href: '/', label: 'Início', icon: 'home', match: [], group: need, hint: 'Trabalhos dos prestadores da cidade' },
+    { href: '/hoje', label: 'Preciso para hoje', icon: 'bolt', urgent: true, match: ['/hoje'], group: need, hint: 'Quem pode ir hoje, no WhatsApp' },
+    { href: '/buscar', label: 'Prestadores de serviço', icon: 'search', match: ['/buscar', '/p/'], group: need, hint: 'Busque por serviço ou bairro' },
+    { href: '/favoritos', label: 'Favoritos', icon: 'heart', match: ['/favoritos'], group: need, hint: 'Quem você salvou' },
+    { href: '/vagas', label: 'Procurar vaga', icon: 'briefcase', match: ['/vagas', '/minhas-candidaturas'], group: work, hint: 'Vagas abertas em Campo Grande' },
+    { href: '/vagas/meu-curriculo', label: 'Cadastrar currículo', icon: 'file', match: ['/vagas/meu-curriculo'], group: work, hint: 'Empresas encontram você' },
+    { href: '/vagas/nova', label: 'Anunciar vaga', icon: 'megaphone', match: ['/vagas/nova', '/minhas-vagas'], group: work, hint: 'Grátis, receba currículos' },
     v.hasProfile
-      ? { href: '/painel', label: 'Painel do prestador', icon: 'tool', match: [] }
-      : { href: '/sou-prestador', label: 'Sou prestador', icon: 'tool', match: ['/sou-prestador'] },
+      ? { href: '/painel', label: 'Painel do prestador', icon: 'tool', match: [], group: pro, hint: 'Fotos, área e “Atendo hoje”' }
+      : { href: '/sou-prestador', label: 'Quero oferecer serviços', icon: 'tool', match: ['/sou-prestador'], group: pro, hint: 'Crie seu perfil grátis' },
   ];
 }
 
