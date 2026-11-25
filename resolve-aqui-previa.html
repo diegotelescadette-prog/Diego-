@@ -1,0 +1,689 @@
+<title>Resolve Aqui</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: coluna única pensada para celular (máx. 760px), cabeçalho fixo, cartões só onde separam objetos */
+:root{
+  --bg:#f6f5f2;--surface:#ffffff;--fg:#1c1b19;--muted:#5d5a54;--line:#e2dfd8;
+  --brand:#0f5f73;--brand-strong:#0a4a5a;--brand-soft:#e6f3f6;
+  --hoje:#ea580c;--hoje-strong:#c2410c;--hoje-soft:#fff2e8;
+  --zap:#15803d;--zap-strong:#166534;--zap-soft:#e9f7ee;
+  --badge-bg:#fdecc8;--badge-fg:#7a4a03;--danger:#b91c1c;--danger-soft:#fdecec;
+  --font:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141615;--surface:#1d2020;--fg:#eceae6;--muted:#a9a59e;--line:#33373a;
+  --brand:#5fb6cb;--brand-strong:#8bd0e0;--brand-soft:#173038;
+  --hoje:#fb8a3c;--hoje-strong:#fdab70;--hoje-soft:#3a2315;
+  --zap:#3fb56b;--zap-strong:#6fd393;--zap-soft:#16301f;
+  --badge-bg:#4a3511;--badge-fg:#fcd98d;--danger:#f08080;--danger-soft:#3b1d1d;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141615;--surface:#1d2020;--fg:#eceae6;--muted:#a9a59e;--line:#33373a;
+  --brand:#5fb6cb;--brand-strong:#8bd0e0;--brand-soft:#173038;
+  --hoje:#fb8a3c;--hoje-strong:#fdab70;--hoje-soft:#3a2315;
+  --zap:#3fb56b;--zap-strong:#6fd393;--zap-soft:#16301f;
+  --badge-bg:#4a3511;--badge-fg:#fcd98d;--danger:#f08080;--danger-soft:#3b1d1d;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.demo{background:var(--brand-soft);color:var(--fg);font-size:14px}
+.demo .wrap{padding-block:8px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.demo details{flex-basis:100%}
+.demo summary{cursor:pointer;font-weight:600;color:var(--brand)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:8px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;color:var(--brand-strong);background:none;border:0;cursor:pointer;padding:0;white-space:nowrap}
+.logo svg{width:30px;height:30px}
+nav.main{display:flex;gap:2px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+main{padding-block:20px 48px}
+h1{font-size:clamp(26px,6vw,34px);line-height:1.15;margin:0 0 8px;text-wrap:balance;font-weight:800;letter-spacing:-.01em}
+h2{font-size:20px;margin:0 0 6px;text-wrap:balance}
+h3{font-size:17px;margin:0}
+p{margin:0}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+.hero{background:linear-gradient(160deg,var(--hoje-soft),var(--surface) 70%);border-color:color-mix(in srgb,var(--hoje) 35%,var(--line))}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 16px;border-radius:12px;font:600 16px var(--font);border:2px solid transparent;cursor:pointer;text-decoration:none;background:none;color:var(--brand)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.primary{background:var(--brand);color:var(--surface)}
+.btn.primary:hover{background:var(--brand-strong)}
+.btn.hoje{background:var(--hoje);color:#fff}
+.btn.hoje:hover{background:var(--hoje-strong)}
+.btn.zap{background:var(--zap);color:#fff}
+.btn.zap:hover{background:var(--zap-strong)}
+.btn.outline{border-color:var(--brand);background:var(--surface)}
+.btn.ghost:hover,.btn.outline:hover{background:var(--brand-soft)}
+.btn.small{min-height:36px;padding:6px 10px;font-size:14px}
+.btn.block{width:100%}
+:focus-visible{outline:3px solid var(--hoje);outline-offset:2px;border-radius:8px}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--brand);background:var(--brand-soft);color:var(--brand-strong);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font)}
+.city{border-color:var(--hoje);background:var(--surface);color:var(--hoje-strong);cursor:default}
+.badge{display:inline-flex;align-items:center;gap:4px;background:var(--badge-bg);color:var(--badge-fg);border-radius:999px;padding:2px 10px;font-size:14px;font-weight:700}
+.muted{color:var(--muted)}.small{font-size:14px}
+label.lbl{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+.input{display:block;width:100%;min-height:44px;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font:16px var(--font);background:var(--surface);color:var(--fg)}
+.input[aria-invalid="true"]{border-color:var(--danger)}
+.err{color:var(--danger);font-size:14px;font-weight:600;margin-top:4px}
+.ok{background:var(--zap-soft);color:var(--fg);border-radius:12px;padding:10px 12px}
+.warn{background:var(--badge-bg);color:var(--badge-fg);border-radius:12px;padding:10px 12px;font-weight:600}
+.alert{background:var(--danger-soft);color:var(--danger);border-radius:12px;padding:10px 12px;font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:600px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:84px;border:2px solid var(--line);border-radius:16px;background:var(--surface);color:var(--fg);font:600 15px var(--font);cursor:pointer;padding:10px;text-align:center}
+.tile svg{width:28px;height:28px}
+.tile[aria-pressed="true"]{border-color:var(--hoje);background:var(--hoje-soft);color:var(--hoje-strong)}
+.pcard{display:flex;gap:12px}
+.av{flex:none;width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px}
+.av.big{width:104px;height:104px;font-size:36px}
+.grid2{display:grid;gap:12px}
+@media (min-width:640px){.grid2{grid-template-columns:1fr 1fr}}
+.list{max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:6px;background:var(--surface)}
+.list label{display:flex;align-items:center;gap:8px;min-height:38px;padding:0 6px;border-radius:8px;cursor:pointer}
+.list label:hover{background:var(--brand-soft)}
+.cat{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:6px 6px 2px}
+input[type=checkbox],input[type=radio]{width:20px;height:20px;accent-color:var(--brand)}
+.steps{display:flex;gap:6px}
+.steps span{flex:1;text-align:center;border:2px solid var(--line);border-radius:12px;padding:6px 4px;font-size:13px;font-weight:600;color:var(--muted);background:var(--surface)}
+.steps span.on{border-color:var(--brand);background:var(--brand);color:var(--surface)}
+.status{display:inline-block;border-radius:999px;padding:2px 12px;font-weight:700}
+.st-published{background:var(--zap-soft);color:var(--zap-strong)}.st-draft{background:var(--line)}.st-paused{background:var(--badge-bg);color:var(--badge-fg)}
+.overlay{position:fixed;inset:0;background:rgb(0 0 0 / .45);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom,0px))}
+.sheet{background:var(--surface);color:var(--fg);border-radius:20px;max-width:520px;width:100%;padding:20px;display:flex;flex-direction:column;gap:12px}
+.bubble{background:var(--zap-soft);border-radius:14px 14px 4px 14px;padding:12px;white-space:pre-wrap}
+textarea.input{min-height:110px;resize:vertical}
+.filters[data-open="false"]{display:none}
+@media (min-width:720px){.searchgrid{display:grid;grid-template-columns:240px minmax(0,1fr);gap:16px;align-items:start}.filters[data-open]{display:flex}.fbtn{display:none!important}}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(16px)}to{transform:none}}}
+
+/* ---- v0.2: identidade, ícones por categoria, cards tocáveis, barra inferior ---- */
+:root{--shadow:0 1px 2px rgb(20 30 30 / .06),0 6px 20px rgb(20 30 30 / .07);--band1:#0f5f73;--band2:#0a3f4c}
+:root[data-theme="dark"]{--shadow:0 1px 2px rgb(0 0 0 / .4);--band1:#123c47;--band2:#0b252c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--shadow:0 1px 2px rgb(0 0 0 / .4);--band1:#123c47;--band2:#0b252c}}
+.card{box-shadow:var(--shadow)}
+.ic{--t:var(--brand);flex:none;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:14px;color:var(--t);background:color-mix(in srgb,var(--t) 14%,var(--surface))}
+.ic svg{width:24px;height:24px}
+.ic.sm{width:24px;height:24px;border-radius:8px}.ic.sm svg{width:14px;height:14px}
+.ic.big{width:56px;height:56px;border-radius:18px}.ic.big svg{width:28px;height:28px}
+.tile .ic{width:48px;height:48px}
+.tile[aria-pressed="true"] .ic{background:var(--surface)}
+.btn.big{min-height:54px;font-size:17px;border-radius:14px}
+.btn.zap svg{flex:none}
+.band{position:relative;overflow:hidden;border-radius:22px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--hoje) 55%,transparent) 0%,transparent 45%),linear-gradient(150deg,var(--band1),var(--band2));padding:24px 20px 56px}
+.band-in{position:relative;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.band h1{color:#fff;margin:4px 0 0;font-size:clamp(30px,7vw,40px)}
+.lead{font-size:17px;color:rgb(255 255 255 / .88);max-width:36ch}
+.live{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;background:rgb(255 255 255 / .12);border-radius:999px;padding:4px 12px}
+.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;flex:none;box-shadow:0 0 0 3px rgb(74 222 128 / .25)}
+.badge .dot{width:7px;height:7px;background:var(--zap);box-shadow:none}
+.city-dark{border-color:rgb(255 255 255 / .35);background:rgb(255 255 255 / .1);color:#fff;cursor:default}
+.lift{margin-top:-64px;position:relative;z-index:1;margin-inline:8px;border-radius:20px}
+@media (min-width:600px){.lift{margin-inline:20px}.band{padding:32px 32px 64px}}
+.searchbar .lbl{font-size:18px;font-weight:700;margin-bottom:8px}
+.sb-row{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 6px 6px 14px;box-shadow:var(--shadow);color:var(--muted)}
+.sb-row:focus-within{border-color:var(--brand)}
+.sb-row input{flex:1;min-width:0;border:0;background:none;font:16px var(--font);color:var(--fg);min-height:40px;outline:none}
+@media (max-width:480px){.sb-row .btn{padding-inline:10px;font-size:0}.sb-row .btn::after{content:"Buscar";font-size:14px}}
+.cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+@media (min-width:600px){.cats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.catbtn{display:flex;align-items:center;gap:10px;min-height:60px;padding:8px 10px;border:1px solid var(--line);border-radius:16px;background:var(--surface);color:var(--fg);font:600 14px/1.25 var(--font);text-align:left;cursor:pointer;box-shadow:var(--shadow)}
+.catbtn:hover{border-color:var(--brand)}
+.catbtn .ic{width:40px;height:40px;border-radius:12px}
+.pro{display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:linear-gradient(135deg,var(--hoje-soft),var(--surface) 75%)}
+.plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.pc{display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,border-color .12s}
+.pc:hover{border-color:var(--zap)}
+.pc:active{transform:scale(.985)}
+.pc-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pc-body h3{font-size:17px;line-height:1.25}
+.pc-svc{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--fg);font-size:15px}
+.pc-area{display:flex;align-items:center;gap:4px}.pc-area svg{flex:none}
+.pc-today{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:2px}
+.pc-wa{flex:none;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--zap);color:#fff}
+.pc-wa svg{width:26px;height:26px}
+.link{background:none;border:0;padding:4px 0;color:var(--brand);font:600 14px var(--font);text-decoration:underline;text-underline-offset:3px;cursor:pointer;align-self:flex-start}
+.av{background-image:linear-gradient(135deg,rgb(255 255 255 / .18),rgb(0 0 0 / .18))}
+.empty{align-items:flex-start}
+.profile{padding:0;overflow:hidden}
+.cover{height:120px}
+.prof-head{display:flex;align-items:flex-end;justify-content:space-between;padding:0 18px;margin-top:-52px}
+.prof-head .av{border:4px solid var(--surface);box-shadow:var(--shadow)}
+.profile>.stack,.profile>div:not(.cover):not(.prof-head){padding:12px 18px 18px}
+.favbtn{width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--hoje);font-size:24px;cursor:pointer;box-shadow:var(--shadow)}
+.favbtn[aria-pressed="true"]{background:var(--hoje-soft);border-color:var(--hoje)}
+.h-sm{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 6px}
+.tag{display:inline-flex;border-radius:999px;background:var(--brand-soft);color:var(--brand-strong);padding:3px 12px;font-size:14px;font-weight:600}
+.cta-bar{position:sticky;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:4;padding:10px 0;background:linear-gradient(transparent,var(--bg) 35%)}
+.bottom{position:fixed;inset:auto 0 0;z-index:6;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);padding:6px 4px max(6px,env(safe-area-inset-bottom,0px))}
+.bn{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:52px;justify-content:center;border:0;background:none;color:var(--muted);font:600 12px var(--font);cursor:pointer;border-radius:12px}
+.bn.on{color:var(--brand)}
+.bn.on svg{background:var(--brand-soft);border-radius:999px;padding:2px 12px;width:48px;box-sizing:content-box}
+main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+nav.main.desk{display:none}
+@media (min-width:760px){nav.main.desk{display:flex}.mob{display:none!important}.bottom{display:none}main{padding-bottom:48px}.cta-bar{bottom:0}}
+.svcpick{border:0;padding:0;margin:0;min-width:0}
+.svc-filter{box-shadow:none;margin-bottom:8px}
+.svclist{max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:4px 6px;overscroll-behavior:contain}
+.svcgroup .cat{position:sticky;top:-4px;background:var(--surface);z-index:1;padding:10px 8px 4px}
+.svcopt{display:flex;align-items:center;gap:10px;min-height:48px;padding:4px 8px;border-radius:12px;cursor:pointer;font-weight:500}
+.svcopt:hover{background:var(--brand-soft)}
+.svcopt input{position:absolute;opacity:0;pointer-events:none}
+.svcopt:has(input:checked){background:var(--hoje-soft);color:var(--hoje-strong);font-weight:700;box-shadow:inset 0 0 0 2px var(--hoje)}
+.svcopt:has(input:focus-visible){outline:3px solid var(--hoje);outline-offset:-3px}
+.svc-none{padding:12px 8px}
+.svcopt[hidden],.svcgroup[hidden]{display:none}
+.area-opt{display:flex;align-items:flex-start;gap:10px;min-height:64px;padding:12px;border:2px solid var(--line);border-radius:16px;background:var(--surface);cursor:pointer}
+.area-opt input{margin-top:2px;flex:none}
+.area-opt:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+</style>
+
+<div id="app"></div>
+<script type="application/json" id="dados">{"cats":[{"n":"Construção e reformas","svcs":[{"n":"Pedreiro","s":"pedreiro","m":"presencial","u":false},{"n":"Servente","s":"servente","m":"presencial","u":false},{"n":"Empreiteiro","s":"empreiteiro","m":"presencial","u":false},{"n":"Mestre de obras","s":"mestre-de-obras","m":"presencial","u":false},{"n":"Gesseiro","s":"gesseiro","m":"presencial","u":false},{"n":"Instalador de drywall","s":"instalador-de-drywall","m":"presencial","u":false},{"n":"Azulejista","s":"azulejista","m":"presencial","u":false},{"n":"Assentador de piso e porcelanato","s":"assentador-de-piso-e-porcelanato","m":"presencial","u":false},{"n":"Impermeabilizador","s":"impermeabilizador","m":"presencial","u":false},{"n":"Telhadista","s":"telhadista","m":"presencial","u":false},{"n":"Instalador de calhas","s":"instalador-de-calhas","m":"presencial","u":false},{"n":"Instalador de forro","s":"instalador-de-forro","m":"presencial","u":false}]},{"n":"Marcenaria, carpintaria e mobiliário","svcs":[{"n":"Marceneiro","s":"marceneiro","m":"presencial","u":false},{"n":"Carpinteiro","s":"carpinteiro","m":"presencial","u":false},{"n":"Montador de móveis","s":"montador-de-moveis","m":"presencial","u":false},{"n":"Instalador de móveis planejados","s":"instalador-de-moveis-planejados","m":"presencial","u":false},{"n":"Restaurador de móveis","s":"restaurador-de-moveis","m":"presencial","u":false},{"n":"Estofador","s":"estofador","m":"presencial","u":false},{"n":"Tapeceiro","s":"tapeceiro","m":"presencial","u":false}]},{"n":"Pintura e acabamentos","svcs":[{"n":"Pintor residencial","s":"pintor-residencial","m":"presencial","u":false},{"n":"Pintor comercial","s":"pintor-comercial","m":"presencial","u":false},{"n":"Aplicador de textura","s":"aplicador-de-textura","m":"presencial","u":false},{"n":"Instalador de papel de parede","s":"instalador-de-papel-de-parede","m":"presencial","u":false},{"n":"Instalador de cortinas e persianas","s":"instalador-de-cortinas-e-persianas","m":"presencial","u":false},{"n":"Marmorista","s":"marmorista","m":"presencial","u":false}]},{"n":"Hidráulica e manutenção","svcs":[{"n":"Encanador","s":"encanador","m":"presencial","u":true},{"n":"Bombeiro hidráulico","s":"bombeiro-hidraulico","m":"presencial","u":false},{"n":"Caça-vazamentos","s":"caca-vazamentos","m":"presencial","u":false},{"n":"Desentupidor","s":"desentupidor","m":"presencial","u":false},{"n":"Limpador de caixa d’água","s":"limpador-de-caixa-dagua","m":"presencial","u":false},{"n":"Instalador de filtros","s":"instalador-de-filtros","m":"presencial","u":false},{"n":"Marido de aluguel","s":"marido-de-aluguel","m":"presencial","u":false}]},{"n":"Elétrica e climatização","svcs":[{"n":"Eletricista","s":"eletricista","m":"presencial","u":true},{"n":"Técnico de ar-condicionado","s":"tecnico-de-ar-condicionado","m":"presencial","u":true},{"n":"Técnico de refrigeração","s":"tecnico-de-refrigeracao","m":"presencial","u":false},{"n":"Instalador de energia solar","s":"instalador-de-energia-solar","m":"presencial","u":false},{"n":"Instalador de ventilador","s":"instalador-de-ventilador","m":"presencial","u":false}]},{"n":"Portas, janelas e segurança","svcs":[{"n":"Serralheiro","s":"serralheiro","m":"presencial","u":false},{"n":"Soldador","s":"soldador","m":"presencial","u":false},{"n":"Vidraceiro","s":"vidraceiro","m":"presencial","u":false},{"n":"Chaveiro","s":"chaveiro","m":"presencial","u":true},{"n":"Instalador de esquadrias","s":"instalador-de-esquadrias","m":"presencial","u":false},{"n":"Técnico de portão eletrônico","s":"tecnico-de-portao-eletronico","m":"presencial","u":false},{"n":"Instalador de câmeras, alarmes e interfone","s":"instalador-de-cameras-alarmes-e-interfone","m":"presencial","u":false}]},{"n":"Piscina, jardim e área externa","svcs":[{"n":"Piscineiro","s":"piscineiro","m":"presencial","u":false},{"n":"Instalador de piscinas","s":"instalador-de-piscinas","m":"presencial","u":false},{"n":"Jardineiro","s":"jardineiro","m":"presencial","u":false},{"n":"Paisagista","s":"paisagista","m":"presencial","u":false},{"n":"Podador de árvores","s":"podador-de-arvores","m":"presencial","u":false},{"n":"Roçador","s":"rocador","m":"presencial","u":false},{"n":"Operador de lavagem de alta pressão","s":"operador-de-lavagem-de-alta-pressao","m":"presencial","u":false}]},{"n":"Limpeza e conservação","svcs":[{"n":"Diarista","s":"diarista","m":"presencial","u":false},{"n":"Faxineiro","s":"faxineiro","m":"presencial","u":false},{"n":"Limpador pós-obra","s":"limpador-pos-obra","m":"presencial","u":false},{"n":"Limpador de vidros","s":"limpador-de-vidros","m":"presencial","u":false},{"n":"Higienizador de sofás e colchões","s":"higienizador-de-sofas-e-colchoes","m":"presencial","u":false},{"n":"Dedetizador","s":"dedetizador","m":"presencial","u":false},{"n":"Passadeira","s":"passadeira","m":"presencial","u":false},{"n":"Organizador residencial","s":"organizador-residencial","m":"presencial","u":false}]},{"n":"Tecnologia e eletrônicos","svcs":[{"n":"Técnico de TI","s":"tecnico-de-ti","m":"ambos","u":false},{"n":"Técnico de computadores","s":"tecnico-de-computadores","m":"presencial","u":false},{"n":"Técnico de celulares","s":"tecnico-de-celulares","m":"presencial","u":false},{"n":"Técnico de impressoras","s":"tecnico-de-impressoras","m":"presencial","u":false},{"n":"Instalador de Wi-Fi e redes","s":"instalador-de-wi-fi-e-redes","m":"presencial","u":false},{"n":"Técnico de TV","s":"tecnico-de-tv","m":"presencial","u":false},{"n":"Suporte remoto","s":"suporte-remoto","m":"online","u":false},{"n":"Desenvolvedor","s":"desenvolvedor","m":"online","u":false},{"n":"Web designer","s":"web-designer","m":"online","u":false}]},{"n":"Eletrodomésticos","svcs":[{"n":"Técnico de geladeira e freezer","s":"tecnico-de-geladeira-e-freezer","m":"presencial","u":false},{"n":"Técnico de máquina de lavar","s":"tecnico-de-maquina-de-lavar","m":"presencial","u":false},{"n":"Técnico de fogão e forno","s":"tecnico-de-fogao-e-forno","m":"presencial","u":false},{"n":"Técnico de micro-ondas","s":"tecnico-de-micro-ondas","m":"presencial","u":false},{"n":"Técnico de pequenos eletrodomésticos","s":"tecnico-de-pequenos-eletrodomesticos","m":"presencial","u":false}]},{"n":"Automotivo","svcs":[{"n":"Mecânico","s":"mecanico","m":"presencial","u":false},{"n":"Eletricista automotivo","s":"eletricista-automotivo","m":"presencial","u":false},{"n":"Borracharia móvel","s":"borracharia-movel","m":"presencial","u":false},{"n":"Guincho","s":"guincho","m":"presencial","u":false},{"n":"Chaveiro automotivo","s":"chaveiro-automotivo","m":"presencial","u":false},{"n":"Funileiro","s":"funileiro","m":"presencial","u":false},{"n":"Pintor automotivo","s":"pintor-automotivo","m":"presencial","u":false},{"n":"Instalador de som automotivo","s":"instalador-de-som-automotivo","m":"presencial","u":false},{"n":"Detalhador automotivo","s":"detalhador-automotivo","m":"presencial","u":false}]},{"n":"Transporte e entregas","svcs":[{"n":"Frete","s":"frete","m":"presencial","u":false},{"n":"Carreto","s":"carreto","m":"presencial","u":false},{"n":"Mudança residencial","s":"mudanca-residencial","m":"presencial","u":false},{"n":"Ajudante de mudança","s":"ajudante-de-mudanca","m":"presencial","u":false},{"n":"Motoboy","s":"motoboy","m":"presencial","u":false},{"n":"Entregador","s":"entregador","m":"presencial","u":false}]},{"n":"Beleza e cuidados pessoais","svcs":[{"n":"Cabeleireiro","s":"cabeleireiro","m":"presencial","u":false},{"n":"Barbeiro","s":"barbeiro","m":"presencial","u":false},{"n":"Manicure","s":"manicure","m":"presencial","u":false},{"n":"Pedicure","s":"pedicure","m":"presencial","u":false},{"n":"Maquiador","s":"maquiador","m":"presencial","u":false},{"n":"Designer de sobrancelhas","s":"designer-de-sobrancelhas","m":"presencial","u":false},{"n":"Depilador","s":"depilador","m":"presencial","u":false}]},{"n":"Pets","svcs":[{"n":"Banho e tosa","s":"banho-e-tosa","m":"presencial","u":false},{"n":"Passeador de cães","s":"passeador-de-caes","m":"presencial","u":false},{"n":"Cuidador de animais","s":"cuidador-de-animais","m":"presencial","u":false},{"n":"Adestrador","s":"adestrador","m":"presencial","u":false},{"n":"Transporte pet","s":"transporte-pet","m":"presencial","u":false}]},{"n":"Eventos e alimentação","svcs":[{"n":"Fotógrafo","s":"fotografo","m":"presencial","u":false},{"n":"Videomaker","s":"videomaker","m":"presencial","u":false},{"n":"DJ","s":"dj","m":"presencial","u":false},{"n":"Decorador de festas","s":"decorador-de-festas","m":"presencial","u":false},{"n":"Garçom","s":"garcom","m":"presencial","u":false},{"n":"Churrasqueiro","s":"churrasqueiro","m":"presencial","u":false},{"n":"Cozinheiro","s":"cozinheiro","m":"presencial","u":false},{"n":"Confeiteiro","s":"confeiteiro","m":"presencial","u":false},{"n":"Buffet","s":"buffet","m":"presencial","u":false},{"n":"Locador de mesas e cadeiras","s":"locador-de-mesas-e-cadeiras","m":"presencial","u":false},{"n":"Técnico de som e iluminação","s":"tecnico-de-som-e-iluminacao","m":"presencial","u":false}]},{"n":"Aulas e serviços profissionais","svcs":[{"n":"Professor particular","s":"professor-particular","m":"ambos","u":false},{"n":"Professor de idiomas","s":"professor-de-idiomas","m":"ambos","u":false},{"n":"Instrutor de música","s":"instrutor-de-musica","m":"ambos","u":false},{"n":"Tradutor","s":"tradutor","m":"online","u":false},{"n":"Revisor","s":"revisor","m":"online","u":false},{"n":"Designer gráfico","s":"designer-grafico","m":"online","u":false},{"n":"Social media","s":"social-media","m":"online","u":false},{"n":"Assistente virtual","s":"assistente-virtual","m":"online","u":false},{"n":"Contador","s":"contador","m":"ambos","u":false}]},{"n":"Confecção e consertos","svcs":[{"n":"Costureira","s":"costureira","m":"presencial","u":false},{"n":"Alfaiate","s":"alfaiate","m":"presencial","u":false},{"n":"Ajuste de roupas","s":"ajuste-de-roupas","m":"presencial","u":false},{"n":"Sapateiro","s":"sapateiro","m":"presencial","u":false},{"n":"Bordadeira","s":"bordadeira","m":"presencial","u":false}]}],"syn":{"encanador":["vazamento","cano","encanamento","torneira","registro","descarga","hidraulica","cano furado","agua vazando","conserto de cano"],"caca-vazamentos":["vazamento","infiltracao","caca vazamento","vazamento oculto","conta de agua alta"],"desentupidor":["entupimento","pia entupida","vaso entupido","esgoto","ralo entupido","desentupir"],"eletricista":["tomada","disjuntor","curto","curto circuito","fiacao","chuveiro queimado","queda de energia","instalacao eletrica","quadro de luz","luz"],"chaveiro":["chave","fechadura","porta trancada","trancado","copia de chave","abrir porta","perdi a chave"],"chaveiro-automotivo":["chave de carro","chave codificada","carro trancado"],"tecnico-de-ar-condicionado":["ar condicionado","ar-condicionado","split","instalar ar","limpeza de ar","ar pingando","climatizacao","manutencao de ar"],"tecnico-de-refrigeracao":["refrigeracao","camara fria"],"piscineiro":["limpeza de piscina","limpar piscina","piscina verde","tratamento de piscina","piscina"],"tecnico-de-ti":["t.i.","ti","informatica","suporte tecnico"],"tecnico-de-computadores":["formatar computador","formatacao","formatar","computador","pc","notebook","computador lento","conserto de notebook"],"tecnico-de-celulares":["celular","tela quebrada","troca de tela","smartphone"],"instalador-de-wi-fi-e-redes":["wifi","internet","roteador","rede"],"suporte-remoto":["suporte online","ajuda no computador"],"diarista":["faxina","limpeza de casa","limpeza"],"faxineiro":["faxina","limpeza"],"pedreiro":["obra","reforma","construcao","muro"],"pintor-residencial":["pintura","pintar parede","pintar casa"],"marido-de-aluguel":["pequenos reparos","faz tudo","reparos"],"montador-de-moveis":["montar movel","montagem de moveis","montar guarda roupa"],"jardineiro":["jardim","cortar grama","grama"],"rocador":["rocada","terreno sujo","limpar terreno"],"dedetizador":["dedetizacao","barata","cupim","pragas"],"mecanico":["carro","oficina","motor"],"guincho":["reboque","carro quebrado"],"borracharia-movel":["pneu furado","pneu","borracheiro"],"frete":["transporte","carreto"],"mudanca-residencial":["mudanca"],"tecnico-de-geladeira-e-freezer":["geladeira","freezer","geladeira nao gela"],"tecnico-de-maquina-de-lavar":["maquina de lavar","lavadora"],"limpador-de-caixa-dagua":["caixa dagua","caixa d agua","limpeza de caixa"],"banho-e-tosa":["pet shop","tosa","banho em cachorro"],"professor-particular":["aula particular","reforco escolar","aulas"],"contador":["contabilidade","imposto de renda","mei"],"costureira":["costura","barra de calca"],"tecnico-de-portao-eletronico":["portao","portao eletronico","motor de portao"],"instalador-de-cameras-alarmes-e-interfone":["camera","cftv","alarme","interfone"],"vidraceiro":["vidro","box de banheiro","vidro quebrado"],"serralheiro":["grade","portao de ferro","serralheria"],"gesseiro":["gesso","sanca"],"instalador-de-energia-solar":["placa solar","energia solar","painel solar"]},"nbs":[["Aero Rancho","aero-rancho"],["Alves Pereira","alves-pereira"],["Amambaí","amambai"],["América","america"],["Autonomista","autonomista"],["Bandeira","bandeira"],["Batistão","batistao"],["Bela Vista","bela-vista"],["Cabreúva","cabreuva"],["Caiçara","caicara"],["Carandá","caranda"],["Carandá Bosque","caranda-bosque"],["Carlota","carlota"],["Centenário","centenario"],["Centro","centro"],["Chácara Cachoeira","chacara-cachoeira"],["Chácara dos Poderes","chacara-dos-poderes"],["Coophavila II","coophavila-ii"],["Coronel Antonino","coronel-antonino"],["Cruzeiro","cruzeiro"],["Dr. Albuquerque","dr-albuquerque"],["Estrela Dalva","estrela-dalva"],["Glória","gloria"],["Guanandi","guanandi"],["Itanhangá","itanhanga"],["Jacy","jacy"],["Jardim dos Estados","jardim-dos-estados"],["Jardim Paulista","jardim-paulista"],["Jockey Club","jockey-club"],["José Abrão","jose-abrao"],["Lageado","lageado"],["Leblon","leblon"],["Los Angeles","los-angeles"],["Margarida","margarida"],["Maria Aparecida Pedrossian","maria-aparecida-pedrossian"],["Mata do Jacinto","mata-do-jacinto"],["Mata do Segredo","mata-do-segredo"],["Monte Castelo","monte-castelo"],["Monte Carlo","monte-carlo"],["Moreninha","moreninha"],["Nasser","nasser"],["Noroeste","noroeste"],["Nova Campo Grande","nova-campo-grande"],["Nova Lima","nova-lima"],["Novos Estados","novos-estados"],["Panamá","panama"],["Parati","parati"],["Pioneiros","pioneiros"],["Piratininga","piratininga"],["Planalto","planalto"],["Popular","popular"],["Rita Vieira","rita-vieira"],["Santa Fé","santa-fe"],["Santo Amaro","santo-amaro"],["Santo Antônio","santo-antonio"],["São Bento","sao-bento"],["São Conrado","sao-conrado"],["São Francisco","sao-francisco"],["São Lourenço","sao-lourenco"],["Seminário","seminario"],["Sobrinho","sobrinho"],["Taquarussu","taquarussu"],["Taveirópolis","taveiropolis"],["Tijuca","tijuca"],["Tiradentes","tiradentes"],["TV Morena","tv-morena"],["Universitário","universitario"],["Vilasboas","vilasboas"]],"demo":[{"key":"carlos","name":"Carlos Hidráulica (demo)","color":"#0f5f73","services":["encanador","desentupidor"],"main":"encanador","areas":["centro","amambai","carlota"],"ref":"Centro","today":{"neighborhoods":["centro","amambai"]},"bio":"Perfil de demonstração. Conserto de vazamentos, troca de registros e desentupimento."},{"key":"rafa","name":"Rafa Piscinas (demo)","color":"#0369a1","services":["piscineiro"],"main":"piscineiro","areas":["caranda-bosque","jardim-dos-estados"],"ref":"Centro","bio":"Perfil de demonstração. Endereço de referência no Centro, atende o Carandá Bosque."},{"key":"pantanal","name":"Elétrica Pantanal (demo)","color":"#ca8a04","services":["eletricista","instalador-de-ventilador"],"main":"eletricista","wholeCity":true,"ref":"Tiradentes","today":{"wholeCity":true},"bio":"Perfil de demonstração. Atende toda Campo Grande."},{"key":"joana","name":"Joana Chaves (demo)","color":"#7c3aed","services":["chaveiro"],"main":"chaveiro","areas":["tiradentes","universitario","centro"],"ref":"Universitário","today":{"neighborhoods":["tiradentes","universitario"]},"bio":"Perfil de demonstração. Abertura de portas e cópias de chave."},{"key":"frio","name":"Frio Bom Climatização (demo)","color":"#0891b2","services":["tecnico-de-ar-condicionado","tecnico-de-refrigeracao"],"main":"tecnico-de-ar-condicionado","areas":["centro","coronel-antonino"],"ref":"Coronel Antonino","bio":"Perfil de demonstração. Sem disponibilidade para hoje."},{"key":"marcos","name":"Marcos Encanador (demo)","color":"#15803d","services":["encanador"],"main":"encanador","areas":["caranda-bosque"],"ref":"Aero Rancho","today":{"neighborhoods":["caranda-bosque"]},"bio":"Perfil de demonstração. Atende somente o Carandá Bosque (o endereço de cadastro é no Aero Rancho)."},{"key":"bia","name":"Bia Faxina (demo)","color":"#db2777","services":["diarista","faxineiro"],"main":"diarista","areas":["centro","caranda-bosque","santa-fe"],"ref":"Santa Fé","today":{"neighborhoods":["centro"]},"bio":"Perfil de demonstração. Serviço fora do piloto do Preciso para hoje."},{"key":"leo","name":"Léo TI Remoto (demo)","color":"#4f46e5","services":["tecnico-de-ti","suporte-remoto","tecnico-de-computadores"],"main":"tecnico-de-ti","areas":["centro"],"online":true,"ref":"Centro","bio":"Perfil de demonstração. Formatação, redes e suporte online."},{"key":"paulo","name":"Paulo Pausado (demo)","color":"#57534e","services":["encanador"],"main":"encanador","wholeCity":true,"ref":"Centro","status":"paused","bio":"Perfil de demonstração pausado: não deve aparecer na busca."},{"key":"sergio","name":"Sérgio Suspenso (demo)","color":"#991b1b","services":["eletricista"],"main":"eletricista","wholeCity":true,"ref":"Centro","status":"suspended","bio":"Perfil de demonstração suspenso: não deve aparecer na busca."},{"key":"hidro","name":"Hidro Cidade (demo)","color":"#0e7490","services":["encanador","caca-vazamentos"],"main":"encanador","wholeCity":true,"ref":"Coophavila II","today":{"wholeCity":true},"bio":"Perfil de demonstração. Encanador que atende toda Campo Grande."},{"key":"ze","name":"Zé Reformas (demo)","color":"#b45309","services":["pedreiro"],"main":"pedreiro","ref":"Centro","bio":"Perfil de demonstração de cadastro antigo: tem só o endereço e ainda não confirmou a área de atendimento."}]}</script>
+<script>
+const D = JSON.parse(document.getElementById('dados').textContent);
+// Todos os serviços presenciais entram no "Preciso para hoje".
+const ALL = D.cats.flatMap(c => c.svcs.map(s => ({ ...s, u: s.m !== 'online', cat: c.n })));
+const SVC = Object.fromEntries(ALL.map(s => [s.s, s]));
+const NB = Object.fromEntries(D.nbs.map(([n, s]) => [s, n]));
+const URGENT = ALL.filter(s => s.u);
+const ICON = {
+  encanador: '<path fill="currentColor" d="M4 10h8V6h4v4a4 4 0 0 1 4 4v2h-4v-2h-4v2H4zM18 19a1.5 1.5 0 1 1-3 0c0-1 1.5-2.5 1.5-2.5S18 18 18 19z"/>',
+  eletricista: '<path fill="currentColor" d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  chaveiro: '<path fill="currentColor" d="M8 14a5 5 0 1 1 4.6-7H22v3h-2v3h-3v-3h-4.4A5 5 0 0 1 8 14zm0-3.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>',
+  'tecnico-de-ar-condicionado': '<path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 5h18v7H3zM6 9h12M7 15c0 1.5-1 2-1 3.5M12 15c0 1.5-1 2-1 3.5M17 15c0 1.5-1 2-1 3.5"/>',
+};
+
+const CAT_ICON = [
+  'M3 6h18v12H3zM3 12h18M9 6v6M15 12v6',
+  'M15 12l-8.5 8.5a2.1 2.1 0 0 1-3-3L12 9M14 4l6 6-2.5 2.5-6-6z',
+  'M4 4h13v5H4zM17 6.5h3v5.5h-8v3M11 15h2v6h-2z',
+  'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z',
+  'M13 2 4 14h7l-1 8 9-12h-7z',
+  'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4',
+  'M5 19c0-9 6-14 15-14 0 9-5 15-14 15M5 19l7-7',
+  'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM19 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z',
+  'M5 5h14v10H5zM2 19h20',
+  'M7 3h10v18H7zM7 10h10M10 6v2M10 13v3',
+  'M3 13l2-6h14l2 6v5H3zM3 13h18M7 18v2M17 18v2',
+  'M2 6h12v10H2zM14 10h4l3 3v3h-7M6 17.5a1.5 1.5 0 1 0 .01 0M17 17.5a1.5 1.5 0 1 0 .01 0',
+  'M6 6a3 3 0 1 0 .01 0M6 15a3 3 0 1 0 .01 0M8.5 7.5 20 19M8.5 16.5 20 5',
+  'M12 14c-3 0-5 3-5 5h10c0-2-2-5-5-5zM5 10.5a1.5 1.5 0 1 0 .01 0M19 10.5a1.5 1.5 0 1 0 .01 0M9 6a1.5 1.5 0 1 0 .01 0M15 6a1.5 1.5 0 1 0 .01 0',
+  'M3 8h4l2-3h6l2 3h4v12H3zM12 10.5a3.5 3.5 0 1 0 .01 0',
+  'M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z',
+  'M5 19 19 5M15 5h4v4M8 8c4-2 7 2 3 5s-5 6-1 6',
+];
+const CAT_TINT = ['#b45309','#92400e','#be185d','#0369a1','#ca8a04','#475569','#15803d','#7c3aed','#4f46e5','#0e7490','#b91c1c','#c2410c','#db2777','#a16207','#9333ea','#2563eb','#0f766e'];
+const catIndex = svc => D.cats.findIndex(c => c.svcs.some(s => s.s === svc));
+const icon = (d, size = 24) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+const WA = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.6.8-.8 1-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.7.5-.1 1.5-.6 1.7-1.2s.2-1.1.1-1.2-.2-.2-.5-.3z"/></svg>';
+const PIN = 'M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12zM12 11.5a2.5 2.5 0 1 0 .01 0';
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const inSentence = n => (n.length > 1 && n[1] === n[1].toLowerCase()) ? n[0].toLowerCase() + n.slice(1) : n;
+const msgUrgent = (svc, nb) => `Olá! Encontrei seu perfil no Resolve Aqui. Preciso de ${inSentence(svc)} hoje ${nb ? `no bairro ${nb}, em Campo Grande` : 'em Campo Grande'}. Qual horário você consegue atender?`;
+const msgGeneral = (svc, place, online) => `Olá! Encontrei seu perfil no Resolve Aqui. Preciso de ${inSentence(svc)} ${online ? 'com atendimento online' : 'em ' + place}. Você tem disponibilidade?`;
+const midnight = () => { const d = new Date(); return d.getTime() + 3600e3 * 12; }; // simulado: vale "até a meia-noite"
+
+let S;
+function reset() {
+  S = {
+    view: 'home', params: {}, user: null, favs: new Set(), notice: null,
+    providers: D.demo.map(p => ({
+      key: p.key, name: p.name, color: p.color, services: p.services, main: p.main, areas: p.areas || [],
+      wholeCity: !!p.wholeCity, online: !!p.online, status: p.status || 'published', bio: p.bio, ref: p.ref,
+      today: p.today && !(p.status && p.status !== 'published') ? { svcs: p.services.filter(s => SVC[s].m !== 'online'), nbs: p.today.neighborhoods || [], whole: !!p.today.wholeCity, exp: midnight() } : null,
+    })),
+    draft: null,
+  };
+}
+reset();
+const P = k => S.providers.find(p => p.key === k);
+const me = () => S.user && P('me');
+const active = p => p.status === 'published' && p.today && p.today.exp > Date.now();
+const areaLabel = p => {
+  const parts = [];
+  if (p.wholeCity) parts.push('Atende toda Campo Grande');
+  else if (p.areas.length) { const n = p.areas.map(a => NB[a]).sort((a, b) => a.localeCompare(b)); parts.push('Atende: ' + (n.length <= 3 ? n.join(', ') : `${n[0]}, ${n[1]} e mais ${n.length - 2} bairros`)); }
+  if (p.online) parts.push('Atendimento online');
+  return parts.join(' · ');
+};
+const todayLabel = p => p.today.whole ? 'Atende toda Campo Grande' : 'Atende: ' + p.today.nbs.map(a => NB[a]).sort((a, b) => a.localeCompare(b)).join(', ');
+const initials = n => n.replace('(demo)', '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const avatar = (p, big) => `<span class="av${big ? ' big' : ''}" style="background:linear-gradient(145deg,${esc(p.color)},color-mix(in srgb,${esc(p.color)} 55%,#000))" aria-hidden="true">${esc(initials(p.name))}</span>`;
+
+function urgentMatch(p, svc, nb) {
+  return active(p) && SVC[svc]?.u && p.today.svcs.includes(svc) && p.services.includes(svc)
+    && (!nb || ((p.today.whole || p.today.nbs.includes(nb)) && (p.wholeCity || p.areas.includes(nb))));
+}
+function matchedServices(q) {
+  const qn = norm(q); if (qn.length < 2) return [];
+  const out = new Set();
+  for (const s of ALL) { const n = norm(s.n); if (n.includes(qn) || (` ${qn} `).includes(` ${n}`)) out.add(s.s); }
+  for (const [s, terms] of Object.entries(D.syn)) for (const t of terms) { const tn = norm(t); if ((` ${qn} `).includes(` ${tn}`) || (qn.length >= 3 && tn.startsWith(qn))) out.add(s); }
+  return [...out];
+}
+function search({ q, svc, nb, online, hoje, cat }) {
+  const qn = norm(q), m = matchedServices(q);
+  return S.providers.filter(p => p.status === 'published'
+    && (!svc || p.services.includes(svc))
+    && (cat === undefined || cat === '' || p.services.some(x => catIndex(x) === +cat))
+    && (!qn || norm(p.name).includes(qn) || p.services.some(s => m.includes(s)))
+    && (!online || p.online)
+    && (p.online || p.wholeCity || p.areas.length > 0) // a área escolhida define onde aparece
+    && (online || !nb || p.wholeCity || p.areas.includes(nb))
+    && (!hoje || (active(p) && (!svc || p.today.svcs.includes(svc)) && (!nb || p.today.whole || p.today.nbs.includes(nb)))))
+    .sort((a, b) => active(b) - active(a));
+}
+
+/* ---------- views ---------- */
+function go(view, params = {}) { S.view = view; S.params = params; render(); window.scrollTo(0, 0); }
+const nbOptions = sel => `<option value="" ${sel ? '' : 'selected'}>Todos os bairros</option>` + D.nbs.map(([n, s]) => `<option value="${s}" ${s === sel ? 'selected' : ''}>${esc(n)}</option>`).join('');
+
+function urgentForm(svc, nb) {
+  return `<form data-form="hoje" class="stack">
+    <fieldset class="svcpick"><legend class="lbl" style="font-size:16px;margin-bottom:8px">1. Do que você precisa hoje?</legend>
+    <div class="sb-row svc-filter">${icon('M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',18)}<input type="search" data-filter="svc" placeholder="Filtrar: pintor, diarista, montador…" aria-label="Filtrar serviços" autocomplete="off"></div>
+    <div class="svclist" role="radiogroup" aria-label="Serviços">
+      ${D.cats.map((c, ci) => { const items = c.svcs.filter(x => x.m !== 'online'); return items.length ? `<div class="svcgroup"><p class="cat">${esc(c.n)}</p>${items.map(x => `<label class="svcopt" data-n="${esc(norm(x.n + ' ' + c.n + ' ' + (D.syn[x.s] || []).join(' ')))}"><input type="radio" name="svc" value="${x.s}" ${x.s === svc ? 'checked' : ''}><span class="ic sm" style="--t:${CAT_TINT[ci]}">${icon(CAT_ICON[ci], 14)}</span><span>${esc(x.n)}</span></label>`).join('')}</div>` : ''; }).join('')}
+      <p class="small muted svc-none" hidden>Nenhum serviço com esse nome. Tente outra palavra.</p>
+    </div></fieldset>
+    <div><label class="lbl" for="f-nb" style="font-size:16px">2. Em qual bairro?</label>
+    <select id="f-nb" name="nb" class="input">${nbOptions(nb)}</select></div>
+    <p class="err" data-err hidden></p>
+    <button class="btn hoje block big">Ver quem atende hoje</button></form>`;
+}
+
+function vHome() {
+  const online = S.providers.filter(active).length;
+  return `<div class="stack" style="gap:24px">
+  <section class="band" aria-labelledby="t1"><div class="band-in">
+    <span class="chip city-dark">${icon(PIN,16)} Campo Grande–MS</span>
+    <h1 id="t1">Preciso para hoje</h1>
+    <p class="lead">Encontre quem atende no seu bairro e confirmou disponibilidade para hoje.</p>
+    <p class="live"><span class="dot"></span>${online} profissionais disponíveis hoje na cidade</p>
+  </div></section>
+  <section class="card lift">${urgentForm(S.params.svc, S.params.nb)}
+    <p class="small muted" style="margin-top:12px;display:flex;gap:6px;align-items:center"><span style="color:var(--zap)">${WA}</span>Sem cadastro: um toque e você fala com o profissional.</p></section>
+  <form data-form="busca-home" class="searchbar" role="search"><label for="q-home" class="lbl">Buscar prestadores</label>
+    <div class="sb-row">${icon('M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4',20)}<input id="q-home" name="q" placeholder="Serviço, nome ou problema: vazamento, pintor…" aria-label="O que você procura?"><button class="btn primary small">Buscar prestadores</button></div></form>
+  <section aria-labelledby="cats"><h2 id="cats">Explore por categoria</h2>
+    <div class="cats">${D.cats.map((c, i) => `<button class="catbtn" data-act="cat" data-i="${i}"><span class="ic" style="--t:${CAT_TINT[i]}">${icon(CAT_ICON[i])}</span><span>${esc(c.n)}</span></button>`).join('')}</div></section>
+  <section class="card pro"><div style="flex:1;min-width:0"><h2>Você é prestador?</h2><p class="muted">Crie seu perfil em 2 etapas pelo celular, escolha os bairros e avise quando atende hoje.</p></div>
+    <button class="btn hoje" data-act="sou">Cadastrar meu perfil</button></section>
+  </div>`;
+}
+
+function pcard(p, { svcName, area, today, act, extra = '' }) {
+  return `<li><div class="pc" role="button" tabindex="0" data-act="${act}" data-k="${p.key}" aria-label="Chamar ${esc(p.name)} no WhatsApp">
+    ${avatar(p)}
+    <div class="pc-body"><h3>${esc(p.name)}</h3>
+      <p class="pc-svc"><span class="ic sm" style="--t:${CAT_TINT[catIndex(p.main)]}">${icon(CAT_ICON[catIndex(p.main)], 14)}</span>${esc(svcName)}</p>
+      <p class="small muted pc-area">${icon(PIN, 14)} ${esc(area)}</p>
+      ${today ? `<p class="pc-today"><span class="badge"><span class="dot"></span>Atende hoje</span>${today === 'urg' ? '<span class="small muted">Horário a combinar pelo WhatsApp</span>' : ''}</p>` : ''}
+      ${extra}
+    </div>
+    <span class="pc-wa" aria-hidden="true">${WA}</span></div></li>`;
+}
+function vHoje() {
+  const { svc, nb, changed } = S.params; const s = SVC[svc];
+  const list = S.providers.filter(p => urgentMatch(p, svc, nb));
+  return `<div class="stack">
+    <div class="row" style="justify-content:space-between"><span class="chip city">${icon(PIN,16)} ${nb ? esc(NB[nb]) : 'Todos os bairros'} · Campo Grande</span><button class="btn ghost small" data-act="go" data-v="home" data-svc="${svc}" data-nb="${nb}">Alterar</button></div>
+    <h1>${esc(s.n)} para hoje</h1>
+    ${changed ? `<p class="warn" role="status">A disponibilidade de ${esc(changed)} mudou e não está mais ativa para hoje. Atualizamos a lista.</p>` : ''}
+    <p class="muted" aria-live="polite">${list.length === 1 ? '1 profissional confirmou' : `${list.length} profissionais confirmaram`} disponibilidade hoje em ${nb ? esc(NB[nb]) : 'toda Campo Grande'}. Toque para chamar no WhatsApp.</p>
+    ${list.length ? `<ul class="plist">${list.map(p => pcard(p, { svcName: s.n, area: todayLabel(p), today: 'urg', act: 'zap-urg',
+        extra: `<button class="link" data-act="perfil" data-k="${p.key}" data-svc="${svc}" data-nb="${nb || ''}" data-hoje="1">Ver perfil</button>` })).join('')}</ul>`
+    : `<div class="card stack empty"><span class="ic big" style="--t:var(--hoje)">${icon('M12 8v4l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',28)}</span><p style="font-weight:700;font-size:18px">Ninguém confirmou disponibilidade para hoje ${nb ? 'nesse bairro' : 'em Campo Grande'} ainda.</p><p class="muted">${nb ? 'Procure em toda Campo Grande ou veja' : 'Veja'} todos os profissionais desse serviço para combinar um horário.</p>
+       <div class="row">${nb ? `<button class="btn hoje" data-act="go" data-v="hoje" data-svc="${svc}" data-nb="">Buscar em toda Campo Grande</button>` : ''}<button class="btn outline" data-act="busca" data-svc="${svc}" data-nb="${nb || ''}">Ver todos os prestadores desse serviço</button></div></div>`}
+  </div>`;
+}
+
+function vNaoPiloto() {
+  const s = SVC[S.params.svc];
+  return `<div class="card stack"><p style="font-weight:700">${esc(s.n)} é atendido online, então não entra no “Preciso para hoje”.</p>
+  <p class="muted">O “Preciso para hoje” vale para todos os serviços feitos no local.</p>
+  <button class="btn primary" data-act="busca" data-svc="${s.s}" data-nb="${S.params.nb || ''}">Buscar ${esc(s.n.toLowerCase())} e combinar</button></div>`;
+}
+
+function vBusca() {
+  const f = { q: '', svc: '', nb: '', online: false, hoje: false, ...S.params };
+  const res = search(f), m = f.q ? matchedServices(f.q).map(s => SVC[s].n) : [];
+  const chips = [];
+  if (f.cat !== undefined && f.cat !== '') chips.push(['Categoria: ' + D.cats[f.cat].n, { cat: '' }]);
+  if (f.svc) chips.push(['Serviço: ' + SVC[f.svc].n, { svc: '' }]);
+  if (f.nb) chips.push(['Bairro: ' + NB[f.nb], { nb: '' }]);
+  if (f.online) chips.push(['Atendimento online', { online: false }]);
+  if (f.hoje) chips.push(['Atende hoje', { hoje: false }]);
+  const enc = o => esc(JSON.stringify(o));
+  return `<div class="stack"><h1>Buscar prestadores</h1>
+  <form data-form="busca-q" class="row" role="search" style="flex-wrap:nowrap"><label class="sr" for="q" hidden>Nome, serviço ou problema</label>
+    <input id="q" name="q" class="input" value="${esc(f.q)}" placeholder="Nome, serviço ou problema" aria-label="Nome, serviço ou problema"><button class="btn primary">Buscar</button></form>
+  <div class="searchgrid">
+    <div><button class="btn outline block fbtn" data-act="filtros" aria-expanded="${!!S.fopen}">Filtros${chips.length ? ` (${chips.length})` : ''}</button>
+    <form data-form="filtros" class="card stack filters" data-open="${!!S.fopen}" style="margin-top:8px">
+      <div><label class="lbl" for="f-svc">Serviço</label><select id="f-svc" name="svc" class="input"><option value="">Todos os serviços</option>
+        ${D.cats.map(c => `<optgroup label="${esc(c.n)}">${c.svcs.map(s => `<option value="${s.s}" ${s.s === f.svc ? 'selected' : ''}>${esc(s.n)}</option>`).join('')}</optgroup>`).join('')}</select></div>
+      <div><label class="lbl" for="f-city">Cidade</label><select id="f-city" class="input" disabled><option>Campo Grande–MS</option></select></div>
+      <div><label class="lbl" for="f-bairro">Bairro</label><select id="f-bairro" name="nb" class="input"><option value="">Todos os bairros</option>${D.nbs.map(([n, s]) => `<option value="${s}" ${s === f.nb ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+      <label class="row"><input type="checkbox" name="online" ${f.online ? 'checked' : ''}> Atendimento online</label>
+      <label class="row"><input type="checkbox" name="hoje" ${f.hoje ? 'checked' : ''}> Atende hoje</label>
+      <button class="btn primary">Aplicar filtros</button></form></div>
+    <section class="stack" aria-live="polite" style="min-width:0">
+      ${chips.length ? `<div class="row">${chips.map(([l, r]) => `<button class="chip" data-act="unfilter" data-r="${enc(r)}" aria-label="Remover filtro ${esc(l)}">${esc(l)} ✕</button>`).join('')}<button class="btn ghost small" data-act="unfilter" data-r="${enc({ svc: '', nb: '', online: false, hoje: false, cat: '' })}">Limpar filtros</button></div>` : ''}
+      ${m.length ? `<p class="small muted">“${esc(f.q)}” inclui: ${esc(m.join(', '))}</p>` : ''}
+      ${res.length ? `<p class="muted">${res.length === 1 ? '1 prestador encontrado' : res.length + ' prestadores encontrados'}</p>
+        <ul class="plist">${res.map(p => pcard(p, { svcName: SVC[p.main].n, area: areaLabel(p), today: active(p) ? 'geral' : '', act: 'zap-card',
+          extra: `<button class="link" data-act="perfil" data-k="${p.key}" data-svc="${f.svc}" data-nb="${f.nb}" data-online="${f.online ? 1 : ''}">Ver perfil</button>` })).join('')}</ul>
+        ${f.nb && res.length < 3 ? `<p class="card small" style="background:var(--brand-soft)">Poucos resultados no bairro. <button class="btn ghost small" data-act="unfilter" data-r="${enc({ nb: '' })}">Ampliar para toda Campo Grande</button></p>` : ''}`
+      : `<div class="card stack"><p style="font-weight:700">Nenhum prestador encontrado${f.q ? ` para “${esc(f.q)}”` : ''}.</p><p class="muted">Tente retirar um filtro ou procurar na cidade inteira:</p>
+         <div class="row">${f.nb ? `<button class="btn primary" data-act="unfilter" data-r="${enc({ nb: '' })}">Buscar em toda Campo Grande</button>` : ''}
+         ${chips.filter(c => !c[0].startsWith('Bairro')).map(([l, r]) => `<button class="btn outline" data-act="unfilter" data-r="${enc(r)}">Retirar “${esc(l)}”</button>`).join('')}
+         ${f.q ? `<button class="btn ghost" data-act="unfilter" data-r="${enc({ q: '' })}">Buscar sem o termo</button>` : ''}</div></div>`}
+    </section></div></div>`;
+}
+
+function vPerfil() {
+  const p = P(S.params.k), { svc, nb } = S.params;
+  const ctxSvc = SVC[p.services.includes(svc) ? svc : p.main];
+  const urgent = ctxSvc.u && S.params.hoje && svc === ctxSvc.s && urgentMatch(p, svc, nb);
+  const isMe = p.key === 'me', fav = S.favs.has(p.key), ci = catIndex(p.main);
+  return `<div class="stack">${p.status !== 'published' ? `<p class="warn">Prévia: este perfil não aparece para visitantes.</p>` : ''}
+  <article class="card profile"><div class="cover" style="background:linear-gradient(120deg,${esc(p.color)},color-mix(in srgb,${esc(p.color)} 40%,#000))"></div>
+    <div class="prof-head">${avatar(p, true)}
+      ${p.status === 'published' && !isMe ? `<button class="favbtn" data-act="fav" data-k="${p.key}" aria-pressed="${fav}" aria-label="${fav ? 'Remover dos favoritos' : 'Salvar nos favoritos'}">${fav ? '★' : '☆'}</button>` : ''}</div>
+    <div class="stack" style="padding:0 18px 18px">
+      <div><h1 style="font-size:26px;margin:0">${esc(p.name)}</h1>
+      <p class="pc-svc" style="font-size:17px"><span class="ic sm" style="--t:${CAT_TINT[ci]}">${icon(CAT_ICON[ci],14)}</span>${esc(SVC[p.main].n)}</p></div>
+      <p class="muted pc-area">${icon(PIN,16)} ${esc(areaLabel(p))}</p>
+      ${active(p) ? '<p class="pc-today"><span class="badge"><span class="dot"></span>Atende hoje</span><span class="small muted">Horário a combinar pelo WhatsApp</span></p>' : ''}
+      ${p.services.length > 1 ? `<div><h2 class="h-sm">Também faz</h2><div class="row">${p.services.filter(s => s !== p.main).map(s => `<span class="tag">${esc(SVC[s].n)}</span>`).join('')}</div></div>` : ''}
+      ${p.bio ? `<div><h2 class="h-sm">Sobre</h2><p>${esc(p.bio)}</p></div>` : ''}
+    </div></article>
+  ${p.status === 'published' && !isMe ? `<div class="cta-bar"><button class="btn zap big block" data-act="${urgent ? 'zap-urg' : 'zap-geral'}" data-k="${p.key}">${WA} Chamar no WhatsApp</button></div>
+    ${!S.user && !urgent ? '<p class="small muted" style="text-align:center">Na primeira vez pedimos um login rápido. Depois é direto.</p>' : ''}
+    <details class="card"><summary style="cursor:pointer;font-weight:600">Denunciar perfil</summary><div class="stack" style="margin-top:12px">
+    ${S.user ? (S.reported?.has(p.key) ? '<p class="ok">Denúncia enviada. Obrigado por ajudar a manter a comunidade segura.</p>' : `<label class="lbl" for="motivo">Motivo</label><select id="motivo" class="input"><option>Informações falsas</option><option>Golpe ou cobrança indevida</option><option>Comportamento inadequado</option><option>Outro</option></select><button class="btn outline" style="border-color:var(--danger);color:var(--danger)" data-act="denunciar" data-k="${p.key}">Enviar denúncia</button>`)
+      : `<button class="btn outline" data-act="login" data-why="denuncia">Entre para denunciar</button>`}</div></details>` : ''}
+  <button class="btn ghost" data-act="back">← Voltar</button></div>`;
+}
+
+function vEntrar() {
+  const why = { contato: 'Entre para chamar o prestador no WhatsApp.', favorito: 'Entre para salvar nos favoritos.', denuncia: 'Entre para denunciar um perfil.', prestador: 'Crie sua conta para cadastrar seu perfil profissional.' }[S.params.why];
+  const signup = S.params.signup;
+  return `<div class="stack" style="max-width:440px;margin:0 auto"><h1>${signup ? 'Criar conta' : 'Entrar'}</h1>
+  ${why ? `<p class="card" style="background:var(--brand-soft)">${esc(why)}</p>` : ''}
+  <form data-form="login" class="card stack" novalidate>
+    <div><label class="lbl" for="em">E-mail</label><input id="em" name="email" type="email" class="input" autocomplete="email" value="cliente@exemplo.com"></div>
+    <div><label class="lbl" for="pw">Senha</label><input id="pw" name="pw" type="password" class="input" value="senha-demo-123"><p class="small muted">Mínimo de 8 caracteres.</p></div>
+    <p class="err" data-err hidden></p>
+    <button class="btn primary">${signup ? 'Criar conta' : 'Entrar'}</button>
+    ${signup ? '<p class="small muted">No app real, enviamos um e-mail de confirmação e você volta para onde estava.</p>' : ''}
+  </form>
+  <button class="btn ghost" data-act="toggle-signup">${signup ? 'Já tenho conta: entrar' : 'Ainda não tem conta? Criar conta'}</button></div>`;
+}
+
+function stepper(n) { return `<div class="steps" aria-label="Etapas">${['Seu perfil', 'Onde você atende', 'Prévia'].map((l, i) => `<span class="${i + 1 === n ? 'on' : ''}">${l}</span>`).join('')}</div>`; }
+
+function vEtapa1() {
+  const d = S.draft, e = S.params.errors || {};
+  const fq = norm(S.params.sf || '');
+  return `<div class="stack">${stepper(1)}<h1>Seu perfil</h1>
+  <form data-form="etapa1" class="card stack" novalidate>
+    <div><label class="lbl" for="dn">Nome profissional</label><input id="dn" name="name" class="input" value="${esc(d.name)}" aria-invalid="${!!e.name}" placeholder="Ex.: João Encanador">${e.name ? `<p class="err">${e.name}</p>` : ''}</div>
+    <div class="row"><span class="av" style="background:${d.color}" aria-hidden="true">${esc(initials(d.name || '?'))}</span><p class="small muted" style="flex:1">Foto de perfil: no app real você envia uma foto (removemos a localização GPS). Aqui usamos as iniciais.</p></div>
+    <div><label class="lbl" for="ph">Telefone e WhatsApp com DDD</label><input id="ph" name="phone" class="input" inputmode="tel" value="${esc(d.phone)}" placeholder="(67) 99999-1234" aria-invalid="${!!e.phone}"><p class="small muted">Não aparece no perfil nem na busca.</p>${e.phone ? `<p class="err">${e.phone}</p>` : ''}</div>
+    <fieldset style="border:0;padding:0;margin:0" class="stack"><legend class="lbl">Serviços que você oferece</legend>
+      <input class="input" type="search" data-input="sf" value="${esc(S.params.sf || '')}" placeholder="Procurar serviço (ex.: pintor)" aria-label="Procurar serviço">
+      ${d.services.length ? `<div class="row">${d.services.map(s => `<button type="button" class="chip" data-act="unsvc" data-s="${s}">${esc(SVC[s].n)} ✕</button>`).join('')}</div>` : ''}
+      <div class="list">${D.cats.map(c => { const it = c.svcs.filter(s => !fq || norm(s.n).includes(fq)); return it.length ? `<div class="cat">${esc(c.n)}</div>` + it.map(s => `<label><input type="checkbox" data-act="svc" data-s="${s.s}" ${d.services.includes(s.s) ? 'checked' : ''}> ${esc(s.n)}${s.m !== 'presencial' ? ` <span class="small muted">(${s.m === 'online' ? 'online' : 'presencial ou online'})</span>` : ''}</label>`).join('') : ''; }).join('')}</div>
+      ${e.services ? `<p class="err">${e.services}</p>` : ''}
+      ${d.services.length > 1 ? `<div><label class="lbl" for="main">Serviço principal</label><select id="main" name="main" class="input">${d.services.map(s => `<option value="${s}" ${s === d.main ? 'selected' : ''}>${esc(SVC[s].n)}</option>`).join('')}</select></div>` : ''}
+    </fieldset>
+    <div><label class="lbl" for="bio">Descrição curta (opcional)</label><textarea id="bio" name="bio" class="input" maxlength="600">${esc(d.bio)}</textarea></div>
+    ${Object.keys(e).length ? '<p class="alert" role="alert">Corrija os campos destacados.</p>' : ''}
+    <button class="btn primary">Salvar e continuar</button></form></div>`;
+}
+
+function vEtapa2() {
+  const d = S.draft, e = S.params.errors || {}, fq = norm(S.params.nf || '');
+  const canOnline = d.services.some(s => SVC[s].m !== 'presencial');
+  return `<div class="stack">${stepper(2)}<h1>Onde você atende</h1>
+  <form data-form="etapa2" class="card stack" novalidate>
+    <div><h2 style="font-size:17px">Endereço de referência</h2><p class="small muted">Privado. Os clientes veem só a região que você atende.</p></div>
+    <div class="grid2"><div><label class="lbl" for="cep">CEP</label><input id="cep" name="cep" class="input" inputmode="numeric" value="${esc(d.cep)}" placeholder="79002-000" aria-invalid="${!!e.cep}">${e.cep ? `<p class="err">${e.cep}</p>` : ''}</div>
+    <div><label class="lbl" for="rua">Rua e número</label><input id="rua" name="rua" class="input" value="${esc(d.rua)}" aria-invalid="${!!e.rua}">${e.rua ? `<p class="err">${e.rua}</p>` : ''}</div></div>
+    <div><h2 style="font-size:17px">Área de atendimento</h2><p class="small muted">Onde você vai até o cliente, em Campo Grande–MS.</p></div>
+    <div class="grid2"><label class="area-opt"><input type="radio" name="mode" value="cidade" data-act="mode" ${d.wholeCity ? 'checked' : ''}><span><strong>Atendo em toda Campo Grande</strong><span class="small muted" style="display:block">Um clique e você aparece em qualquer bairro.</span></span></label>
+      <label class="area-opt"><input type="radio" name="mode" value="bairros" data-act="mode" ${!d.wholeCity ? 'checked' : ''}><span><strong>Atendo em bairros selecionados</strong><span class="small muted" style="display:block">Escolha um ou mais bairros.</span></span></label></div>
+    ${d.wholeCity ? '' : `<input class="input" type="search" data-input="nf" value="${esc(S.params.nf || '')}" placeholder="Procurar bairro" aria-label="Procurar bairro">
+      <p class="small muted">${d.areas.length} selecionado(s)</p>
+      <div class="list">${D.nbs.filter(([n]) => !fq || norm(n).includes(fq)).map(([n, s]) => `<label><input type="checkbox" data-act="area" data-s="${s}" ${d.areas.includes(s) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}</div>`}
+    ${e.areas ? `<p class="err">${e.areas}</p>` : ''}
+    ${canOnline ? `<label class="row"><input type="checkbox" name="online" ${d.online ? 'checked' : ''}> Também atendo online</label>` : ''}
+    <div class="row"><button type="button" class="btn ghost" data-act="go" data-v="etapa1">← Voltar</button><button class="btn primary" style="flex:1">Ver prévia do perfil</button></div></form></div>`;
+}
+
+function vPrevia() {
+  const d = S.draft, tmp = { ...d, key: 'preview' };
+  return `<div class="stack">${stepper(3)}<h1>Prévia do seu perfil</h1>
+  <p class="muted">Assim você aparece na busca:</p>
+  <div class="card pcard">${avatar(tmp)}<div><h3>${esc(d.name)}</h3><p>${esc(SVC[d.main].n)}</p><p class="small muted">${esc(areaLabel(tmp))}</p></div></div>
+  <p class="small muted">Telefone e endereço de referência não aparecem para os clientes.</p>
+  <button class="btn hoje" data-act="publicar">Publicar meu perfil</button>
+  <button class="btn ghost" data-act="go" data-v="etapa2">← Editar área</button></div>`;
+}
+
+function vPainel() {
+  const p = me(); if (!p) return vEtapa1();
+  const st = { published: 'Publicado', paused: 'Pausado', draft: 'Rascunho', suspended: 'Suspenso' }[p.status];
+  const inPerson = p.services.filter(s => SVC[s].m !== 'online'), elig = inPerson.filter(s => SVC[s].u);
+  const r = S.params.restrict;
+  const info = `<p class="small muted">Ao ativar, visitantes sem cadastro podem te chamar no WhatsApp pelo <strong>“Preciso para hoje”</strong>${elig.length ? ` nos seus serviços presenciais: ${elig.map(s => SVC[s].n).join(', ')}` : ' (vale para serviços feitos no local); seus serviços online aparecem com “Atende hoje” na busca geral'}. Vale até a meia-noite (horário de Campo Grande).</p>`;
+  return `<div class="stack"><h1>Painel do prestador</h1>
+  ${S.params.published ? '<p class="ok" role="status">Perfil publicado! Agora você aparece na busca.</p>' : ''}
+  <section class="card stack"><p style="font-size:18px">Estado do perfil: <span class="status st-${p.status}">${st}</span></p>
+    <p class="muted">${p.status === 'published' ? 'Seu perfil aparece na busca.' : 'Seu perfil está oculto da busca até você reativar.'}</p>
+    <div class="row"><button class="btn outline" data-act="editar">Editar perfil</button><button class="btn ghost" data-act="perfil" data-k="me">Ver como aparece</button>
+    ${p.status === 'published' ? '<button class="btn ghost" data-act="status" data-s="paused">Pausar publicação</button>' : '<button class="btn primary" data-act="status" data-s="published">Reativar publicação</button>'}</div></section>
+  <section class="card stack" style="border-color:color-mix(in srgb,var(--hoje) 40%,var(--line))"><h2>Atendo hoje</h2>
+  ${p.status !== 'published' ? '<p class="muted">Disponível quando o perfil estiver Publicado.</p>' : !inPerson.length ? '<p class="muted">Vale para serviços presenciais.</p>' : active(p) ? `
+    <p style="font-weight:700;color:var(--hoje-strong)"><span class="badge">● Atendo hoje</span> ativo até 23:59 de hoje (horário de Campo Grande)</p>
+    <div><p style="font-weight:600">Serviços incluídos</p><div class="row">${p.today.svcs.map(s => `<span class="chip" style="cursor:default">${esc(SVC[s].n)}${SVC[s].u ? ' · contato sem login' : ''}</span>`).join('')}</div></div>
+    <div><p style="font-weight:600">Área de hoje</p><p class="muted">${esc(todayLabel(p))}</p></div>${info}
+    <button class="btn outline" data-act="off">Desativar “Atendo hoje”</button>` : `${info}
+    <button type="button" class="btn ghost small" style="align-self:flex-start;padding-left:0" data-act="restrict">${r ? 'Usar meus serviços e área cadastrados' : 'Restringir serviços ou bairros só para hoje'}</button>
+    ${r ? `<div class="stack"><p class="lbl">Serviços de hoje</p>${inPerson.map(s => `<label class="row"><input type="checkbox" data-today-svc="${s}" checked> ${esc(SVC[s].n)}</label>`).join('')}
+      ${p.wholeCity ? '<p class="small muted">Você atende toda a cidade; hoje vale para toda Campo Grande.</p>' : `<p class="lbl">Bairros de hoje</p>${p.areas.map(a => `<label class="row"><input type="checkbox" data-today-nb="${a}" checked> ${esc(NB[a])}</label>`).join('')}`}</div>` : ''}
+    <p class="err" data-err hidden></p>
+    <button class="btn hoje" data-act="on">Atendo hoje</button>`}
+  </section></div>`;
+}
+
+function vFavs() {
+  const l = S.providers.filter(p => S.favs.has(p.key) && p.status === 'published');
+  return `<div class="stack"><h1>Meus favoritos</h1>${l.length ? l.map(p => `<div class="card pcard">${avatar(p)}<div><h3>${esc(p.name)}</h3><p>${esc(SVC[p.main].n)}</p><button class="btn ghost small" style="padding-left:0" data-act="perfil" data-k="${p.key}">Ver perfil →</button></div></div>`).join('')
+    : '<div class="card stack"><p>Você ainda não salvou nenhum prestador.</p><button class="btn primary" data-act="busca">Buscar prestadores</button></div>'}</div>`;
+}
+
+function header() {
+  return `<header class="top"><div class="wrap"><button class="logo" data-act="go" data-v="home" aria-label="Página inicial">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f5f73"/><path d="M32 12c-8.3 0-15 6.5-15 14.6C17 37.5 32 52 32 52s15-14.5 15-25.4C47 18.5 40.3 12 32 12z" fill="#fff"/><path d="m25 27 5 5 9-10" stroke="#ea580c" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Resolve Aqui</button>
+    <nav class="main desk" aria-label="Principal"><button class="btn ghost small" data-act="busca">Buscar</button>
+    ${S.user ? `<button class="btn ghost small" data-act="go" data-v="favs">Favoritos</button><button class="btn ghost small" data-act="sou">${me() ? 'Painel' : 'Sou prestador'}</button><button class="btn outline small" data-act="sair">Sair</button>`
+      : `<button class="btn ghost small" data-act="sou">Sou prestador</button><button class="btn outline small" data-act="login">Entrar</button>`}</nav>
+    ${S.user ? '<button class="btn ghost small mob" data-act="sair">Sair</button>' : '<button class="btn outline small mob" data-act="login">Entrar</button>'}</div></header>`;
+}
+function bottomNav() {
+  const it = (v, label, d, act = 'go') => `<button class="bn${S.view === v || (v === 'painel' && ['etapa1','etapa2','previa'].includes(S.view)) ? ' on' : ''}" data-act="${act}" data-v="${v}">${icon(d,22)}<span>${label}</span></button>`;
+  return `<nav class="bottom" aria-label="Navegação">${it('home','Início','M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z')}${it('busca','Buscar','M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4','busca')}${it('favs','Favoritos','M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z','favs')}${it('painel', me() ? 'Meu perfil' : 'Sou prestador','M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0','sou')}</nav>`;
+}
+
+function banner() {
+  return `<div class="demo"><div class="wrap"><span><strong>Prévia para teste</strong> com dados fictícios. Nada é salvo nem enviado.${S.user ? ` Conectado como ${esc(S.user)}.` : ''}</span>
+  <details><summary>Ferramentas de teste</summary><div class="tools">
+    <button class="btn outline small" data-act="t-vencer">Fazer a disponibilidade vencer (simula meia-noite)</button>
+    <button class="btn outline small" data-act="t-reset">Reiniciar dados</button></div>
+    <p class="small muted" style="margin-top:6px">Dica: abra uma lista do “Preciso para hoje”, toque em “Fazer a disponibilidade vencer” e depois em “Chamar no WhatsApp”.</p></details></div></div>`;
+}
+
+let sheet = null;
+function render() {
+  const V = { home: vHome, hoje: vHoje, naopiloto: vNaoPiloto, busca: vBusca, perfil: vPerfil, entrar: vEntrar, etapa1: vEtapa1, etapa2: vEtapa2, previa: vPrevia, painel: vPainel, favs: vFavs }[S.view];
+  document.getElementById('app').innerHTML = banner() + header() + `<main class="wrap">${V()}</main>` + bottomNav() + (sheet ? sheet : '');
+  const chk = document.querySelector('.svclist input:checked'); if (chk) { const b = chk.closest('.svclist'); b.scrollTop = chk.closest('label').offsetTop - b.offsetTop - 40; }
+}
+
+function openZap(p, text, editable) {
+  sheet = `<div class="overlay" data-act="close-bg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="zt">
+    <h2 id="zt">WhatsApp de ${esc(p.name)}</h2>
+    ${editable ? `<label class="lbl" for="zmsg">Mensagem (você pode editar antes de enviar)</label><textarea id="zmsg" class="input">${esc(text)}</textarea>` : `<div class="bubble">${esc(text)}</div>`}
+    <p class="small muted">No app real, este toque abre o WhatsApp com o texto pronto; você pode editar e decide se envia. O número do prestador nunca aparece na página: o link é gerado no servidor.</p>
+    <div class="row"><button class="btn zap" style="flex:1" data-act="close">Entendi</button></div></div></div>`;
+  render();
+  document.getElementById('zmsg')?.focus();
+}
+
+function zapGeneralDirect(p) {
+  const { svc, nb, online } = S.params, s = SVC[p.services.includes(svc) ? svc : p.main];
+  const place = nb ? `${NB[nb]}, Campo Grande` : 'Campo Grande';
+  openZap(p, msgGeneral(s.n, place, online || (p.online && !p.areas.length && !p.wholeCity)), false);
+}
+function needLogin(why, back, signup) { S.back = back; go('entrar', { why, signup }); }
+
+const actions = {
+  go: el => go(el.dataset.v, { svc: el.dataset.svc, nb: el.dataset.nb }),
+  pick: el => { const f = el.closest('form'); f.svc.value = el.dataset.s; f.querySelectorAll('.tile').forEach(t => t.setAttribute('aria-pressed', t === el)); },
+  busca: el => go('busca', { svc: el.dataset.svc || '', nb: el.dataset.nb || '' }),
+  perfil: el => { S.prev = { view: S.view, params: S.params }; go('perfil', { k: el.dataset.k, svc: el.dataset.svc, nb: el.dataset.nb, online: !!el.dataset.online, hoje: !!el.dataset.hoje }); },
+  back: () => S.prev ? go(S.prev.view, S.prev.params) : go('home'),
+  filtros: () => { S.fopen = !S.fopen; render(); },
+  unfilter: el => go('busca', { ...S.params, ...JSON.parse(el.dataset.r) }),
+  login: el => needLogin(el.dataset.why, { view: S.view, params: S.params }),
+  'toggle-signup': () => go('entrar', { ...S.params, signup: !S.params.signup }),
+  sair: () => { S.user = null; go('home'); },
+  sou: () => { if (!S.user) return needLogin('prestador', { view: 'etapa1' }, true); startProvider(); },
+  'zap-urg': el => {
+    const p = P(el.dataset.k), { svc, nb } = S.params;
+    if (!urgentMatch(p, svc, nb)) { const back = S.view === 'perfil' ? S.prev : null; go('hoje', { svc, nb, changed: p.name }); return; }
+    openZap(p, msgUrgent(SVC[svc].n, NB[nb]), false);
+  },
+  'zap-geral': el => {
+    const p = P(el.dataset.k);
+    if (!S.user) return needLogin('contato', { view: 'perfil', params: S.params, then: p.key });
+    zapGeneralDirect(p);
+  },
+  'zap-card': el => {
+    const p = P(el.dataset.k);
+    if (!S.user) return needLogin('contato', { view: 'busca', params: S.params, then: p.key });
+    zapGeneralDirect(p);
+  },
+  cat: el => { const c = D.cats[+el.dataset.i]; go('busca', { cat: +el.dataset.i, q: '' }); },
+  favs: () => S.user ? go('favs') : needLogin('favorito', { view: 'favs' }),
+  close: () => { sheet = null; render(); },
+  'close-bg': (el, ev) => { if (ev.target === el) { sheet = null; render(); } },
+  fav: el => { if (!S.user) return needLogin('favorito', { view: 'perfil', params: S.params }); const k = el.dataset.k; S.favs.has(k) ? S.favs.delete(k) : S.favs.add(k); render(); },
+  denunciar: el => { (S.reported ||= new Set()).add(el.dataset.k); render(); },
+  svc: el => { const d = S.draft, s = el.dataset.s; d.services = el.checked ? [...d.services, s] : d.services.filter(x => x !== s); if (!d.services.includes(d.main)) d.main = d.services[0] || null; keepDraft(); render(); },
+  unsvc: el => { const d = S.draft; d.services = d.services.filter(x => x !== el.dataset.s); if (!d.services.includes(d.main)) d.main = d.services[0] || null; keepDraft(); render(); },
+  area: el => { const d = S.draft, s = el.dataset.s; d.areas = el.checked ? [...d.areas, s] : d.areas.filter(x => x !== s); keepDraft(); render(); },
+  mode: el => { keepDraft(); S.draft.wholeCity = el.value === 'cidade'; render(); },
+  publicar: () => {
+    const d = S.draft; let p = me();
+    if (!p) { p = { key: 'me', status: 'draft', today: null }; S.providers.push(p); }
+    Object.assign(p, { name: d.name, color: d.color, services: d.services, main: d.main, areas: d.wholeCity ? [] : d.areas, wholeCity: d.wholeCity, online: d.online, bio: d.bio, status: 'published', today: null });
+    go('painel', { published: true });
+  },
+  editar: () => startProvider(true),
+  status: el => { const p = me(); p.status = el.dataset.s; if (p.status !== 'published') p.today = null; render(); },
+  restrict: () => { S.params.restrict = !S.params.restrict; S.params.published = false; render(); },
+  on: () => {
+    const p = me(), inPerson = p.services.filter(s => SVC[s].m !== 'online');
+    let svcs = inPerson, nbs = p.areas;
+    if (S.params.restrict) { svcs = [...document.querySelectorAll('[data-today-svc]:checked')].map(i => i.dataset.todaySvc); if (!p.wholeCity) nbs = [...document.querySelectorAll('[data-today-nb]:checked')].map(i => i.dataset.todayNb); }
+    const err = document.querySelector('[data-err]');
+    if (!svcs.length || (!p.wholeCity && !nbs.length)) { err.textContent = !svcs.length ? 'Escolha pelo menos um serviço para hoje.' : 'Escolha pelo menos um bairro para hoje.'; err.hidden = false; return; }
+    p.today = { svcs, nbs: p.wholeCity ? [] : nbs, whole: p.wholeCity, exp: midnight() }; S.params.published = false; render();
+  },
+  off: () => { me().today = null; render(); },
+  't-vencer': () => { S.providers.forEach(p => { if (p.today) p.today.exp = 0; }); const t = document.querySelector('.demo details'); t.insertAdjacentHTML('beforeend', '<p class="ok small" style="margin-top:6px">Todas as disponibilidades venceram. A tela ainda não foi atualizada: toque em “Chamar no WhatsApp” para ver o aviso.</p>'); },
+  't-reset': () => { reset(); sheet = null; go('home'); },
+};
+
+function startProvider(edit) {
+  const p = me();
+  S.draft = p && edit ? { name: p.name, color: p.color, phone: S.phoneSaved || '', services: [...p.services], main: p.main, bio: p.bio || '', cep: '79002-000', rua: 'Rua Exemplo, 10', areas: [...p.areas], wholeCity: p.wholeCity, online: p.online }
+    : p ? null : (S.draft || { name: '', color: '#b45309', phone: '', services: [], main: null, bio: '', cep: '', rua: '', areas: [], wholeCity: false, online: false });
+  if (p && !edit) return go('painel');
+  go('etapa1');
+}
+function keepDraft() {
+  const f = document.querySelector('form[data-form="etapa1"],form[data-form="etapa2"]'); if (!f) return;
+  const d = S.draft;
+  if (f.dataset.form === 'etapa1') { d.name = f.name.value; d.phone = f.phone.value; d.bio = f.bio.value; if (f.main) d.main = f.main.value; }
+  else { d.cep = f.cep.value; d.rua = f.rua.value; if (f.online) d.online = f.online.checked; }
+}
+const phoneOk = v => { let d = v.replace(/\D/g, ''); if ((d.length === 12 || d.length === 13) && d.startsWith('55')) d = d.slice(2); return d.length === 11 && d[2] === '9' && Number(d.slice(0, 2)) >= 11; };
+
+const forms = {
+  hoje: f => {
+    const svc = f.svc.value, nb = f.nb.value, err = f.querySelector('[data-err]');
+    if (!svc) { err.textContent = 'Escolha o serviço.'; err.hidden = false; return; }
+    go('hoje', { svc, nb });
+  },
+  'busca-home': f => go('busca', { q: f.q.value.trim() }),
+  'busca-q': f => go('busca', { ...S.params, q: f.q.value.trim() }),
+  filtros: f => { S.fopen = false; go('busca', { ...S.params, svc: f.svc.value, nb: f.nb.value, online: f.online.checked, hoje: f.hoje.checked }); },
+  login: f => {
+    const err = f.querySelector('[data-err]'), em = f.email.value.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { err.textContent = 'Informe um e-mail válido.'; err.hidden = false; return; }
+    if (f.pw.value.length < 8) { err.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; err.hidden = false; return; }
+    S.user = em; const b = S.back; S.back = null;
+    if (b?.view === 'etapa1') return startProvider();
+    b ? go(b.view, b.params) : go('home');
+    if (b?.then) zapGeneralDirect(P(b.then));
+  },
+  etapa1: f => {
+    keepDraft(); const d = S.draft, e = {};
+    if (d.name.trim().length < 3) e.name = 'Informe seu nome profissional.';
+    if (!phoneOk(d.phone)) e.phone = 'Telefone inválido. Use DDD + celular, ex.: (67) 99999-1234.';
+    if (!d.services.length) e.services = 'Escolha pelo menos um serviço.';
+    if (Object.keys(e).length) return go('etapa1', { errors: e, sf: S.params.sf });
+    S.phoneSaved = d.phone; go('etapa2');
+  },
+  etapa2: f => {
+    keepDraft(); const d = S.draft, e = {};
+    if (d.cep.replace(/\D/g, '').length !== 8) e.cep = 'CEP deve ter 8 números.';
+    if (d.rua.trim().length < 3) e.rua = 'Informe a rua e o número.';
+    if (!d.wholeCity && !d.areas.length && !(d.online && d.services.every(s => SVC[s].m === 'online'))) e.areas = 'Escolha pelo menos um bairro ou marque “Atendo em toda Campo Grande”.';
+    if (Object.keys(e).length) return go('etapa2', { errors: e, nf: S.params.nf });
+    go('previa');
+  },
+};
+
+document.addEventListener('click', ev => {
+  const el = ev.target.closest('[data-act]'); if (!el) return;
+  const a = actions[el.dataset.act]; if (!a) return;
+  if (el.tagName === 'INPUT' && el.type !== 'checkbox' && el.type !== 'radio') return;
+  if (el.tagName === 'BUTTON') ev.preventDefault();
+  a(el, ev);
+});
+document.addEventListener('submit', ev => { ev.preventDefault(); const f = ev.target; forms[f.dataset.form]?.(f); });
+document.addEventListener('input', ev => {
+  if (ev.target.dataset.filter === 'svc') {
+    const q = norm(ev.target.value), box = ev.target.closest('form').querySelector('.svclist'); let any = false;
+    box.querySelectorAll('.svcgroup').forEach(g => { let n = 0; g.querySelectorAll('.svcopt').forEach(o => { const ok = !q || o.dataset.n.includes(q); o.hidden = !ok; if (ok) n++; }); g.hidden = !n; any ||= n > 0; });
+    box.querySelector('.svc-none').hidden = any; return;
+  }
+  const k = ev.target.dataset.input; if (!k) return;
+  keepDraft(); const pos = ev.target.selectionStart; S.params[k] = ev.target.value; render();
+  const n = document.querySelector(`[data-input="${k}"]`); n.focus(); n.setSelectionRange(pos, pos);
+});
+document.addEventListener('keydown', ev => {
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList?.contains('pc')) { ev.preventDefault(); ev.target.click(); return; } if (ev.key === 'Escape' && sheet) { sheet = null; render(); } });
+render();
+
+</script>
