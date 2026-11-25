@@ -9,6 +9,8 @@ import { loadProfile } from '@/lib/profile';
 import { getNeighborhoods, getUser } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 import { generalMessage } from '@/lib/whatsapp';
+import { PostCard } from '@/components/PostCard';
+import { getPosts } from '@/lib/posts';
 import { STATUS_LABEL } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -47,6 +49,7 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
     isFav = !!data;
   }
   const isOwner = user?.id === p.id;
+  const posts = p.status === 'published' ? await getPosts({ author: p.id, limit: 20 }) : [];
 
   const actions = p.status === 'published' && !isOwner ? (
     <>
@@ -85,6 +88,12 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
         <p className="rounded-xl bg-brand-50 p-3 text-brand-900">É assim que os clientes veem seu perfil. <Link className="underline" href="/painel">Voltar ao painel</Link></p>
       )}
       <ProfileDetails p={p} actions={actions} />
+      {posts.length > 0 && (
+        <section aria-labelledby="pub-titulo" className="space-y-4">
+          <h2 id="pub-titulo" className="text-xl font-bold">Publicações</h2>
+          {posts.map((po) => <PostCard key={po.id} post={po} viewerId={user?.id ?? null} message={defaultMessage} />)}
+        </section>
+      )}
       {!user && p.status === 'published' && !urgentCtx && (
         <p className="text-sm text-stone-600">Para chamar pelo WhatsApp a partir da busca geral, entre com e-mail e senha. Você volta para este perfil logo depois.</p>
       )}

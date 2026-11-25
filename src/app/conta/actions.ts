@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 
 export type DelState = { message?: string } | undefined;
 
-/** Exclusão da conta e dos dados (perfil, dados privados, fotos, favoritos, vagas, candidaturas e currículos). */
+/** Exclusão da conta e dos dados (perfil, dados privados, fotos, publicações, comentários, favoritos, vagas, candidaturas e currículos). */
 export async function deleteAccount(_: DelState, form: FormData): Promise<DelState> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -30,6 +30,10 @@ export async function deleteAccount(_: DelState, form: FormData): Promise<DelSta
     : { data: [] as { resume_path: string }[] };
   const resumes = [...(sent ?? []), ...(received ?? []), ...(bank ?? [])].map((a) => a.resume_path);
   for (let i = 0; i < resumes.length; i += 100) await admin.storage.from('curriculos').remove(resumes.slice(i, i + 100));
+  // Fotos e vídeos das publicações (as linhas, comentários e "Útil" saem em cascata).
+  const { data: media } = await admin.from('post_media').select('path, posts!inner(author_id)').eq('posts.author_id', user.id);
+  const mediaPaths = (media ?? []).map((m) => m.path);
+  for (let i = 0; i < mediaPaths.length; i += 100) await admin.storage.from('post-media').remove(mediaPaths.slice(i, i + 100));
   const { error } = await admin.auth.admin.deleteUser(user.id); // cascata remove perfil, dados privados, favoritos, vagas e candidaturas
   if (error) return { message: 'Não foi possível excluir agora. Tente novamente.' };
   await supabase.auth.signOut();

@@ -53,5 +53,7 @@
       "bio": "Perfil de demonstração. Encanador que atende toda Campo Grande." },
     { "key": "ze", "work": ["Muro rebocado"], "name": "Zé Reformas (demo)", "color": "#b45309", "services": ["pedreiro"], "main": "pedreiro", "ref": "Centro",
       "bio": "Perfil de demonstração de cadastro antigo: tem só o endereço e ainda não confirmou a área de atendimento." }
-  ]
+  ],
+  "posts": [{"author": "ze", "body": "Perfil de demonstração. Muro do vizinho rebocado e pintado em dois dias.", "photos": ["Muro antes", "Muro depois"]}, {"author": "pantanal", "body": "Perfil de demonstração. Quadro de luz trocado hoje: disjuntores novos e tudo identificado.", "photos": ["Quadro novo"], "comments": [{"by": "cliente", "body": "Fez a troca aqui em casa também, muito caprichado!"}], "useful": ["cliente"]}, {"author": "bia", "body": "Perfil de demonstração. Faxina pós-obra concluída no Centro. Ainda tenho horário amanhã de manhã!", "photos": ["Sala", "Cozinha", "Banheiro", "Varanda", "Quarto"]}],
+  "memberNames": {"cliente": "Ana Cliente (demo)"}
 }

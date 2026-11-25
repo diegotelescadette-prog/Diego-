@@ -64,20 +64,20 @@ test('início: busca no topo e trabalhos dos prestadores; WhatsApp do feed pede 
   await expect(posts.first()).toContainText('Atende hoje');
   await expect(page.getByText('Paulo Pausado')).toHaveCount(0);
   await expect(page.getByText('Sérgio Suspenso')).toHaveCount(0);
-  const bia = posts.filter({ hasText: 'Bia Faxina (demo)' });
-  await expect(bia.getByRole('link', { name: 'Ver as 5 fotos de Bia Faxina (demo)' })).toBeVisible();
-  await expect(bia.getByText('+1')).toBeVisible(); // 4 fotos à vista + 1
+  // prestador ainda sem publicação aparece com as fotos do perfil
+  const carlos = posts.filter({ hasText: 'Carlos Hidráulica (demo)' });
+  await expect(carlos.getByRole('link', { name: 'Ver as 3 fotos de Carlos Hidráulica (demo)' })).toBeVisible();
   await expect(page.getByTestId('composer')).toHaveAttribute('href', '/sou-prestador');
   // sem conta: o WhatsApp leva ao login e volta para o perfil
-  await bia.getByRole('button', { name: /Chamar no WhatsApp/ }).click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fp%2Fbia-demo/);
+  await carlos.getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fp%2Fcarlos-demo/);
   await login(page, demoEmail('cliente'));
-  await expect(page).toHaveURL(/\/p\/bia-demo$/);
+  await expect(page).toHaveURL(/\/p\/carlos-demo$/);
   // com conta: direto do feed para o WhatsApp
   await page.goto('/');
-  await page.getByTestId('feed-post').filter({ hasText: 'Bia Faxina (demo)' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  await page.getByTestId('feed-post').filter({ hasText: 'Carlos Hidráulica (demo)' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
   await expect.poll(() => wa.length).toBe(1);
-  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de diarista em Campo Grande. Você tem disponibilidade?');
+  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
 });
 
 test('cidade inteira aparece em qualquer bairro; bairro do dia; serviço fora do "Preciso para hoje"', async ({ page }) => {

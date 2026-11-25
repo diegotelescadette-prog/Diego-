@@ -87,6 +87,25 @@ async function main() {
     console.log(`✓ ${p.name}`);
   }
 
+  // Publicações de demonstração (mais antiga primeiro), com comentários e "Útil".
+  const userBy = new Map((await sb.auth.admin.listUsers({ perPage: 1000 })).data.users.map((u) => [u.email!.split('@')[0], u.id]));
+  for (const [local, name] of Object.entries(demo.memberNames ?? {})) {
+    await must(sb.from('member_names').upsert({ user_id: userBy.get(local)!, name }), 'nome');
+  }
+  for (const po of demo.posts ?? []) {
+    const authorId = userBy.get(`prestador-${po.author}`)!;
+    const color = demo.providers.find((x: { key: string }) => x.key === po.author).color;
+    const post = await must(sb.from('posts').insert({ author_id: authorId, body: po.body }).select('id').single(), 'publicação');
+    for (const [k, label] of (po.photos ?? []).entries()) {
+      const path = `${authorId}/post-demo-${post.id.slice(0, 8)}-${k}.webp`;
+      await sb.storage.from('post-media').upload(path, await workPhoto(label, color, '#1c1917'), { contentType: 'image/webp', upsert: true });
+      await must(sb.from('post_media').insert({ post_id: post.id, kind: 'foto', path, sort: k }), 'mídia');
+    }
+    for (const c of po.comments ?? []) await must(sb.from('post_comments').insert({ post_id: post.id, author_id: userBy.get(c.by)!, body: c.body }), 'comentário');
+    for (const u of po.useful ?? []) await must(sb.from('post_reactions').insert({ post_id: post.id, user_id: userBy.get(u)! }), 'útil');
+    console.log(`✓ publicação de ${po.author}`);
+  }
+
   // Vagas de demonstração (publicadas por uma conta "empresa" fictícia).
   const empresa = await create('empresa');
   for (const j of demo.jobs ?? []) {

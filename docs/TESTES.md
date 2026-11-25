@@ -14,6 +14,20 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 7 (25/11/2026): publicações com foto, vídeo e comentários — todos passando
+
+Unitários (15), banco/API (33) e E2E (31 cenários × computador e celular = 62).
+
+- Só prestador com perfil publicado publica, e só no próprio perfil; estado e data não vêm do cliente; perfil pausado ou suspenso some do feed.
+- Mídia: arquivo só na própria pasta; um vídeo OU até 6 fotos; tipo proibido recusado; vídeo acima de 60 s é barrado na tela.
+- Comentário: nome vem do perfil ou do cadastro (nunca do formulário de outra pessoa); quem não tem nome informa uma vez; autor da publicação oculta; denúncia sem duplicar e não pública.
+- Moderação: só admin remove, com motivo e histórico; removida some e o autor não reativa.
+- Telas: visitante vê publicações e é levado ao login para Útil e comentar; prestador publica fotos e vídeo; perfil mostra as publicações; autor apaga.
+
+## Rodada 6 (25/11/2026): nova tela inicial com feed e menu por assunto — todos passando
+
+Unitários (15), banco/API (27) e E2E (27 cenários × computador e celular = 54).
+
 ## Rodada 5 (25/11/2026): Oferecer trabalho / Enviar currículo e banco de currículos — todos passando
 
 Unitários (15), banco/API (27) e E2E (26 cenários × computador e celular = 52).
