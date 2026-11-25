@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { addSynonym, createService, removeSynonym, resolveReport, resolveSuggestion, saveCpfSetting, toggleCategory, toggleService, toggleUrgent } from './actions';
+import { addSynonym, adminJobAction, createService, removeSynonym, resolveReport, resolveSuggestion, saveCpfSetting, toggleCategory, toggleService, toggleUrgent } from './actions';
 import { ConfirmStatus } from './ConfirmStatus';
 import { SubmitButton } from '@/components/SubmitButton';
 import { getCatalog, getCities, getIsAdmin, getPilotCity, getSetting, getUser, type CpfSetting } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 import { ADMIN_SECTIONS, adminSection } from '@/lib/nav';
 import { STATUS_LABEL, type City, type ProviderStatus } from '@/lib/types';
+import { JOB_REPORT_REASON, JOB_STATUS_LABEL, jobState } from '@/lib/jobs';
 
 export const metadata: Metadata = { title: 'Administração' };
 export const dynamic = 'force-dynamic';
@@ -56,6 +57,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<SP
       {aba === 'sugestoes' && <Sugestoes sb={sb} />}
       {aba === 'denuncias' && <Denuncias sb={sb} sp={sp} city={city} cities={cities} />}
       {aba === 'perfis' && <Perfis sb={sb} sp={sp} city={city} cities={cities} />}
+      {aba === 'vagas' && <Vagas sb={sb} />}
       {aba === 'historico' && <Historico sb={sb} />}
       {aba === 'config' && <Config />}
     </div>
@@ -410,10 +412,11 @@ async function Perfis({ sb, sp, city, cities }: { sb: SB; sp: SP; city: City | n
 const ACTION_LABEL: Record<string, string> = {
   suspender_perfil: 'Suspendeu perfil', reativar_perfil: 'Reativou perfil', avaliar_denuncia: 'Avaliou denúncia',
   insert: 'Criou', update: 'Alterou', delete: 'Removeu',
+  remover_vaga: 'Removeu vaga', encerrar_vaga: 'Encerrou vaga', avaliar_denuncia_vaga: 'Avaliou denúncia de vaga',
 };
 const TARGET_LABEL: Record<string, string> = {
   provider: 'Perfil', report: 'Denúncia', services: 'Serviço', service_categories: 'Categoria', service_synonyms: 'Sinônimo',
-  app_settings: 'Configuração', service_suggestions: 'Sugestão',
+  app_settings: 'Configuração', service_suggestions: 'Sugestão', job: 'Vaga', job_report: 'Denúncia de vaga',
 };
 
 async function Historico({ sb }: { sb: SB }) {
@@ -437,6 +440,75 @@ async function Historico({ sb }: { sb: SB }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+const JOB_REASON: Record<string, string> = JOB_REPORT_REASON;
+
+/** Vagas: denúncias em aberto e as vagas mais recentes. A moderação não tem acesso aos currículos. */
+async function Vagas({ sb }: { sb: SB }) {
+  const [{ data: reports, error }, { data: jobs }] = await Promise.all([
+    sb.from('job_reports').select('id, reason, details, created_at, job_id, jobs!inner(title, company_name, status)').eq('status', 'aberta').order('created_at', { ascending: false }).limit(100),
+    sb.from('jobs').select('id, title, company_name, status, expires_at, created_at').order('created_at', { ascending: false }).limit(50),
+  ]);
+  return (
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Denúncias de vagas em análise</h2>
+        {error && <p role="alert" className="card p-4 text-red-800">Não foi possível carregar as denúncias.</p>}
+        {!error && (reports ?? []).length === 0 && <p className="card p-4">Nenhuma denúncia de vaga em análise.</p>}
+        {(reports ?? []).map((r) => {
+          const j = r.jobs as unknown as { title: string; company_name: string; status: string };
+          return (
+            <div key={r.id} className="card p-4" data-testid="denuncia-vaga">
+              <p className="font-bold">#{r.id} · {JOB_REASON[r.reason] ?? r.reason}</p>
+              <p className="mt-1">Vaga: <Link className="underline" href={`/vagas/${r.job_id}`}>{j.title}</Link> · {j.company_name} ({JOB_STATUS_LABEL[j.status]})</p>
+              <p className="text-sm text-stone-600">Recebida em {new Date(r.created_at).toLocaleString('pt-BR', { timeZone: 'America/Campo_Grande' })}</p>
+              {r.details && <p className="mt-1 text-stone-700">{r.details}</p>}
+              <form action={adminJobAction} className="mt-3 space-y-2">
+                <input type="hidden" name="report_id" value={r.id} /><input type="hidden" name="job_id" value={r.job_id} />
+                <label className="label" htmlFor={`jn-${r.id}`}>Nota da avaliação</label>
+                <input id={`jn-${r.id}`} name="note" className="input" />
+                <div className="flex flex-wrap gap-2">
+                  <SubmitButton name="op" value="procedente" className="btn-danger">Procedente: remover vaga</SubmitButton>
+                  <SubmitButton name="op" value="improcedente" className="btn-outline">Improcedente</SubmitButton>
+                </div>
+              </form>
+            </div>
+          );
+        })}
+      </section>
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Vagas recentes</h2>
+        <div className="card overflow-x-auto p-2">
+          <table className="w-full text-left text-sm">
+            <thead><tr className="text-stone-600"><th className="p-2">Vaga</th><th className="p-2">Situação</th><th className="p-2">Publicada</th><th className="p-2">Ação</th></tr></thead>
+            <tbody>
+              {(jobs ?? []).length === 0 && <tr><td className="p-2" colSpan={4}>Nenhuma vaga publicada.</td></tr>}
+              {(jobs ?? []).map((j) => {
+                const st = jobState(j);
+                return (
+                  <tr key={j.id} className="border-t border-stone-100 align-top">
+                    <td className="p-2"><Link className="underline" href={`/vagas/${j.id}`}>{j.title}</Link><br /><span className="text-stone-600">{j.company_name}</span></td>
+                    <td className="p-2">{JOB_STATUS_LABEL[st]}</td>
+                    <td className="whitespace-nowrap p-2">{new Date(j.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Campo_Grande' })}</td>
+                    <td className="p-2">
+                      {st !== 'removida' && (
+                        <form action={adminJobAction} className="flex flex-wrap items-center gap-2">
+                          <input type="hidden" name="job_id" value={j.id} />
+                          <input name="note" className="input min-h-9 w-44 py-1 text-sm" placeholder="Motivo" aria-label={`Motivo para remover ${j.title}`} />
+                          <SubmitButton name="op" value="remover" className="btn-danger min-h-9 px-3 py-1 text-sm">Remover</SubmitButton>
+                        </form>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

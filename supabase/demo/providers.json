@@ -4,6 +4,19 @@
   "emailDomain": "demo.resolveaqui.test",
   "admin": { "email": "admin" },
   "clients": [{ "email": "cliente" }],
+  "jobs": [
+    { "title": "Auxiliar de cozinha (demo)", "company": "Restaurante Sabor do Pantanal (demo)", "type": "clt", "mode": "presencial", "neighborhood": "centro",
+      "salary": "R$ 1.900 + vale-transporte", "openings": 2,
+      "description": "Vaga de demonstração. Preparo de alimentos, organização da cozinha e apoio ao cozinheiro. Segunda a sábado, das 10h às 16h.",
+      "requirements": "Experiência de 6 meses em cozinha. Ensino fundamental completo." },
+    { "title": "Vendedor(a) de loja (demo)", "company": "Loja Fictícia Calçados (demo)", "type": "clt", "mode": "presencial", "neighborhood": "jardim-dos-estados",
+      "salary": "R$ 1.700 + comissão",
+      "description": "Vaga de demonstração. Atendimento ao cliente, organização da vitrine e do estoque, fechamento de caixa." },
+    { "title": "Eletricista para obra (demo)", "company": "Construtora Exemplo (demo)", "type": "temporario", "mode": "presencial",
+      "salary": "A combinar",
+      "description": "Vaga de demonstração. Instalações elétricas em obra residencial por 3 meses. Ferramentas próprias são um diferencial.",
+      "requirements": "NR-10 em dia." }
+  ],
   "providers": [
     { "key": "carlos", "name": "Carlos Hidráulica (demo)", "color": "#0f5f73", "services": ["encanador", "desentupidor"], "main": "encanador",
       "areas": ["centro", "amambai", "carlota"], "ref": "Centro", "today": { "neighborhoods": ["centro", "amambai"] },

@@ -61,6 +61,17 @@ export default async function Home() {
         </ul>
       </section>
 
+      <section aria-labelledby="vagas-titulo" className="card flex flex-wrap items-center gap-4 p-5 sm:p-6">
+        <div className="min-w-0 flex-1">
+          <h2 id="vagas-titulo" className="text-xl font-bold">Vagas de emprego</h2>
+          <p className="mt-1 text-stone-700">Procurando trabalho? Envie seu currículo para vagas de Campo Grande. Contratando? Anuncie grátis e receba currículos.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/vagas" className="btn-primary">Ver vagas</Link>
+          <Link href="/vagas/nova" className="btn-outline">Anunciar vaga</Link>
+        </div>
+      </section>
+
       <section aria-labelledby="prestador-titulo" className="card pro flex flex-wrap items-center gap-4 p-5 sm:p-6">
         <div className="min-w-0 flex-1">
           <h2 id="prestador-titulo" className="text-xl font-bold">Você é prestador?</h2>

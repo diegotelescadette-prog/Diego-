@@ -39,6 +39,7 @@ export const NAV_ICONS = {
   history: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2',
   gear: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
   back: 'M15 18l-6-6 6-6',
+  briefcase: 'M4 8h16v11H4zM9 8V5h6v3M4 13h16',
 } as const;
 
 /** Área em uso a partir do caminho. */
@@ -55,6 +56,7 @@ export function searchItems(v: NavViewer): NavItem[] {
     { href: '/buscar', label: 'Buscar serviços', icon: 'search', match: ['/buscar', '/p/'] },
     { href: '/#categorias', label: 'Categorias', icon: 'grid', match: [] },
     { href: '/favoritos', label: 'Favoritos', icon: 'heart', match: ['/favoritos'] },
+    { href: '/vagas', label: 'Vagas de emprego', icon: 'briefcase', match: ['/vagas', '/minhas-vagas', '/minhas-candidaturas'] },
     v.hasProfile
       ? { href: '/painel', label: 'Painel do prestador', icon: 'tool', match: [] }
       : { href: '/sou-prestador', label: 'Sou prestador', icon: 'tool', match: ['/sou-prestador'] },
@@ -78,6 +80,7 @@ export const ADMIN_SECTIONS = [
   { key: 'catalogo', label: 'Catálogo', icon: 'book' },
   { key: 'sugestoes', label: 'Sugestões', icon: 'bulb' },
   { key: 'denuncias', label: 'Denúncias', icon: 'flag' },
+  { key: 'vagas', label: 'Vagas', icon: 'briefcase' },
   { key: 'historico', label: 'Histórico', icon: 'history' },
   { key: 'config', label: 'Configurações', icon: 'gear' },
 ] as const satisfies readonly { key: string; label: string; icon: keyof typeof NAV_ICONS }[];
@@ -127,9 +130,12 @@ export function screenTitle(pathname: string, section?: string | null): string {
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
     '/conta': 'Minha conta', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
+    '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };
   if (exact[pathname]) return exact[pathname];
   if (pathname.startsWith('/p/')) return 'Perfil do prestador';
+  if (pathname.startsWith('/minhas-vagas/')) return 'Candidatos da vaga';
+  if (pathname.startsWith('/vagas/')) return pathname.endsWith('/editar') ? 'Editar vaga' : 'Vaga de emprego';
   return '';
 }
 

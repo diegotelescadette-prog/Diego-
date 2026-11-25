@@ -1,7 +1,7 @@
 // Gateway de testes locais que imita a API do Supabase em http://localhost:54321
 //   /auth/v1/*    → GoTrue (supabase/auth) em :9999
 //   /rest/v1/*    → PostgREST em :3001
-//   /storage/v1/* → stub simples em disco (aplica a mesma regra de pasta do dono)
+//   /storage/v1/* → stub simples em disco (aplica a mesma regra de pasta do dono; bucket privado de currículos só via service_role/dono)
 // Também sobe um "caixa de e-mails" SMTP em :2500, consultável em GET /_mail.
 // Use somente em desenvolvimento/testes. Em produção, use um projeto Supabase.
 import http from 'node:http';
@@ -47,6 +47,7 @@ async function storage(req, res) {
   const json = (code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
   let m = p.match(/^\/object\/public\/([^/]+)\/(.+)$/);
   if (m && req.method === 'GET') {
+    if (m[1] !== 'profile-photos') return json(400, { statusCode: '404', error: 'Bucket not found' }); // só o bucket público
     const file = path.join(STORAGE_DIR, m[1], decodeURIComponent(m[2]));
     if (!file.startsWith(STORAGE_DIR) || !fs.existsSync(file)) return json(404, { error: 'not_found' });
     res.writeHead(200, { 'content-type': 'image/webp', 'cache-control': 'public, max-age=60' });
@@ -61,12 +62,22 @@ async function storage(req, res) {
     if (claims.role !== 'service_role' && name.split('/')[0] !== claims.sub) return json(403, { statusCode: '403', error: 'Unauthorized', message: 'new row violates row-level security policy' });
     const ct = req.headers['content-type'] || '';
     if (m[1] === 'profile-photos' && !ct.startsWith('image/webp')) return json(415, { error: 'invalid_mime_type' });
+    if (m[1] === 'curriculos' && !ct.startsWith('application/pdf')) return json(415, { error: 'invalid_mime_type' });
     const body = await readBody(req);
-    if (body.length > 2 * 1024 * 1024) return json(413, { error: 'Payload too large' });
+    if (body.length > (m[1] === 'curriculos' ? 4 : 2) * 1024 * 1024) return json(413, { error: 'Payload too large' });
     const file = path.join(STORAGE_DIR, m[1], name);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, body);
     return json(200, { Key: `${m[1]}/${name}`, Id: crypto.randomUUID() });
+  }
+  // Download autenticado (bucket privado): só service_role ou o dono da pasta.
+  if (m && req.method === 'GET') {
+    const name = decodeURIComponent(m[2]);
+    if (claims.role !== 'service_role' && name.split('/')[0] !== claims.sub) return json(400, { error: 'not_found' });
+    const file = path.join(STORAGE_DIR, m[1], name);
+    if (!file.startsWith(STORAGE_DIR) || !fs.existsSync(file)) return json(400, { statusCode: '404', error: 'not_found' });
+    res.writeHead(200, { 'content-type': m[1] === 'curriculos' ? 'application/pdf' : 'application/octet-stream' });
+    return fs.createReadStream(file).pipe(res);
   }
   m = p.match(/^\/object\/([^/]+)$/);
   if (m && req.method === 'DELETE') {

@@ -15,9 +15,9 @@ O cabeçalho mostra o nome da tela e as ações de conta. No celular, o botão *
 
 | Área | Botões laterais |
 | --- | --- |
-| Para quem busca | Início (`/`), Preciso para hoje (`/#preciso-para-hoje` → `/hoje`), Buscar serviços (`/buscar`), Categorias (`/#categorias`), Favoritos (`/favoritos`), Sou prestador (`/sou-prestador`) ou Painel do prestador (`/painel`) |
+| Para quem busca | Início (`/`), Preciso para hoje (`/#preciso-para-hoje` → `/hoje`), Buscar serviços (`/buscar`), Categorias (`/#categorias`), Favoritos (`/favoritos`), Vagas de emprego (`/vagas`), Sou prestador (`/sou-prestador`) ou Painel do prestador (`/painel`) |
 | Prestador | Visão geral (`/painel`), Meu perfil (`/painel/perfil`), Serviços e fotos (`/painel/servicos`), Onde atendo (`/painel/atendimento`), Disponibilidade (`/painel/disponibilidade`), Prévia do perfil (`/painel/previa`), Minha conta (`/conta`), Buscar serviços |
-| Administração | Visão geral, Prestadores, Catálogo, Sugestões, Denúncias, Histórico, Configurações (`/admin?aba=…`), Voltar à busca |
+| Administração | Visão geral, Prestadores, Catálogo, Sugestões, Denúncias, Vagas, Histórico, Configurações (`/admin?aba=…`), Voltar à busca |
 
 | Rota | O que faz |
 | --- | --- |
@@ -32,6 +32,22 @@ O cabeçalho mostra o nome da tela e as ações de conta. No celular, o botão *
 | `/painel/disponibilidade` | Ativar, ajustar serviços e bairros do dia, desativar |
 | `/admin` | Indicadores reais por cidade, cobertura por categoria, listas filtráveis, moderação com confirmação e histórico com responsável |
 | `/entrar`, `/cadastrar`, `/recuperar-senha`, `/redefinir-senha`, `/favoritos`, `/conta`, `/privacidade`, `/sugerir-servico` | Sem mudança |
+
+### Vagas de emprego e currículos (migração `20261125000700_vagas.sql`, aditiva)
+
+| Rota | O que faz |
+| --- | --- |
+| `/vagas` | Vagas abertas, busca por cargo/empresa e filtros de contratação e formato |
+| `/vagas/[id]` | Detalhe da vaga e candidatura: nome, e-mail, WhatsApp (opcional), mensagem, **currículo em PDF até 4 MB** e autorização de envio |
+| `/vagas/nova`, `/vagas/[id]/editar` | Qualquer conta anuncia (empresa ou pessoa), aceitando as regras (vaga real, sem cobrança, uso só na seleção). Fica no ar 30 dias |
+| `/minhas-vagas`, `/minhas-vagas/[id]` | Quem publicou: candidatos, baixar currículo, situação (Recebida, Currículo visto, Em contato, Não selecionada), encerrar, reabrir por 30 dias, excluir |
+| `/minhas-candidaturas` | Candidato acompanha a situação, baixa o que enviou e retira a candidatura (apaga o PDF) |
+| `/admin?aba=vagas` | Denúncias de vagas e remoção com motivo (fica no histórico). A moderação **não** vê currículos |
+
+- Currículos ficam no bucket **privado** `curriculos`, na pasta do candidato; o servidor confere a assinatura real do PDF. Download só por `/api/vagas/curriculo/[id]`, liberado ao candidato e a quem publicou (RLS), com `no-store`.
+- Retenção: apagados ao retirar a candidatura, ao excluir a vaga ou a conta, e automaticamente 90 dias depois que a vaga encerra (limpeza disparada no máximo 1x/hora a partir de `/vagas`).
+- Limites no banco: 5 vagas/dia e 20 abertas por conta; 20 candidaturas/dia; uma candidatura por vaga; não se candidata à própria vaga.
+- Produção já existente: rode `supabase/producao/atualizacoes/2026-11-25-vagas.sql` uma vez no SQL Editor.
 
 ### Regras da evolução dos painéis (migração `20261125000600_paineis.sql`, aditiva)
 
@@ -69,7 +85,7 @@ O cabeçalho mostra o nome da tela e as ações de conta. No celular, o botão *
 - Status do perfil só muda por funções do banco (pausar/publicar pelo dono; suspender/reativar só admin, com histórico).
 - Coleta de CPF desligada por padrão; o admin só liga informando a finalidade e confirmando a necessidade.
 - Fotos: só JPG/PNG/WebP até 8 MB, reprocessadas para WebP sem EXIF/GPS, gravadas na pasta do próprio usuário.
-- Exclusão de conta remove perfil, dados privados, fotos e favoritos.
+- Exclusão de conta remove perfil, dados privados, fotos, favoritos, vagas, candidaturas e currículos (enviados e recebidos).
 - O limite por IP usa `x-forwarded-for`; em produção rode atrás de um proxy que sobrescreva esse cabeçalho (ex.: Vercel).
 
 ## Testes
