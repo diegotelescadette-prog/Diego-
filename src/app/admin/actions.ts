@@ -122,3 +122,23 @@ export async function saveCpfSetting(form: FormData) {
   await sb.from('app_settings').upsert({ key: 'cpf_collection', value: { enabled, purpose: purpose || null, necessity_confirmed: confirmed } });
   done('config', 'Configuração salva');
 }
+
+/** Vagas: remover (com motivo) ou avaliar denúncia. */
+export async function adminJobAction(form: FormData) {
+  const sb = await admin();
+  const op = String(form.get('op'));
+  const jobId = String(form.get('job_id') ?? '');
+  const reportId = Number(form.get('report_id')) || null;
+  const note = String(form.get('note') ?? '').trim();
+  let msg = '';
+  if (op === 'remover' || op === 'procedente') {
+    const reason = note || (reportId ? `Denúncia #${reportId}` : '');
+    const { error } = await sb.rpc('admin_set_job_status', { p_job: jobId, p_status: 'removida', p_note: reason });
+    if (!error && reportId) await sb.rpc('admin_resolve_job_report', { p_report: reportId, p_status: 'procedente', p_note: note || null });
+    msg = error ? error.message : 'Vaga removida do ar';
+  } else if (op === 'improcedente' && reportId) {
+    const { error } = await sb.rpc('admin_resolve_job_report', { p_report: reportId, p_status: 'improcedente', p_note: note || null });
+    msg = error ? error.message : 'Denúncia avaliada';
+  }
+  done('vagas', msg);
+}

@@ -95,6 +95,8 @@ function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | nul
         {viewer.email && <li className="truncate px-3 py-1 text-sm text-stone-600">{viewer.email}</li>}
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/conta">Minha conta</Link></li>
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/favoritos">Meus favoritos</Link></li>
+        <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/minhas-candidaturas">Minhas candidaturas</Link></li>
+        <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/minhas-vagas">Vagas que publiquei</Link></li>
         <li>
           <Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href={viewer.hasProfile ? '/painel' : '/painel/perfil'}>
             {viewer.hasProfile ? 'Painel do prestador' : 'Ativar perfil profissional'}

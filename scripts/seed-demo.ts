@@ -73,9 +73,21 @@ async function main() {
     }
     console.log(`✓ ${p.name}`);
   }
+
+  // Vagas de demonstração (publicadas por uma conta "empresa" fictícia).
+  const empresa = await create('empresa');
+  for (const j of demo.jobs ?? []) {
+    await must(sb.from('jobs').insert({
+      poster_id: empresa.id, city_id: city.id, title: j.title, company_name: j.company, description: j.description,
+      requirements: j.requirements ?? null, employment_type: j.type, work_mode: j.mode,
+      neighborhood_id: j.neighborhood ? nb(j.neighborhood) : null, salary_text: j.salary ?? null, openings: j.openings ?? 1,
+    }), `vaga ${j.title}`);
+    console.log(`✓ vaga ${j.title}`);
+  }
   console.log(`\nAdmin: ${email(demo.admin.email)} / ${demo.password}`);
   console.log(`Cliente: ${email(demo.clients[0].email)} / ${demo.password}`);
   console.log(`Prestadores: prestador-<chave>@${demo.emailDomain} / ${demo.password}`);
+  console.log(`Empresa (vagas): ${email('empresa')} / ${demo.password}`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

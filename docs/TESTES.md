@@ -14,6 +14,18 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 4 (25/11/2026): vagas de emprego e currículos — todos passando
+
+Unitários (15), banco/API (24) e E2E (22 cenários × computador e celular = 44). O cenário antigo “busca sem resultados” oscilou uma vez
+(mesmo problema já registrado na rodada 3) e passou na repetição.
+
+- Visitante vê só vagas abertas; encerrar tira da lista; reabrir renova 30 dias. Ninguém publica em nome de outro nem muda status/prazo direto.
+- Currículo: só o candidato e quem publicou leem a candidatura; outro usuário, a administração e visitantes não. Download por outra conta dá 404, sem login 401.
+- Candidatura barrada na própria vaga, com arquivo na pasta de outra pessoa, em vaga encerrada e em duplicidade. Arquivo que não é PDF é recusado.
+- Quem publicou baixa o PDF (anexo, `application/pdf`) e a situação vira “Currículo visto”; atualiza para “Em contato”.
+- Candidato retira a candidatura: linha e arquivo apagados. Retenção de 90 dias apaga candidaturas antigas (só o servidor chama).
+- Moderação remove vaga com motivo (histórico), quem publicou não reabre; usuário comum não modera.
+
 ## Rodada 3 (25/11/2026): navegação lateral e painéis — todos passando
 
 Unitários (11), banco/API (18) e E2E (17 cenários × computador e celular = 34). Antes da mudança: 8, 13 e 26, todos passando

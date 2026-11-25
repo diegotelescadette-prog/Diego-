@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED = ['/painel', '/favoritos', '/conta', '/admin'];
+const PROTECTED = ['/painel', '/favoritos', '/conta', '/admin', '/minhas-vagas', '/minhas-candidaturas', '/vagas/nova'];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname, search } = request.nextUrl;
-  if (!user && PROTECTED.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+  if (!user && (PROTECTED.some((p) => pathname === p || pathname.startsWith(p + '/')) || /^\/vagas\/[^/]+\/editar$/.test(pathname))) {
     const url = request.nextUrl.clone();
     url.pathname = '/entrar';
     url.search = `?next=${encodeURIComponent(pathname + search)}`;
