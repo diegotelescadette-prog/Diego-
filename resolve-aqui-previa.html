@@ -162,7 +162,7 @@ textarea.input{min-height:110px;resize:vertical}
 .bn.on svg{background:var(--brand-soft);border-radius:999px;padding:2px 12px;width:48px;box-sizing:content-box}
 main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 nav.main.desk{display:none}
-@media (min-width:760px){nav.main.desk{display:flex}.mob{display:none!important}.bottom{display:none}main{padding-bottom:48px}.cta-bar{bottom:0}}
+@media (min-width:900px){nav.main.desk{display:flex}.mob{display:none!important}.bottom{display:none}main{padding-bottom:48px}.cta-bar{bottom:0}}
 .svcpick{border:0;padding:0;margin:0;min-width:0}
 .svc-filter{box-shadow:none;margin-bottom:8px}
 .svclist{max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:4px 6px;overscroll-behavior:contain}
@@ -177,6 +177,53 @@ nav.main.desk{display:none}
 .area-opt{display:flex;align-items:flex-start;gap:10px;min-height:64px;padding:12px;border:2px solid var(--line);border-radius:16px;background:var(--surface);cursor:pointer}
 .area-opt input{margin-top:2px;flex:none}
 .area-opt:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
+
+/* ---- v0.3: menu lateral por área, gaveta no celular, painéis ---- */
+header.top .wrap{max-width:1180px}
+.screen-title{display:none;font-weight:700;font-size:17px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:16px}
+.acct{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shell{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.content{min-width:0;padding-top:20px}
+.side{display:none}
+.side-heading{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;padding:0 10px}
+.side-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.side-link{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:8px 10px;border:0;border-left:3px solid transparent;border-radius:10px;background:none;color:var(--fg);font:500 15px var(--font);text-align:left;cursor:pointer}
+.side-link svg{flex:none;color:var(--muted)}
+.side-link span:first-of-type{flex:1}
+.side-link:hover{background:var(--brand-soft)}
+.side-link[aria-current="page"]{background:var(--brand-soft);border-left-color:var(--brand);font-weight:700;color:var(--brand-strong)}
+.side-link[aria-current="page"] svg{color:var(--brand)}
+.side-urgent svg{color:var(--hoje)!important}
+.side-on{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--brand);background:var(--surface);border-radius:999px;padding:1px 8px}
+.side-other{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+@media (min-width:900px){
+  .shell{display:grid;grid-template-columns:232px minmax(0,1fr);gap:28px}
+  .side{display:block;position:sticky;top:72px;align-self:start;padding-top:20px;max-height:calc(100vh - 80px);overflow-y:auto}
+  .screen-title{display:block}
+  .mob{display:none!important}
+  nav.main.desk{display:flex}
+  .bottom{display:none}
+  main{padding-bottom:48px}
+  .content>*{max-width:860px}
+}
+@media (max-width:899px){nav.main.desk{display:none}}
+.drawer-bg{justify-content:flex-start;align-items:stretch;padding:0}
+.drawer{background:var(--surface);color:var(--fg);width:min(320px,86vw);height:100%;overflow-y:auto;padding:16px 12px max(16px,env(safe-area-inset-bottom,0px));box-shadow:var(--shadow)}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(-24px);opacity:.6}to{transform:none;opacity:1}}}
+.next{border-left:4px solid var(--hoje)}
+.ph{display:inline-flex;align-items:center;justify-content:center;width:104px;height:104px;border-radius:16px;background:var(--bg);border:1px dashed var(--line);color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:700px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.kpi{display:flex;flex-direction:column;gap:2px;text-align:left;cursor:pointer;font:inherit;color:var(--fg)}
+.kpi:hover{border-color:var(--brand)}
+.kpi-n{font-size:32px;font-weight:800;line-height:1.1;color:var(--brand-strong)}
+.tbl{overflow-x:auto}
+.tbl table{width:100%;border-collapse:collapse;font-size:15px}
+.tbl th,.tbl td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl th{font-size:13px;color:var(--muted);font-weight:700}
+.adm-filters{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end}
+.adm-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.st-suspended{background:var(--danger-soft);color:var(--danger)}
 </style>
 
 <div id="app"></div>
@@ -236,7 +283,9 @@ function reset() {
       wholeCity: !!p.wholeCity, online: !!p.online, status: p.status || 'published', bio: p.bio, ref: p.ref,
       today: p.today && !(p.status && p.status !== 'published') ? { svcs: p.services.filter(s => SVC[s].m !== 'online'), nbs: p.today.neighborhoods || [], whole: !!p.today.wholeCity, exp: midnight() } : null,
     })),
-    draft: null,
+    draft: null, isAdmin: false, menu: false, log: [], cpf: { on: false },
+    reports: [{ k: 'bia', reason: 'Informações falsas', details: 'Disse que atende no sábado, mas não atende (denúncia fictícia).', status: 'aberta' }],
+    sugs: [{ name: 'Afinador de piano', note: 'Sugestão fictícia de um cliente.', status: 'pendente' }, { name: 'Limpeza de estofado de carro', note: 'Sugestão fictícia: pode virar sinônimo de Higienizador de sofás.', status: 'pendente' }],
   };
 }
 reset();
@@ -473,23 +522,16 @@ function vPrevia() {
   <p class="muted">Assim você aparece na busca:</p>
   <div class="card pcard">${avatar(tmp)}<div><h3>${esc(d.name)}</h3><p>${esc(SVC[d.main].n)}</p><p class="small muted">${esc(areaLabel(tmp))}</p></div></div>
   <p class="small muted">Telefone e endereço de referência não aparecem para os clientes.</p>
-  <button class="btn hoje" data-act="publicar">Publicar meu perfil</button>
+  <button class="btn hoje" data-act="publicar">${me() && me().status !== 'draft' ? 'Salvar alterações' : 'Publicar meu perfil'}</button>
   <button class="btn ghost" data-act="go" data-v="etapa2">← Editar área</button></div>`;
 }
 
-function vPainel() {
-  const p = me(); if (!p) return vEtapa1();
+function atendoHojeSection(p) {
   const st = { published: 'Publicado', paused: 'Pausado', draft: 'Rascunho', suspended: 'Suspenso' }[p.status];
   const inPerson = p.services.filter(s => SVC[s].m !== 'online'), elig = inPerson.filter(s => SVC[s].u);
   const r = S.params.restrict;
   const info = `<p class="small muted">Ao ativar, visitantes sem cadastro podem te chamar no WhatsApp pelo <strong>“Preciso para hoje”</strong>${elig.length ? ` nos seus serviços presenciais: ${elig.map(s => SVC[s].n).join(', ')}` : ' (vale para serviços feitos no local); seus serviços online aparecem com “Atende hoje” na busca geral'}. Vale até a meia-noite (horário de Campo Grande).</p>`;
-  return `<div class="stack"><h1>Painel do prestador</h1>
-  ${S.params.published ? '<p class="ok" role="status">Perfil publicado! Agora você aparece na busca.</p>' : ''}
-  <section class="card stack"><p style="font-size:18px">Estado do perfil: <span class="status st-${p.status}">${st}</span></p>
-    <p class="muted">${p.status === 'published' ? 'Seu perfil aparece na busca.' : 'Seu perfil está oculto da busca até você reativar.'}</p>
-    <div class="row"><button class="btn outline" data-act="editar">Editar perfil</button><button class="btn ghost" data-act="perfil" data-k="me">Ver como aparece</button>
-    ${p.status === 'published' ? '<button class="btn ghost" data-act="status" data-s="paused">Pausar publicação</button>' : '<button class="btn primary" data-act="status" data-s="published">Reativar publicação</button>'}</div></section>
-  <section class="card stack" style="border-color:color-mix(in srgb,var(--hoje) 40%,var(--line))"><h2>Atendo hoje</h2>
+  return `<section class="card stack" style="border-color:color-mix(in srgb,var(--hoje) 40%,var(--line))"><h2>Atendo hoje</h2>
   ${p.status !== 'published' ? '<p class="muted">Disponível quando o perfil estiver Publicado.</p>' : !inPerson.length ? '<p class="muted">Vale para serviços presenciais.</p>' : active(p) ? `
     <p style="font-weight:700;color:var(--hoje-strong)"><span class="badge">● Atendo hoje</span> ativo até 23:59 de hoje (horário de Campo Grande)</p>
     <div><p style="font-weight:600">Serviços incluídos</p><div class="row">${p.today.svcs.map(s => `<span class="chip" style="cursor:default">${esc(SVC[s].n)}${SVC[s].u ? ' · contato sem login' : ''}</span>`).join('')}</div></div>
@@ -500,8 +542,270 @@ function vPainel() {
       ${p.wholeCity ? '<p class="small muted">Você atende toda a cidade; hoje vale para toda Campo Grande.</p>' : `<p class="lbl">Bairros de hoje</p>${p.areas.map(a => `<label class="row"><input type="checkbox" data-today-nb="${a}" checked> ${esc(NB[a])}</label>`).join('')}`}</div>` : ''}
     <p class="err" data-err hidden></p>
     <button class="btn hoje" data-act="on">Atendo hoje</button>`}
-  </section></div>`;
+  </section>`;
 }
+
+/* ---------- navegação lateral por área (igual ao app: lib/nav.ts) ---------- */
+const NI = {
+  home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z', bolt: 'M13 2 4 14h7l-1 8 9-12h-7z',
+  search: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4', grid: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  heart: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
+  tool: 'M14.7 6.3a4 4 0 0 0-5.4 5.1L3 17.7V21h3.3l6.3-6.3a4 4 0 0 0 5.1-5.4l-2.6 2.6-2.4-.6-.6-2.4z',
+  gauge: 'M4 19a9 9 0 1 1 16 0M12 13l4-4', user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0',
+  photo: 'M4 6h16v13H4zM4 15l4-4 5 5 3-3 4 4M15.5 9.5a1.5 1.5 0 1 0 .01 0', pin: 'M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12zM12 11.5a2.5 2.5 0 1 0 .01 0',
+  clock: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2', eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 9a3 3 0 1 0 .01 0',
+  account: 'M4 5h16v14H4zM8 10a2 2 0 1 0 .01 0M6 16c.5-2 3.5-2 4 0M13 9h5M13 13h5',
+  users: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2 20a7 7 0 0 1 14 0M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14a6 6 0 0 1 4 6',
+  book: 'M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z',
+  bulb: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.5 1 2.5h6c0-1 .4-1.9 1-2.5A6 6 0 0 0 12 3z',
+  flag: 'M5 21V4M5 4h11l-2 4 2 4H5', history: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 8v4l3 2',
+  gear: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4',
+  back: 'M15 18l-6-6 6-6',
+};
+const PRO_VIEWS = ['painel', 'pserv', 'pdisp', 'conta', 'etapa1', 'etapa2', 'previa'];
+const ADMIN_SECS = [['visao', 'Visão geral', 'gauge'], ['perfis', 'Prestadores', 'users'], ['catalogo', 'Catálogo', 'book'], ['sugestoes', 'Sugestões', 'bulb'],
+  ['denuncias', 'Denúncias', 'flag'], ['historico', 'Histórico', 'history'], ['config', 'Configurações', 'gear']];
+const AREA_LABEL = { busca: 'Para quem busca', prestador: 'Painel do prestador', admin: 'Administração' };
+
+function navArea() {
+  if (S.view === 'admin' && S.isAdmin) return 'admin';
+  if (S.user && PRO_VIEWS.includes(S.view)) return 'prestador';
+  return 'busca';
+}
+function navItems(area) {
+  if (area === 'admin') return [...ADMIN_SECS.map(([k, l, i]) => ({ id: 'adm-' + k, label: l, icon: i, act: 'nav-admin', data: `data-aba="${k}"` })),
+    { id: 'voltar', label: 'Voltar à busca', icon: 'back', act: 'busca' }];
+  if (area === 'prestador') return [
+    { id: 'painel', label: 'Visão geral', icon: 'gauge', act: 'nav', data: 'data-v="painel"' },
+    { id: 'pperfil', label: 'Meu perfil', icon: 'user', act: 'editar' },
+    { id: 'pserv', label: 'Serviços e fotos', icon: 'photo', act: 'nav', data: 'data-v="pserv"' },
+    { id: 'patend', label: 'Onde atendo', icon: 'pin', act: 'editar-area' },
+    { id: 'pdisp', label: 'Disponibilidade', icon: 'clock', act: 'nav', data: 'data-v="pdisp"' },
+    { id: 'previa', label: 'Prévia do perfil', icon: 'eye', act: 'ver-previa' },
+    { id: 'conta', label: 'Minha conta', icon: 'account', act: 'nav', data: 'data-v="conta"' },
+    { id: 'voltar', label: 'Buscar serviços', icon: 'back', act: 'busca' }];
+  return [
+    { id: 'home', label: 'Início', icon: 'home', act: 'nav', data: 'data-v="home"' },
+    { id: 'hoje', label: 'Preciso para hoje', icon: 'bolt', act: 'nav-anchor', data: 'data-to="t1"', urgent: true },
+    { id: 'busca', label: 'Buscar serviços', icon: 'search', act: 'busca' },
+    { id: 'cats', label: 'Categorias', icon: 'grid', act: 'nav-anchor', data: 'data-to="cats"' },
+    { id: 'favs', label: 'Favoritos', icon: 'heart', act: 'favs' },
+    me() ? { id: 'pro', label: 'Painel do prestador', icon: 'tool', act: 'nav', data: 'data-v="painel"' } : { id: 'pro', label: 'Sou prestador', icon: 'tool', act: 'sou' }];
+}
+function activeId(area) {
+  const v = S.view;
+  if (area === 'admin') return 'adm-' + (S.params.aba || 'visao');
+  if (area === 'prestador') return { painel: 'painel', pserv: 'pserv', pdisp: 'pdisp', conta: 'conta', etapa1: 'pperfil', etapa2: 'patend', previa: 'previa' }[v];
+  return { home: 'home', hoje: 'hoje', naopiloto: 'hoje', busca: 'busca', perfil: 'busca', favs: 'favs' }[v];
+}
+function screenTitle() {
+  if (S.view === 'admin') return 'Administração · ' + (ADMIN_SECS.find(s => s[0] === (S.params.aba || 'visao')) || ADMIN_SECS[0])[1];
+  return { home: 'Início', hoje: 'Preciso para hoje', naopiloto: 'Preciso para hoje', busca: 'Buscar serviços', perfil: 'Perfil do prestador', favs: 'Favoritos',
+    painel: 'Painel do prestador', etapa1: me() ? 'Meu perfil' : 'Cadastro · Seu perfil', etapa2: me() ? 'Onde atendo' : 'Cadastro · Onde você atende',
+    previa: 'Prévia do perfil', pserv: 'Serviços e fotos', pdisp: 'Disponibilidade', conta: 'Minha conta', entrar: 'Entrar' }[S.view] || '';
+}
+function navList() {
+  const area = navArea(), on = activeId(area);
+  const other = [];
+  if (area !== 'admin' && S.isAdmin) other.push('<button class="side-link" data-act="nav-admin" data-aba="visao">Administração</button>');
+  if (area === 'admin' && me()) other.push('<button class="side-link" data-act="nav" data-v="painel">Painel do prestador</button>');
+  return `<nav aria-label="${AREA_LABEL[area]}"><p class="side-heading">${AREA_LABEL[area]}</p><ul class="side-list">${navItems(area).map(it =>
+    `<li><button class="side-link${it.urgent ? ' side-urgent' : ''}" data-act="${it.act}" ${it.data || ''} ${it.id === on ? 'aria-current="page"' : ''}>${icon(NI[it.icon], 20)}<span>${esc(it.label)}</span>${it.id === on ? '<span class="side-on">atual</span>' : ''}</button></li>`).join('')}</ul>
+    ${other.length ? `<div class="side-other"><p class="side-heading">Outras áreas</p>${other.join('')}</div>` : ''}</nav>`;
+}
+const sideNav = () => navList();
+const drawer = () => `<div class="overlay drawer-bg" data-act="menu-bg"><div class="drawer" id="gaveta" role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="row" style="justify-content:space-between;margin-bottom:8px"><strong>Menu</strong><button class="btn ghost small" data-act="menu" aria-label="Fechar menu">✕</button></div>${navList()}</div></div>`;
+
+/* ---------- regras do prestador ---------- */
+const coverage = p => p.wholeCity ? 'cidade' : p.areas.length ? 'bairros' : p.online ? 'online' : 'pendente';
+const COV_LABEL = { cidade: 'Toda a cidade', bairros: 'Bairros', online: 'Só online', pendente: 'Pendente' };
+/** "Atendo hoje" acompanha a área habitual e os serviços: mantém o que vale, desliga se nada sobrar. */
+function revalidateToday(p) {
+  if (!p.today) return 'inativa';
+  const svcs = p.today.svcs.filter(s => p.services.includes(s) && SVC[s].m !== 'online');
+  const whole = p.wholeCity && p.today.whole;
+  const nbs = p.wholeCity ? p.today.nbs : p.areas.filter(a => p.today.whole || p.today.nbs.includes(a));
+  if (!svcs.length || (!whole && !nbs.length)) { p.today = null; return 'removida'; }
+  const same = svcs.length === p.today.svcs.length && whole === p.today.whole && nbs.length === p.today.nbs.length;
+  Object.assign(p.today, { svcs, whole, nbs }); return same ? 'mantida' : 'ajustada';
+}
+
+function vPainel() {
+  const p = me(); if (!p) return vEtapa1();
+  const st = { published: 'Publicado', paused: 'Pausado', draft: 'Rascunho', suspended: 'Suspenso' }[p.status];
+  const cov = coverage(p);
+  const next = p.status === 'suspended' ? ['Seu perfil foi suspenso pela moderação.', null]
+    : cov === 'pendente' ? ['Confirme sua área de atendimento para aparecer na busca.', '<button class="btn primary" data-act="editar-area">Confirmar área</button>']
+    : p.status === 'paused' ? ['Seu perfil está pausado e não aparece na busca.', '<button class="btn primary" data-act="status" data-s="published">Reativar publicação</button>']
+    : !active(p) ? ['Vai atender hoje? Avise e receba chamadas pelo “Preciso para hoje”.', '<button class="btn hoje" data-act="nav" data-v="pdisp">Ativar “Atendo hoje”</button>']
+    : ['Tudo certo: você aparece na busca e no “Preciso para hoje”.', null];
+  return `<div class="stack"><h1>Visão geral</h1>
+  ${S.params.published ? '<p class="ok" role="status">Perfil publicado! Agora você aparece na busca.</p>' : ''}
+  ${S.params.saved ? `<p class="ok" role="status">Alterações salvas.${S.params.rv === 'ajustada' ? ' Seu “Atendo hoje” foi ajustado à nova área e aos serviços.' : S.params.rv === 'removida' ? ' Seu “Atendo hoje” foi desativado porque nada dele continua valendo.' : ''}</p>` : ''}
+  <section class="card stack next"><h2 class="h-sm">Próximo passo</h2><p style="font-weight:600">${next[0]}</p>${next[1] || ''}</section>
+  <div class="grid2">
+    <section class="card stack"><h2 class="h-sm">Meu perfil</h2><p style="font-size:18px"><span class="status st-${p.status}">${st}</span></p>
+      <p class="muted small">${p.status === 'published' ? 'Visível na busca.' : 'Oculto da busca.'}</p>
+      <div class="row">${p.status === 'published' ? '<button class="btn ghost small" data-act="status" data-s="paused">Pausar publicação</button>' : p.status === 'paused' ? '<button class="btn primary small" data-act="status" data-s="published">Reativar publicação</button>' : ''}
+        <button class="btn outline small" data-act="editar">Editar</button></div></section>
+    <section class="card stack"><h2 class="h-sm">Atendo hoje</h2>
+      ${active(p) ? `<p><span class="badge"><span class="dot"></span>Ativo até 23:59</span></p><p class="small muted">${esc(todayLabel(p))}</p>` : '<p class="muted">Desativado.</p>'}
+      <button class="btn outline small" style="align-self:flex-start" data-act="nav" data-v="pdisp">Gerenciar disponibilidade</button></section>
+    <section class="card stack"><h2 class="h-sm">Área de atendimento</h2><p>${cov === 'pendente' ? '<strong>Pendente</strong>: só o endereço de cadastro.' : esc(areaLabel(p))}</p>
+      <button class="btn outline small" style="align-self:flex-start" data-act="editar-area">Onde atendo</button></section>
+    <section class="card stack"><h2 class="h-sm">Perfil público</h2><p class="small muted">resolveaqui.com.br/p/${esc(p.key)}-perfil</p>
+      <div class="row"><button class="btn outline small" data-act="perfil" data-k="${p.key}">Ver perfil</button><button class="btn ghost small" data-act="copiar">${S.copied ? 'Link copiado ✓' : 'Copiar link'}</button></div></section>
+  </div></div>`;
+}
+function vPDisp() {
+  const p = me(); if (!p) return vEtapa1();
+  return `<div class="stack"><h1>Disponibilidade</h1>${atendoHojeSection(p)}</div>`;
+}
+function vPServ() {
+  const p = me(); if (!p) return vEtapa1();
+  const ci = catIndex(p.main);
+  return `<div class="stack"><h1>Serviços e fotos</h1>
+  <section class="card stack"><h2 class="h-sm">Serviço principal</h2><p class="pc-svc" style="font-size:17px"><span class="ic sm" style="--t:${CAT_TINT[ci]}">${icon(CAT_ICON[ci], 14)}</span>${esc(SVC[p.main].n)}</p>
+    <h2 class="h-sm">Todas as especialidades</h2><div class="row">${p.services.map(s => `<span class="tag">${esc(SVC[s].n)}</span>`).join('')}</div></section>
+  <section class="card stack"><h2 class="h-sm">Foto do perfil e fotos de trabalhos</h2><div class="row">${avatar(p, true)}
+    <span class="ph">${icon(NI.photo, 28)}</span><span class="ph">${icon(NI.photo, 28)}</span></div>
+    <p class="small muted">No app: JPG, PNG ou WebP até 8 MB; as fotos são convertidas e perdem a localização (GPS).</p></section>
+  <button class="btn primary" style="align-self:flex-start" data-act="editar">Editar serviços e fotos</button></div>`;
+}
+function vConta() {
+  return `<div class="stack"><h1>Minha conta</h1><section class="card stack"><p>E-mail de acesso: <strong>${esc(S.user || '')}</strong></p>
+  <p class="small muted">Seu e-mail não aparece para ninguém.</p>
+  <button class="btn outline" style="align-self:flex-start;border-color:var(--danger);color:var(--danger)" data-act="sair">Excluir conta e dados (simulado: só sai)</button></section></div>`;
+}
+
+const NAV_ACTIONS = {
+  menu: () => { S.menu = !S.menu; render(); if (S.menu) document.querySelector('#gaveta .side-link')?.focus(); },
+  'menu-bg': (el, ev) => { if (ev.target === el) { S.menu = false; render(); } },
+  nav: el => { S.menu = false; if (PRO_VIEWS.includes(el.dataset.v) && !S.user) return needLogin('prestador', { view: el.dataset.v }); go(el.dataset.v); },
+  'nav-anchor': el => { S.menu = false; go('home'); document.getElementById(el.dataset.to)?.scrollIntoView({ block: 'start' }); },
+  'nav-admin': el => { S.menu = false; go('admin', { aba: el.dataset.aba, ...(el.dataset.f ? JSON.parse(el.dataset.f) : {}) }); },
+  'editar-area': () => { S.menu = false; startProvider(true); go('etapa2'); },
+  'ver-previa': () => { S.menu = false; startProvider(true); go('previa'); },
+  copiar: () => { S.copied = true; render(); setTimeout(() => { S.copied = false; }, 2000); },
+  't-pro': () => {
+    S.user = 'prestador@exemplo.com'; S.isAdmin = false;
+    if (!me()) S.providers.push({ key: 'me', name: 'Seu Nome Encanador', color: '#7c3aed', services: ['encanador', 'desentupidor'], main: 'encanador',
+      areas: ['centro', 'amambai'], wholeCity: false, online: false, status: 'published', bio: 'Perfil de exemplo para testar o painel.', ref: 'Centro', today: null });
+    S.phoneSaved = '(67) 99999-1234'; go('painel');
+  },
+  't-admin': () => { S.user = 'admin@demo.resolveaqui.test'; S.isAdmin = true; go('admin', { aba: 'visao' }); },
+};
+
+/* ---------- administração (dados fictícios) ---------- */
+function adminBase() {
+  return S.providers.filter(p => p.key !== 'preview').map(p => ({ p, cov: coverage(p), pending: coverage(p) === 'pendente' && p.status !== 'draft',
+    today: p.status === 'published' && active(p) && coverage(p) !== 'pendente',
+    cats: [...new Set(p.services.map(catIndex))], todayCats: active(p) ? [...new Set(p.today.svcs.map(catIndex))] : [] }));
+}
+function vAdmin() {
+  if (!S.isAdmin) return '<div class="card stack"><h1>Acesso restrito</h1><p class="muted">Esta área é só para administradores.</p></div>';
+  const aba = S.params.aba || 'visao';
+  return ({ visao: admVisao, perfis: admPerfis, catalogo: admCatalogo, sugestoes: admSugestoes, denuncias: admDenuncias, historico: admHistorico, config: admConfig }[aba] || admVisao)();
+}
+const kpi = (n, label, f) => `<button class="card kpi" data-act="nav-admin" data-aba="perfis" data-f='${JSON.stringify(f)}'><span class="kpi-n">${n}</span><span>${label}</span><span class="small link">Abrir lista →</span></button>`;
+function admVisao() {
+  const b = adminBase(), open = (S.reports || []).filter(r => r.status === 'aberta').length;
+  return `<div class="stack"><h1>Visão geral</h1>
+  <div class="row"><label class="lbl" for="adm-city" style="margin:0">Cidade</label><select id="adm-city" class="input" style="max-width:260px"><option>Campo Grande–MS</option></select></div>
+  <div class="kpis">${kpi(b.filter(x => x.p.status === 'published').length, 'Prestadores publicados', { st: 'published' })}
+    ${kpi(b.filter(x => x.today).length, 'Disponíveis hoje', { hoje: 1 })}
+    ${kpi(b.filter(x => x.pending).length, 'Sem área confirmada', { pend: 1 })}
+    <button class="card kpi" data-act="nav-admin" data-aba="denuncias"><span class="kpi-n">${open}</span><span>Denúncias abertas</span><span class="small link">Abrir lista →</span></button></div>
+  <section class="card stack"><h2>Cobertura por categoria</h2><p class="small muted">Cada profissional conta uma vez por categoria.</p>
+    <div class="tbl"><table><thead><tr><th>Categoria</th><th>Publicados</th><th>Disponíveis hoje</th></tr></thead><tbody>
+    ${D.cats.map((c, i) => { const pub = b.filter(x => x.p.status === 'published' && x.cats.includes(i)).length, td = b.filter(x => x.today && x.todayCats.includes(i)).length;
+      return `<tr><td><span class="ic sm" style="--t:${CAT_TINT[i]}">${icon(CAT_ICON[i], 14)}</span> ${esc(c.n)}</td><td>${pub ? `<button class="link" data-act="nav-admin" data-aba="perfis" data-f='${JSON.stringify({ st: 'published', cat: i })}'>${pub}</button>` : '0'}</td><td>${td}</td></tr>`; }).join('')}
+    </tbody></table></div></section></div>`;
+}
+function admPerfis() {
+  const f = S.params, ST = { published: 'Publicado', paused: 'Pausado', draft: 'Rascunho', suspended: 'Suspenso' };
+  const qn = norm(f.q || '');
+  const list = adminBase().filter(x => (!f.st || x.p.status === f.st) && (!f.cov || x.cov === f.cov) && (!f.hoje || x.today) && (!f.pend || x.pending)
+    && (f.cat === undefined || f.cat === '' || x.cats.includes(+f.cat)) && (!qn || norm(x.p.name).includes(qn)));
+  const sel = (name, opts, v) => `<select name="${name}" class="input">${opts.map(([k, l]) => `<option value="${k}" ${String(v ?? '') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  return `<div class="stack"><h1>Prestadores</h1>
+  <form data-form="adm-filtro" class="card adm-filters">
+    <div><label class="lbl">Nome</label><input name="q" class="input" value="${esc(f.q || '')}"></div>
+    <div><label class="lbl">Estado</label>${sel('st', [['', 'Todos'], ['published', 'Publicado'], ['paused', 'Pausado'], ['draft', 'Rascunho'], ['suspended', 'Suspenso']], f.st)}</div>
+    <div><label class="lbl">Cobertura</label>${sel('cov', [['', 'Todas'], ['cidade', 'Toda a cidade'], ['bairros', 'Bairros'], ['online', 'Só online'], ['pendente', 'Pendente']], f.cov)}</div>
+    <div><label class="lbl">Categoria</label>${sel('cat', [['', 'Todas'], ...D.cats.map((c, i) => [String(i), c.n])], f.cat)}</div>
+    <label class="row"><input type="checkbox" name="hoje" ${f.hoje ? 'checked' : ''}> Atende hoje</label>
+    <label class="row"><input type="checkbox" name="pend" ${f.pend ? 'checked' : ''}> Sem área confirmada</label>
+    <button class="btn primary">Filtrar</button></form>
+  <p class="muted">${list.length} ${list.length === 1 ? 'prestador' : 'prestadores'}</p>
+  <ul class="plist">${list.map(({ p, cov, today, pending }) => `<li class="card adm-row"><div style="flex:1;min-width:0"><h3>${esc(p.name)}</h3>
+    <p class="small"><span class="status st-${p.status}">${ST[p.status]}</span> · ${COV_LABEL[cov]}${today ? ' · <span class="badge"><span class="dot"></span>Atende hoje</span>' : ''}${pending ? ' · <strong>Sem área confirmada</strong>' : ''}</p>
+    <p class="small muted">${esc(areaLabel(p) || 'Sem área')} · ${esc([...new Set(p.services.map(s => D.cats[catIndex(s)].n))].join(', '))}</p></div>
+    <div class="row"><button class="btn ghost small" data-act="perfil" data-k="${p.key}">Ver</button>
+    ${p.status === 'suspended' ? `<button class="btn outline small" data-act="adm-status" data-k="${p.key}" data-s="published">Reativar</button>` : p.status === 'published' || p.status === 'paused' ? `<button class="btn outline small" style="border-color:var(--danger);color:var(--danger)" data-act="adm-status" data-k="${p.key}" data-s="suspended">Suspender</button>` : ''}</div></li>`).join('')}</ul></div>`;
+}
+function admCatalogo() {
+  return `<div class="stack"><h1>Catálogo</h1><p class="muted">Desativar uma categoria ou serviço preserva os vínculos já cadastrados. Cada mudança entra no histórico.</p>
+  ${D.cats.map((c, i) => `<details class="card"><summary style="cursor:pointer;font-weight:600"><span class="ic sm" style="--t:${CAT_TINT[i]}">${icon(CAT_ICON[i], 14)}</span> ${esc(c.n)} <span class="small muted">(${c.svcs.length} serviços)</span></summary>
+    <ul class="stack" style="margin-top:10px;gap:4px;list-style:none;padding:0">${c.svcs.map(x => `<li class="row" style="justify-content:space-between"><span>${esc(x.n)} <span class="small muted">${x.m}${SVC[x.s].u ? ' · Preciso para hoje' : ''}</span></span>
+      <label class="row small"><input type="checkbox" data-act="adm-svc" data-s="${x.s}" ${(S.offSvc || new Set()).has(x.s) ? '' : 'checked'}> ativo</label></li>`).join('')}</ul></details>`).join('')}</div>`;
+}
+function admSugestoes() {
+  const l = S.sugs;
+  return `<div class="stack"><h1>Sugestões</h1>${l.map((g, i) => `<div class="card stack"><p><strong>${esc(g.name)}</strong> <span class="small muted">· ${g.status}</span></p><p class="small muted">${esc(g.note)}</p>
+    ${g.status === 'pendente' ? `<div class="row"><button class="btn primary small" data-act="adm-sug" data-i="${i}" data-s="incorporada">Incorporar ao catálogo</button><button class="btn outline small" data-act="adm-sug" data-i="${i}" data-s="associada">Associar como sinônimo</button><button class="btn ghost small" data-act="adm-sug" data-i="${i}" data-s="recusada">Recusar</button></div>` : ''}</div>`).join('')}</div>`;
+}
+function admDenuncias() {
+  return `<div class="stack"><h1>Denúncias</h1>${S.reports.map((r, i) => `<div class="card stack"><p><strong>${esc(P(r.k).name)}</strong> · ${esc(r.reason)} <span class="small muted">· ${r.status}</span></p><p class="small muted">${esc(r.details)}</p>
+    ${r.status === 'aberta' ? `<div class="row"><button class="btn outline small" data-act="adm-rep" data-i="${i}" data-s="procedente">Procedente</button><button class="btn ghost small" data-act="adm-rep" data-i="${i}" data-s="improcedente">Improcedente</button><button class="btn ghost small" data-act="adm-status" data-k="${r.k}" data-s="suspended">Suspender perfil</button></div>` : ''}</div>`).join('')}</div>`;
+}
+function admHistorico() {
+  return `<div class="stack"><h1>Histórico</h1>${S.log.length ? `<div class="tbl"><table><thead><tr><th>Quando</th><th>Responsável</th><th>Ação</th><th>Alvo</th><th>Motivo</th></tr></thead><tbody>
+    ${S.log.slice().reverse().map(l => `<tr><td>${l.at}</td><td>${esc(l.actor)}</td><td>${esc(l.action)}</td><td>${esc(l.target)}</td><td>${esc(l.note || '—')}</td></tr>`).join('')}</tbody></table></div>`
+    : '<p class="card muted">Nenhuma ação ainda. Suspenda um perfil ou mude o catálogo para ver o registro aqui.</p>'}</div>`;
+}
+function admConfig() {
+  const c = S.cpf;
+  return `<div class="stack"><h1>Configurações</h1><section class="card stack"><h2>Coleta de CPF</h2>
+  <p>Estado: <strong>${c.on ? 'ligada' : 'desligada'}</strong>${c.on ? ` · finalidade: ${esc(c.purpose)}` : ''}</p>
+  ${c.on ? '<button class="btn outline" style="align-self:flex-start" data-act="adm-cpf-off">Desligar coleta</button>' : `<form data-form="adm-cpf" class="stack">
+    <div><label class="lbl" for="cpf-fin">Finalidade</label><input id="cpf-fin" name="fin" class="input" placeholder="Ex.: verificação de identidade por provedor"></div>
+    <label class="row"><input type="checkbox" name="nec"> Confirmo que o CPF é necessário para essa finalidade (princípio da necessidade, LGPD)</label>
+    <p class="err" data-err hidden></p><button class="btn primary" style="align-self:flex-start">Ligar coleta</button></form>`}</section></div>`;
+}
+function logAdm(action, target, note) {
+  const d = new Date(); S.log.push({ at: d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }), actor: S.user, action, target, note });
+}
+const ADMIN_ACTIONS = {
+  'adm-status': el => {
+    const p = P(el.dataset.k), s = el.dataset.s, verb = s === 'suspended' ? 'Suspender' : 'Reativar';
+    sheet = `<div class="overlay" data-act="close-bg"><form class="sheet" data-form="adm-confirm" role="dialog" aria-modal="true" aria-labelledby="cf-t">
+      <h2 id="cf-t">${verb} ${esc(p.name)}?</h2><p class="muted">${s === 'suspended' ? 'O perfil sai da busca e do “Preciso para hoje” na hora.' : 'O perfil volta a aparecer na busca.'}</p>
+      <input type="hidden" name="k" value="${p.key}"><input type="hidden" name="s" value="${s}">
+      <div><label class="lbl" for="cf-m">Motivo (fica no histórico)</label><textarea id="cf-m" name="m" class="input" style="min-height:80px"></textarea></div>
+      <p class="err" data-err hidden></p>
+      <div class="row"><button class="btn ${s === 'suspended' ? 'primary' : 'primary'}">${verb}</button><button type="button" class="btn ghost" data-act="close">Cancelar</button></div></form></div>`;
+    render(); document.getElementById('cf-m').focus();
+  },
+  'adm-svc': el => { const set = (S.offSvc ||= new Set()); el.checked ? set.delete(el.dataset.s) : set.add(el.dataset.s); logAdm(el.checked ? 'Ativou serviço' : 'Desativou serviço', SVC[el.dataset.s].n); },
+  'adm-sug': el => { const g = S.sugs[+el.dataset.i]; g.status = el.dataset.s; logAdm('Sugestão ' + el.dataset.s, g.name); render(); },
+  'adm-rep': el => { const r = S.reports[+el.dataset.i]; r.status = el.dataset.s; logAdm('Denúncia ' + el.dataset.s, P(r.k).name); render(); },
+  'adm-cpf-off': () => { S.cpf = { on: false }; logAdm('Desligou coleta de CPF', 'Configurações'); render(); },
+};
+const ADMIN_FORMS = {
+  'adm-filtro': f => go('admin', { aba: 'perfis', q: f.q.value.trim(), st: f.st.value, cov: f.cov.value, cat: f.cat.value, hoje: f.hoje.checked ? 1 : '', pend: f.pend.checked ? 1 : '' }),
+  'adm-confirm': f => {
+    const m = f.m.value.trim(); if (m.length < 3) { const e = f.querySelector('[data-err]'); e.textContent = 'Escreva o motivo.'; e.hidden = false; return; }
+    const p = P(f.k.value); p.status = f.s.value; if (p.status !== 'published') p.today = null;
+    logAdm(p.status === 'suspended' ? 'Suspendeu perfil' : 'Reativou perfil', p.name, m); sheet = null; render();
+  },
+  'adm-cpf': f => {
+    const e = f.querySelector('[data-err]');
+    if (f.fin.value.trim().length < 5 || !f.nec.checked) { e.textContent = 'Informe a finalidade e confirme a necessidade.'; e.hidden = false; return; }
+    S.cpf = { on: true, purpose: f.fin.value.trim() }; logAdm('Ligou coleta de CPF', 'Configurações', f.fin.value.trim()); render();
+  },
+};
 
 function vFavs() {
   const l = S.providers.filter(p => S.favs.has(p.key) && p.status === 'published');
@@ -512,9 +816,11 @@ function vFavs() {
 function header() {
   return `<header class="top"><div class="wrap"><button class="logo" data-act="go" data-v="home" aria-label="Página inicial">
     <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0f5f73"/><path d="M32 12c-8.3 0-15 6.5-15 14.6C17 37.5 32 52 32 52s15-14.5 15-25.4C47 18.5 40.3 12 32 12z" fill="#fff"/><path d="m25 27 5 5 9-10" stroke="#ea580c" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Resolve Aqui</button>
-    <nav class="main desk" aria-label="Principal"><button class="btn ghost small" data-act="busca">Buscar</button>
-    ${S.user ? `<button class="btn ghost small" data-act="go" data-v="favs">Favoritos</button><button class="btn ghost small" data-act="sou">${me() ? 'Painel' : 'Sou prestador'}</button><button class="btn outline small" data-act="sair">Sair</button>`
-      : `<button class="btn ghost small" data-act="sou">Sou prestador</button><button class="btn outline small" data-act="login">Entrar</button>`}</nav>
+    <button class="btn outline small mob menu-btn" data-act="menu" aria-expanded="${!!S.menu}" aria-controls="gaveta">${icon('M4 7h16M4 12h16M4 17h16',20)} Menu</button>
+    <p class="screen-title">${esc(screenTitle())}</p>
+    <nav class="main desk" aria-label="Conta">
+    ${S.user ? `<span class="small muted acct">${esc(S.user)}</span><button class="btn outline small" data-act="sair">Sair</button>`
+      : `<button class="btn outline small" data-act="login">Entrar</button>`}</nav>
     ${S.user ? '<button class="btn ghost small mob" data-act="sair">Sair</button>' : '<button class="btn outline small mob" data-act="login">Entrar</button>'}</div></header>`;
 }
 function bottomNav() {
@@ -526,14 +832,20 @@ function banner() {
   return `<div class="demo"><div class="wrap"><span><strong>Prévia para teste</strong> com dados fictícios. Nada é salvo nem enviado.${S.user ? ` Conectado como ${esc(S.user)}.` : ''}</span>
   <details><summary>Ferramentas de teste</summary><div class="tools">
     <button class="btn outline small" data-act="t-vencer">Fazer a disponibilidade vencer (simula meia-noite)</button>
+    <button class="btn outline small" data-act="t-pro">Entrar como prestador publicado</button>
+    <button class="btn outline small" data-act="t-admin">Entrar como administrador</button>
     <button class="btn outline small" data-act="t-reset">Reiniciar dados</button></div>
     <p class="small muted" style="margin-top:6px">Dica: abra uma lista do “Preciso para hoje”, toque em “Fazer a disponibilidade vencer” e depois em “Chamar no WhatsApp”.</p></details></div></div>`;
 }
 
 let sheet = null;
 function render() {
-  const V = { home: vHome, hoje: vHoje, naopiloto: vNaoPiloto, busca: vBusca, perfil: vPerfil, entrar: vEntrar, etapa1: vEtapa1, etapa2: vEtapa2, previa: vPrevia, painel: vPainel, favs: vFavs }[S.view];
-  document.getElementById('app').innerHTML = banner() + header() + `<main class="wrap">${V()}</main>` + bottomNav() + (sheet ? sheet : '');
+  const V = { home: vHome, hoje: vHoje, naopiloto: vNaoPiloto, busca: vBusca, perfil: vPerfil, entrar: vEntrar, etapa1: vEtapa1, etapa2: vEtapa2, previa: vPrevia, painel: vPainel, favs: vFavs,
+    pserv: vPServ, pdisp: vPDisp, conta: vConta, admin: vAdmin }[S.view] || vHome;
+  const area = navArea();
+  document.getElementById('app').innerHTML = banner() + header()
+    + `<div class="shell"><aside class="side">${sideNav()}</aside><main class="content" data-area="${area}">${V()}</main></div>`
+    + (area === 'busca' ? bottomNav() : '') + (S.menu ? drawer() : '') + (sheet ? sheet : '');
   const chk = document.querySelector('.svclist input:checked'); if (chk) { const b = chk.closest('.svclist'); b.scrollTop = chk.closest('label').offsetTop - b.offsetTop - 40; }
 }
 
@@ -564,7 +876,7 @@ const actions = {
   unfilter: el => go('busca', { ...S.params, ...JSON.parse(el.dataset.r) }),
   login: el => needLogin(el.dataset.why, { view: S.view, params: S.params }),
   'toggle-signup': () => go('entrar', { ...S.params, signup: !S.params.signup }),
-  sair: () => { S.user = null; go('home'); },
+  sair: () => { S.user = null; S.isAdmin = false; S.menu = false; go('home'); },
   sou: () => { if (!S.user) return needLogin('prestador', { view: 'etapa1' }, true); startProvider(); },
   'zap-urg': el => {
     const p = P(el.dataset.k), { svc, nb } = S.params;
@@ -594,8 +906,11 @@ const actions = {
   publicar: () => {
     const d = S.draft; let p = me();
     if (!p) { p = { key: 'me', status: 'draft', today: null }; S.providers.push(p); }
-    Object.assign(p, { name: d.name, color: d.color, services: d.services, main: d.main, areas: d.wholeCity ? [] : d.areas, wholeCity: d.wholeCity, online: d.online, bio: d.bio, status: 'published', today: null });
-    go('painel', { published: true });
+    const wasDraft = p.status === 'draft';
+    Object.assign(p, { name: d.name, color: d.color, services: d.services, main: d.main, areas: d.wholeCity ? [] : d.areas, wholeCity: d.wholeCity, online: d.online, bio: d.bio });
+    if (wasDraft) { p.status = 'published'; p.today = null; }
+    const rv = revalidateToday(p);
+    go('painel', wasDraft ? { published: true } : { saved: true, rv });
   },
   editar: () => startProvider(true),
   status: el => { const p = me(); p.status = el.dataset.s; if (p.status !== 'published') p.today = null; render(); },
@@ -611,6 +926,7 @@ const actions = {
   off: () => { me().today = null; render(); },
   't-vencer': () => { S.providers.forEach(p => { if (p.today) p.today.exp = 0; }); const t = document.querySelector('.demo details'); t.insertAdjacentHTML('beforeend', '<p class="ok small" style="margin-top:6px">Todas as disponibilidades venceram. A tela ainda não foi atualizada: toque em “Chamar no WhatsApp” para ver o aviso.</p>'); },
   't-reset': () => { reset(); sheet = null; go('home'); },
+  ...NAV_ACTIONS, ...ADMIN_ACTIONS,
 };
 
 function startProvider(edit) {
@@ -629,6 +945,7 @@ function keepDraft() {
 const phoneOk = v => { let d = v.replace(/\D/g, ''); if ((d.length === 12 || d.length === 13) && d.startsWith('55')) d = d.slice(2); return d.length === 11 && d[2] === '9' && Number(d.slice(0, 2)) >= 11; };
 
 const forms = {
+  ...ADMIN_FORMS,
   hoje: f => {
     const svc = f.svc.value, nb = f.nb.value, err = f.querySelector('[data-err]');
     if (!svc) { err.textContent = 'Escolha o serviço.'; err.hidden = false; return; }
@@ -641,7 +958,7 @@ const forms = {
     const err = f.querySelector('[data-err]'), em = f.email.value.trim();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { err.textContent = 'Informe um e-mail válido.'; err.hidden = false; return; }
     if (f.pw.value.length < 8) { err.textContent = 'A senha precisa ter pelo menos 8 caracteres.'; err.hidden = false; return; }
-    S.user = em; const b = S.back; S.back = null;
+    S.user = em; S.isAdmin = /^admin@/.test(em); const b = S.back; S.back = null;
     if (b?.view === 'etapa1') return startProvider();
     b ? go(b.view, b.params) : go('home');
     if (b?.then) zapGeneralDirect(P(b.then));
@@ -683,7 +1000,9 @@ document.addEventListener('input', ev => {
   const n = document.querySelector(`[data-input="${k}"]`); n.focus(); n.setSelectionRange(pos, pos);
 });
 document.addEventListener('keydown', ev => {
-  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList?.contains('pc')) { ev.preventDefault(); ev.target.click(); return; } if (ev.key === 'Escape' && sheet) { sheet = null; render(); } });
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList?.contains('pc')) { ev.preventDefault(); ev.target.click(); return; }
+  if (ev.key === 'Escape' && sheet) { sheet = null; render(); return; }
+  if (ev.key === 'Escape' && S.menu) { S.menu = false; render(); document.querySelector('.menu-btn')?.focus(); } });
 render();
 
 </script>
