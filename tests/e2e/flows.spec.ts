@@ -8,9 +8,19 @@ test.beforeAll(async () => { await reseed(); });
 test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => {
   const wa = await captureWhatsApp(page);
   await page.goto('/');
+  await page.getByRole('navigation', { name: 'Atalhos' }).getByRole('link', { name: 'Preciso para hoje' }).click();
+  await expect(page).toHaveURL(/\/hoje$/);
   await expect(page.getByRole('heading', { name: 'Preciso para hoje' })).toBeVisible();
   await expect(page.getByText('Campo Grande–MS').first()).toBeVisible();
+  // A lista começa fechada; sem escolher, o botão pede o serviço e abre a lista inteira.
+  await expect(page.getByText('Encanador', { exact: true })).toBeHidden();
+  await page.getByRole('button', { name: 'Ver quem atende hoje' }).click();
+  await expect(page.getByText('Escolha um serviço para continuar.')).toBeVisible();
+  await expect(page).toHaveURL(/\/hoje$/);
   await page.getByText('Encanador', { exact: true }).click();
+  // Escolhido: a lista fecha e fica só o serviço, com opção de trocar.
+  await expect(page.getByText('Pedreiro', { exact: true })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Trocar serviço' })).toBeVisible();
   await page.getByLabel('2. Em qual bairro?').selectOption({ label: 'Centro' });
   await page.getByRole('button', { name: 'Ver quem atende hoje' }).click();
   await expect(page).toHaveURL(/\/hoje\?servico=encanador&bairro=centro/);
@@ -31,7 +41,7 @@ test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => 
 
 test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só com a cidade', async ({ page }) => {
   const wa = await captureWhatsApp(page);
-  await page.goto('/');
+  await page.goto('/hoje');
   await page.getByLabel('Filtrar serviços').fill('encan');
   await page.getByText('Encanador', { exact: true }).click();
   await expect(page.getByLabel('2. Em qual bairro?')).toHaveValue(''); // padrão: Todos os bairros
@@ -43,6 +53,31 @@ test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só
   await results.filter({ hasText: 'Marcos Encanador (demo)' }).getByRole('button').click();
   await expect.poll(() => wa.length).toBe(1);
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
+});
+
+test('início: busca no topo e trabalhos dos prestadores; WhatsApp do feed pede login uma vez', async ({ page }) => {
+  const wa = await captureWhatsApp(page);
+  await page.goto('/');
+  const posts = page.getByTestId('feed-post');
+  await expect(posts.first()).toBeVisible();
+  // quem atende hoje e tem fotos vem primeiro; perfis pausados e suspensos não aparecem
+  await expect(posts.first()).toContainText('Atende hoje');
+  await expect(page.getByText('Paulo Pausado')).toHaveCount(0);
+  await expect(page.getByText('Sérgio Suspenso')).toHaveCount(0);
+  const bia = posts.filter({ hasText: 'Bia Faxina (demo)' });
+  await expect(bia.getByRole('link', { name: 'Ver as 5 fotos de Bia Faxina (demo)' })).toBeVisible();
+  await expect(bia.getByText('+1')).toBeVisible(); // 4 fotos à vista + 1
+  await expect(page.getByTestId('composer')).toHaveAttribute('href', '/sou-prestador');
+  // sem conta: o WhatsApp leva ao login e volta para o perfil
+  await bia.getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fp%2Fbia-demo/);
+  await login(page, demoEmail('cliente'));
+  await expect(page).toHaveURL(/\/p\/bia-demo$/);
+  // com conta: direto do feed para o WhatsApp
+  await page.goto('/');
+  await page.getByTestId('feed-post').filter({ hasText: 'Bia Faxina (demo)' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  await expect.poll(() => wa.length).toBe(1);
+  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de diarista em Campo Grande. Você tem disponibilidade?');
 });
 
 test('cidade inteira aparece em qualquer bairro; bairro do dia; serviço fora do "Preciso para hoje"', async ({ page }) => {
@@ -82,7 +117,7 @@ test('clique com disponibilidade vencida: avisa, atualiza e mantém serviço e b
 test('busca geral: sinônimo, login antes do contato, retorno ao mesmo perfil, favoritos', async ({ page, isMobile }) => {
   const wa = await captureWhatsApp(page);
   await page.goto('/');
-  await page.getByLabel('O que você procura?').fill('limpar piscina');
+  await page.getByLabel('Que serviço você procura?').fill('limpar piscina');
   await page.getByRole('button', { name: 'Buscar prestadores' }).click();
   await expect(page.getByText('“limpar piscina” inclui: Piscineiro')).toBeVisible();
   // filtro de bairro (Carandá Bosque) cruza a área declarada; endereço de referência é no Centro

@@ -56,7 +56,7 @@ export default async function HojePage({ searchParams }: { searchParams: Promise
     return (
       <div>
         {header('Preciso para hoje')}
-        <div className="card p-5"><UrgentForm categories={urgentList} neighborhoods={neighborhoods} neighborhood={neighborhood?.slug} /></div>
+        <div className="card p-5"><UrgentForm categories={urgentList} neighborhoods={neighborhoods} neighborhood={neighborhood?.slug} home /></div>
       </div>
     );
   }

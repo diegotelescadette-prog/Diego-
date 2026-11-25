@@ -2,14 +2,16 @@ import { UrgentServiceList, type UrgentListCategory } from './UrgentServiceList'
 import type { Neighborhood } from '@/lib/types';
 import { PILOT_CITY_LABEL } from '@/config/brand';
 
-export function UrgentForm({ categories, neighborhoods, service, neighborhood, compact = false }: {
+export function UrgentForm({ categories, neighborhoods, service, neighborhood, compact = false, home = false }: {
   categories: UrgentListCategory[]; neighborhoods: Neighborhood[]; service?: string; neighborhood?: string; compact?: boolean;
+  /** Tela inicial: lista de serviços fechada (aparece ao digitar) e textos mais curtos. */
+  home?: boolean;
 }) {
   return (
     <form action="/hoje" method="get" className="space-y-4" aria-label="Preciso para hoje">
       <fieldset className="min-w-0">
         <legend className="label mb-2 text-base">{compact ? 'Serviço' : '1. Do que você precisa hoje?'}</legend>
-        <UrgentServiceList categories={categories} selected={service} />
+        <UrgentServiceList categories={categories} selected={service} collapsible={home} />
       </fieldset>
       <div>
         <label htmlFor="bairro" className="label text-base">{compact ? 'Bairro (opcional)' : '2. Em qual bairro? (opcional)'}</label>
@@ -17,7 +19,7 @@ export function UrgentForm({ categories, neighborhoods, service, neighborhood, c
           <option value="">Todos os bairros</option>
           {neighborhoods.map((n) => <option key={n.slug} value={n.slug}>{n.name}</option>)}
         </select>
-        <p className="hint">Cidade: <strong>{PILOT_CITY_LABEL}</strong>. Sem bairro, mostramos quem atende hoje em toda a cidade.</p>
+        {!home && <p className="hint">Cidade: <strong>{PILOT_CITY_LABEL}</strong>. Sem bairro, mostramos quem atende hoje em toda a cidade.</p>}
       </div>
       <button type="submit" className="btn-hoje min-h-13 w-full text-lg">Ver quem atende hoje</button>
     </form>
