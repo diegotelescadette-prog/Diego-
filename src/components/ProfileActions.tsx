@@ -38,8 +38,8 @@ export function GeneralContactButton({ providerId, defaultMessage }: { providerI
   );
 }
 
-export function UrgentContactButton({ providerId, serviceId, neighborhoodId, backHref }: {
-  providerId: string; serviceId: number; neighborhoodId: number; backHref: string;
+export function UrgentContactButton({ providerId, serviceId, neighborhoodId, cityId, backHref }: {
+  providerId: string; serviceId: number; neighborhoodId: number | null; cityId: number | null; backHref: string;
 }) {
   const [state, setState] = useState<'idle' | 'busy' | 'changed' | 'error'>('idle');
   const [ready, setReady] = useState(false);
@@ -47,7 +47,7 @@ export function UrgentContactButton({ providerId, serviceId, neighborhoodId, bac
   async function go() {
     setState('busy');
     const res = await fetch('/api/contact/urgent', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ providerId, serviceId, neighborhoodId }),
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ providerId, serviceId, neighborhoodId, cityId }),
     }).catch(() => null);
     const body = await res?.json().catch(() => ({}));
     if (res?.ok && body?.url) { window.location.assign(body.url); return; }

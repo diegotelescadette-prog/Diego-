@@ -15,28 +15,50 @@ test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => 
   await page.getByRole('button', { name: 'Ver quem atende hoje' }).click();
   await expect(page).toHaveURL(/\/hoje\?servico=encanador&bairro=centro/);
   const results = page.getByTestId('urgent-result');
-  await expect(results).toHaveCount(1);
-  await expect(results.first()).toContainText('Carlos Hidráulica (demo)');
-  await expect(results.first()).toContainText('Atende hoje');
-  await expect(results.first()).toContainText('Horário a combinar pelo WhatsApp');
-  await expect(page.getByText('Marcos Encanador')).toHaveCount(0); // fora do bairro
+  await expect(results).toHaveCount(2); // Carlos (bairros do dia) + Hidro (cidade inteira)
+  const carlos = results.filter({ hasText: 'Carlos Hidráulica (demo)' });
+  await expect(carlos).toContainText('Atende hoje');
+  await expect(carlos).toContainText('Horário a combinar pelo WhatsApp');
+  await expect(results.filter({ hasText: 'Hidro Cidade (demo)' })).toContainText('Atende toda Campo Grande');
+  await expect(page.getByText('Marcos Encanador')).toHaveCount(0); // só Carandá Bosque
   await expect(page.getByText('Paulo Pausado')).toHaveCount(0); // pausado
-  await results.first().getByRole('button', { name: 'Chamar no WhatsApp' }).click();
+  await carlos.getByRole('button', { name: /Chamar no WhatsApp/ }).click(); // o card inteiro é o botão
   await expect.poll(() => wa.length).toBe(1);
   const u = new URL(wa[0]);
   expect(u.pathname).toBe('/5567900000001');
   expect(u.searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
 });
 
-test('cidade inteira aparece em qualquer bairro; especialidade fora do piloto', async ({ page }) => {
+test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só com a cidade', async ({ page }) => {
+  const wa = await captureWhatsApp(page);
+  await page.goto('/');
+  await page.getByLabel('Filtrar serviços').fill('encan');
+  await page.getByText('Encanador', { exact: true }).click();
+  await expect(page.getByLabel('2. Em qual bairro?')).toHaveValue(''); // padrão: Todos os bairros
+  await page.getByRole('button', { name: 'Ver quem atende hoje' }).click();
+  await expect(page).toHaveURL(/\/hoje\?servico=encanador&bairro=$/);
+  const results = page.getByTestId('urgent-result');
+  await expect(results).toHaveCount(3); // cidade inteira + quem confirmou bairros
+  await expect(results.filter({ hasText: 'Marcos Encanador (demo)' })).toContainText('Atende: Carandá Bosque');
+  await results.filter({ hasText: 'Marcos Encanador (demo)' }).getByRole('button').click();
+  await expect.poll(() => wa.length).toBe(1);
+  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
+});
+
+test('cidade inteira aparece em qualquer bairro; bairro do dia; serviço fora do "Preciso para hoje"', async ({ page }) => {
   await page.goto('/hoje?servico=eletricista&bairro=nova-lima');
   await expect(page.getByTestId('urgent-result').filter({ hasText: 'Elétrica Pantanal (demo)' })).toBeVisible();
-  await expect(page.getByTestId('urgent-result').first()).toContainText('Toda Campo Grande');
+  await expect(page.getByTestId('urgent-result').first()).toContainText('Atende toda Campo Grande');
+  // Marcos atende só o Carandá Bosque: aparece lá e fica fora do Centro
+  await page.goto('/hoje?servico=encanador&bairro=caranda-bosque');
+  await expect(page.getByTestId('urgent-result').filter({ hasText: 'Marcos Encanador (demo)' })).toBeVisible();
+  await expect(page.getByTestId('urgent-result').filter({ hasText: 'Hidro Cidade (demo)' })).toBeVisible();
   await page.goto('/hoje?servico=diarista&bairro=centro');
-  await expect(page.getByText('Diarista ainda não faz parte do “Preciso para hoje”.')).toBeVisible();
-  await page.getByRole('link', { name: /Buscar diarista/ }).click();
-  await expect(page).toHaveURL(/\/buscar\?servico=diarista&cidade=campo-grande-ms&bairro=centro/);
-  await expect(page.getByTestId('provider-card').filter({ hasText: 'Bia Faxina' })).toBeVisible();
+  await expect(page.getByTestId('urgent-result').filter({ hasText: 'Bia Faxina' })).toBeVisible(); // serviço presencial entra
+  await page.goto('/hoje?servico=tradutor&bairro=centro');
+  await expect(page.getByText('Tradutor ainda não faz parte do “Preciso para hoje”.')).toBeVisible();
+  await page.getByRole('link', { name: /Buscar tradutor/ }).click();
+  await expect(page).toHaveURL(/\/buscar\?servico=tradutor&cidade=campo-grande-ms&bairro=centro/);
 });
 
 test('clique com disponibilidade vencida: avisa, atualiza e mantém serviço e bairro', async ({ page }) => {
@@ -45,12 +67,13 @@ test('clique com disponibilidade vencida: avisa, atualiza e mantém serviço e b
   await expect(page.getByTestId('urgent-result')).toHaveCount(1);
   // vence entre a busca e o clique (meia-noite simulada)
   await admin.from('availability_today').update({ expires_at: new Date(Date.now() - 1000).toISOString() }).eq('provider_id', await profileId('joana-demo'));
-  await page.getByRole('button', { name: 'Chamar no WhatsApp' }).click();
+  await page.getByRole('button', { name: /Chamar no WhatsApp/ }).click();
   await expect(page.getByRole('status')).toContainText('A disponibilidade de Joana Chaves (demo) mudou');
   await expect(page.getByTestId('urgent-result')).toHaveCount(0);
   await expect(page).toHaveURL(/servico=chaveiro&bairro=tiradentes/);
   expect(wa.length).toBe(0);
-  const all = page.getByRole('link', { name: 'Ver todos nesse bairro' });
+  await expect(page.getByRole('link', { name: 'Buscar em toda Campo Grande' })).toHaveAttribute('href', '/hoje?servico=chaveiro');
+  const all = page.getByRole('link', { name: 'Ver todos os prestadores desse serviço' });
   await expect(all).toHaveAttribute('href', '/buscar?servico=chaveiro&cidade=campo-grande-ms&bairro=tiradentes');
   await all.click();
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Joana Chaves' })).toBeVisible();
@@ -94,6 +117,41 @@ test('busca geral: sinônimo, login antes do contato, retorno ao mesmo perfil, f
   await expect(page.getByRole('button', { name: '☆ Salvar nos favoritos' })).toBeVisible();
 });
 
+test('busca geral: tocar no card pede login uma vez e depois abre o WhatsApp direto', async ({ page }) => {
+  const wa = await captureWhatsApp(page);
+  await page.goto('/buscar?servico=encanador&bairro=caranda-bosque');
+  await expect(page.getByLabel('Cidade', { exact: true })).toHaveValue('campo-grande-ms'); // Campo Grande já selecionada
+  const cards = page.getByTestId('provider-card');
+  await expect(cards).toHaveCount(2);
+  await expect(cards.filter({ hasText: 'Hidro Cidade' })).toContainText('Atende toda Campo Grande');
+  await cards.filter({ hasText: 'Marcos Encanador' }).getByRole('button').click();
+  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=/);
+  await login(page, demoEmail('cliente'));
+  await expect.poll(() => wa.length).toBe(1);
+  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
+  // já logado: direto, sem pedir login de novo
+  await page.goto('/buscar?servico=encanador');
+  await expect(page.getByTestId('provider-card')).toHaveCount(3);
+  await page.getByTestId('provider-card').filter({ hasText: 'Hidro Cidade' }).getByRole('button').click();
+  await expect.poll(() => wa.length).toBe(2);
+  expect(new URL(wa[1]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
+  await page.goto('/buscar?servico=encanador&bairro=centro');
+  await expect(page.getByTestId('provider-card').filter({ hasText: 'Marcos Encanador' })).toHaveCount(0);
+});
+
+test('perfil antigo só com endereço pede confirmação da área', async ({ page }) => {
+  await page.goto('/entrar?next=/painel');
+  await login(page, demoEmail('prestador-ze'));
+  await expect(page.getByTestId('confirm-area')).toContainText('Confirme sua área de atendimento');
+  await page.getByRole('link', { name: 'Confirmar área' }).click();
+  await expect(page.getByText('Confirme sua área de atendimento. Só assim')).toBeVisible();
+  await page.getByText('Atendo em toda Campo Grande').click();
+  await page.getByRole('button', { name: 'Salvar alterações' }).click();
+  await expect(page).toHaveURL(/\/painel\/previa$/);
+  await page.goto('/buscar?q=pedreiro&bairro=universitario');
+  await expect(page.getByTestId('provider-card').filter({ hasText: 'Zé Reformas' })).toContainText('Atende toda Campo Grande');
+});
+
 test('favorito como visitante pede login e volta ao perfil', async ({ page }) => {
   await page.goto('/p/leo-demo');
   await page.getByRole('button', { name: '☆ Salvar nos favoritos' }).click();
@@ -105,7 +163,7 @@ test('favorito como visitante pede login e volta ao perfil', async ({ page }) =>
 test('busca sem resultados sugere retirar filtro e manter a consulta', async ({ page }) => {
   await page.goto('/buscar?q=piscina&cidade=campo-grande-ms&bairro=aero-rancho');
   await expect(page.getByTestId('empty-search')).toContainText('Nenhum prestador encontrado para “piscina”');
-  await page.getByRole('link', { name: 'Procurar em toda Campo Grande' }).click();
+  await page.getByRole('link', { name: 'Buscar em toda Campo Grande' }).click();
   await page.waitForURL((u) => !u.searchParams.has('bairro'));
   await expect(page.getByLabel('Nome, serviço ou problema')).toHaveValue('piscina');
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Rafa Piscinas' })).toBeVisible();
@@ -163,6 +221,11 @@ test('prestador: cria conta, confirma e-mail, publica e ativa/desativa Atendo ho
   await page.getByLabel('Bairro', { exact: true }).fill('Centro');
   await page.getByLabel('Cidade', { exact: true }).fill('Campo Grande');
   await page.getByLabel('UF').selectOption('MS');
+  await page.getByRole('button', { name: 'Ver prévia do perfil' }).click();
+  await expect(page.getByText('Escolha se você atende toda a cidade ou bairros selecionados')).toBeVisible();
+  await page.getByLabel('CEP').fill('79002-000');
+  await page.getByLabel('Número').fill('10');
+  await page.getByText('Atendo em bairros selecionados').click();
   await page.getByLabel('Procurar bairro').fill('mata do');
   await page.getByRole('checkbox', { name: 'Mata do Jacinto' }).check();
   await page.getByRole('button', { name: 'Ver prévia do perfil' }).click();
@@ -187,7 +250,7 @@ test('prestador: cria conta, confirma e-mail, publica e ativa/desativa Atendo ho
   await page.getByRole('button', { name: 'Desativar “Atendo hoje”' }).click();
   await expect(page.getByRole('button', { name: 'Atendo hoje' })).toBeVisible();
   await visitor.reload();
-  await expect(visitor.getByTestId('urgent-result')).toHaveCount(0);
+  await expect(visitor.getByTestId('urgent-result').filter({ hasText: 'Teste Encanamentos' })).toHaveCount(0);
 
   // pausar remove da busca
   await page.getByRole('button', { name: 'Pausar publicação' }).click();

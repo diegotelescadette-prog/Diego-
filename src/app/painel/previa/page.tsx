@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Stepper } from '@/components/Stepper';
 import { ProfileDetails } from '@/components/ProfileDetails';
+import { photoUrl } from '@/lib/data';
 import { ProviderCard } from '@/components/ProviderCard';
 import { PublishForm } from './PublishForm';
 import { loadProfile } from '@/lib/profile';
@@ -30,7 +31,7 @@ export default async function Previa() {
 
       <section aria-labelledby="busca-prev">
         <h2 id="busca-prev" className="mb-2 font-bold">Como aparece na busca</h2>
-        <ul><ProviderCard p={{ id: p.id, slug: p.slug, display_name: p.display_name || 'Seu nome', photo_path: p.photo_path, main_service: p.main_service?.name ?? null, area_label: p.area_label, serves_online: p.serves_online, available_today: p.available_today }} /></ul>
+        <ul><ProviderCard p={{ id: p.id, slug: p.slug, display_name: p.display_name || 'Seu nome', photo_path: p.photo_path, main_service: p.main_service?.name ?? null, area_label: p.area_label, serves_online: p.serves_online, available_today: p.available_today }} photo={photoUrl(p.photo_path)} /></ul>
       </section>
       <section aria-labelledby="perfil-prev">
         <h2 id="perfil-prev" className="mb-2 font-bold">Página do perfil</h2>

@@ -12,7 +12,7 @@ import { STATUS_LABEL } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-type SP = { servico?: string; bairro?: string; cidade?: string; online?: string };
+type SP = { servico?: string; bairro?: string; cidade?: string; online?: string; hoje?: string };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const p = await loadProfile({ slug: (await params).slug });
@@ -36,7 +36,8 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
   const place = ctxNb ? `${ctxNb.name}, ${p.city?.name}` : p.city?.name ?? null;
   const online = sp.online === '1' || (!place && p.serves_online);
   const defaultMessage = generalMessage(ctxService?.name ?? 'um serviço', place, online);
-  const urgentCtx = ctxService?.urgent_pilot && ctxNb && sp.servico === ctxService.slug && p.available_today;
+  // Veio do "Preciso para hoje" (com ou sem bairro): contato sem login, revalidado no servidor.
+  const urgentCtx = ctxService?.urgent_pilot && sp.hoje === '1' && sp.servico === ctxService.slug && p.available_today;
 
   let isFav = false;
   if (user) {
@@ -49,7 +50,7 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
   const actions = p.status === 'published' && !isOwner ? (
     <>
       {urgentCtx ? (
-        <UrgentContactButton providerId={p.id} serviceId={ctxService.id} neighborhoodId={ctxNb.id} backHref={`/hoje?servico=${ctxService.slug}&bairro=${ctxNb.slug}`} />
+        <UrgentContactButton providerId={p.id} serviceId={ctxService.id} neighborhoodId={ctxNb?.id ?? null} cityId={p.city?.id ?? null} backHref={`/hoje?servico=${ctxService.slug}${ctxNb ? `&bairro=${ctxNb.slug}` : ''}`} />
       ) : user ? (
         <GeneralContactButton providerId={p.id} defaultMessage={defaultMessage} />
       ) : (

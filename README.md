@@ -11,7 +11,7 @@ Stack: **Next.js 15 (App Router) + TypeScript + Tailwind 4 + Supabase** (Auth, P
 
 | Rota | O que faz |
 | --- | --- |
-| `/` | Início: “Preciso para hoje” com as 4 especialidades do piloto, busca geral e “Sou prestador” |
+| `/` | Início: “Preciso para hoje” (lista de serviços com filtro e bairro opcional), busca geral, categorias e “Sou prestador” |
 | `/hoje?servico=&bairro=` | Resultados de quem confirmou “Atende hoje”, com “Chamar no WhatsApp” sem login |
 | `/buscar` | Busca geral por nome, serviço ou problema; filtros (painel lateral / botão “Filtros” no celular) |
 | `/p/[slug]` | Perfil público: serviços, área, descrição, fotos, WhatsApp, favoritos, denúncia |

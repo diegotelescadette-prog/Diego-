@@ -39,6 +39,19 @@ export const getAllServices = cache(async (): Promise<Service[]> => (await getCa
 export const getUrgentServices = cache(async (): Promise<Service[]> =>
   (await getAllServices()).filter((s) => s.urgent_pilot));
 
+/** Catálogo do "Preciso para hoje": todos os serviços feitos no local, por categoria. */
+export const getUrgentCatalog = cache(async (): Promise<Category[]> =>
+  (await getCatalog()).map((c) => ({ ...c, services: c.services.filter((s) => s.urgent_pilot) })).filter((c) => c.services.length > 0));
+
+/** Sinônimos por serviço (ajudam o filtro da lista: "vazamento" acha Encanador). */
+export const getSynonymsByService = cache(async (): Promise<Record<number, string[]>> => {
+  const supabase = await createClient();
+  const { data } = await supabase.from('service_synonyms').select('service_id,term');
+  const out: Record<number, string[]> = {};
+  for (const r of data ?? []) (out[r.service_id] ??= []).push(r.term);
+  return out;
+});
+
 export const getCities = cache(async (): Promise<City[]> => {
   const supabase = await createClient();
   const { data } = await supabase.from('cities').select('id,name,uf,slug,timezone,is_pilot').eq('active', true).order('name');

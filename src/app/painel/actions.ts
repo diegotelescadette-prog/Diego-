@@ -162,8 +162,10 @@ export async function saveAreaStep(_: FormState, form: FormData): Promise<FormSt
   const onlyOnline = modes.length > 0 && modes.every((m) => m === 'online');
   const online = form.get('online') === 'on' && canOnline;
   if (form.get('online') === 'on' && !canOnline) errors.online = 'Nenhum dos seus serviços é oferecido online';
-  if (strict && !wholeCity && validNb.length === 0 && !(onlyOnline && online)) {
-    errors.neighborhoods = 'Escolha os bairros atendidos ou marque “Toda a cidade”';
+  if (strict && !mode && !(onlyOnline && online)) {
+    errors.area_mode = 'Escolha se você atende toda a cidade ou bairros selecionados';
+  } else if (strict && mode === 'bairros' && validNb.length === 0 && !(onlyOnline && online)) {
+    errors.neighborhoods = 'Escolha pelo menos um bairro ou marque “Atendo em toda Campo Grande”';
   }
 
   if (Object.keys(errors).length) {

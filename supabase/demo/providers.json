@@ -21,8 +21,8 @@
       "areas": ["centro", "coronel-antonino"], "ref": "Coronel Antonino",
       "bio": "Perfil de demonstração. Sem disponibilidade para hoje." },
     { "key": "marcos", "name": "Marcos Encanador (demo)", "color": "#15803d", "services": ["encanador"], "main": "encanador",
-      "areas": ["aero-rancho"], "ref": "Aero Rancho", "today": { "neighborhoods": ["aero-rancho"] },
-      "bio": "Perfil de demonstração. Atende somente o Aero Rancho." },
+      "areas": ["caranda-bosque"], "ref": "Aero Rancho", "today": { "neighborhoods": ["caranda-bosque"] },
+      "bio": "Perfil de demonstração. Atende somente o Carandá Bosque (o endereço de cadastro é no Aero Rancho)." },
     { "key": "bia", "name": "Bia Faxina (demo)", "color": "#db2777", "services": ["diarista", "faxineiro"], "main": "diarista",
       "areas": ["centro", "caranda-bosque", "santa-fe"], "ref": "Santa Fé", "today": { "neighborhoods": ["centro"] },
       "bio": "Perfil de demonstração. Serviço fora do piloto do Preciso para hoje." },
@@ -34,6 +34,11 @@
       "bio": "Perfil de demonstração pausado: não deve aparecer na busca." },
     { "key": "sergio", "name": "Sérgio Suspenso (demo)", "color": "#991b1b", "services": ["eletricista"], "main": "eletricista",
       "wholeCity": true, "ref": "Centro", "status": "suspended",
-      "bio": "Perfil de demonstração suspenso: não deve aparecer na busca." }
+      "bio": "Perfil de demonstração suspenso: não deve aparecer na busca." },
+    { "key": "hidro", "name": "Hidro Cidade (demo)", "color": "#0e7490", "services": ["encanador", "caca-vazamentos"], "main": "encanador",
+      "wholeCity": true, "ref": "Coophavila II", "today": { "wholeCity": true },
+      "bio": "Perfil de demonstração. Encanador que atende toda Campo Grande." },
+    { "key": "ze", "name": "Zé Reformas (demo)", "color": "#b45309", "services": ["pedreiro"], "main": "pedreiro", "ref": "Centro",
+      "bio": "Perfil de demonstração de cadastro antigo: tem só o endereço e ainda não confirmou a área de atendimento." }
   ]
 }

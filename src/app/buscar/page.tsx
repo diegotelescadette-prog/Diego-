@@ -1,15 +1,16 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { FiltersPanel } from '@/components/FiltersPanel';
-import { ProviderCard } from '@/components/ProviderCard';
-import { getAllServices, getCatalog, getCities, getNeighborhoods } from '@/lib/data';
+import { ContinueContact, ProviderCard } from '@/components/ProviderCard';
+import { getAllServices, getCatalog, getCities, getNeighborhoods, getPilotCity, getUser, photoUrl } from '@/lib/data';
+import { generalMessage } from '@/lib/whatsapp';
 import { createClient } from '@/lib/supabase/server';
 import type { ProviderCardData } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Buscar prestadores' };
 export const dynamic = 'force-dynamic';
 
-type SP = { q?: string; servico?: string; cidade?: string; bairro?: string; online?: string; hoje?: string; pagina?: string };
+type SP = { q?: string; servico?: string; categoria?: string; cidade?: string; bairro?: string; online?: string; hoje?: string; pagina?: string; chamar?: string };
 const PAGE = 20;
 
 function href(sp: SP, patch: Partial<SP>) {
@@ -27,8 +28,10 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
   const today = sp.hoje === '1';
   const page = Math.max(1, Number(sp.pagina) || 1);
 
-  const [catalog, services, cities] = await Promise.all([getCatalog(), getAllServices(), getCities()]);
-  const city = cities.find((c) => c.slug === sp.cidade);
+  const [catalog, services, cities, pilot, user] = await Promise.all([getCatalog(), getAllServices(), getCities(), getPilotCity(), getUser()]);
+  // Campo Grande já vem selecionada; "todas" desliga o filtro de cidade.
+  const city = sp.cidade === 'todas' ? undefined : cities.find((c) => c.slug === (sp.cidade ?? pilot.slug));
+  const category = catalog.find((c) => c.slug === sp.categoria);
   const neighborhoods = city ? await getNeighborhoods(city.id) : [];
   const neighborhood = neighborhoods.find((n) => n.slug === sp.bairro);
   const service = services.find((s) => s.slug === sp.servico);
@@ -37,7 +40,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
   const [{ data, error }, matched] = await Promise.all([
     supabase.rpc('search_providers', {
       p_q: q || null, p_service_slug: service?.slug ?? null, p_city_slug: city?.slug ?? null,
-      p_neighborhood_slug: neighborhood?.slug ?? null, p_online: online, p_today: today,
+      p_neighborhood_slug: neighborhood?.slug ?? null, p_online: online, p_today: today, p_category_slug: category?.slug ?? null,
       p_limit: PAGE, p_offset: (page - 1) * PAGE,
     }),
     q ? supabase.rpc('query_service_ids', { p_q: q }) : Promise.resolve({ data: [] as { service_id: number }[] }),
@@ -48,7 +51,8 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
 
   const applied: { label: string; remove: Partial<SP> }[] = [];
   if (service) applied.push({ label: `Serviço: ${service.name}`, remove: { servico: undefined } });
-  if (city) applied.push({ label: `Cidade: ${city.name}–${city.uf}`, remove: { cidade: undefined, bairro: undefined } });
+  if (category) applied.push({ label: `Categoria: ${category.name}`, remove: { categoria: undefined } });
+  if (city && city.slug !== pilot.slug) applied.push({ label: `Cidade: ${city.name}–${city.uf}`, remove: { cidade: undefined, bairro: undefined } });
   if (neighborhood) applied.push({ label: `Bairro: ${neighborhood.name}`, remove: { bairro: undefined } });
   if (online) applied.push({ label: 'Atendimento online', remove: { online: undefined } });
   if (today) applied.push({ label: 'Atende hoje', remove: { hoje: undefined } });
@@ -60,6 +64,12 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
   if (online) ctx.set('online', '1');
   const ctxStr = ctx.toString() ? `?${ctx}` : '';
 
+  // Mensagem do card (busca geral). Local: bairro + cidade, ou só a cidade.
+  const place = neighborhood ? `${neighborhood.name}, ${city?.name}` : city?.name ?? null;
+  const messageFor = (p: ProviderCardData) => generalMessage(service?.name ?? p.main_service ?? 'um serviço', place, online || (!place && p.serves_online));
+  const returnTo = href({ ...sp, chamar: undefined }, { pagina: sp.pagina });
+  const pending = user && sp.chamar ? results.find((r) => r.slug === sp.chamar) : undefined;
+
   return (
     <div>
       <h1 className="text-2xl font-extrabold sm:text-3xl">Buscar prestadores</h1>
@@ -67,6 +77,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
         <label htmlFor="q" className="sr-only">Nome, serviço ou problema</label>
         <input id="q" name="q" defaultValue={q} className="input" placeholder="Nome, serviço ou problema (ex.: vazamento)" />
         {service && <input type="hidden" name="servico" value={service.slug} />}
+        {category && <input type="hidden" name="categoria" value={category.slug} />}
         {city && <input type="hidden" name="cidade" value={city.slug} />}
         {neighborhood && <input type="hidden" name="bairro" value={neighborhood.slug} />}
         {online && <input type="hidden" name="online" value="1" />}
@@ -79,6 +90,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
           <FiltersPanel count={applied.length}>
             <form action="/buscar" method="get" className="space-y-4">
               {q && <input type="hidden" name="q" value={q} />}
+              {category && <input type="hidden" name="categoria" value={category.slug} />}
               <div>
                 <label htmlFor="f-servico" className="label">Serviço</label>
                 <select id="f-servico" name="servico" defaultValue={service?.slug ?? ''} className="input">
@@ -92,15 +104,15 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
               </div>
               <div>
                 <label htmlFor="f-cidade" className="label">Cidade</label>
-                <select id="f-cidade" name="cidade" defaultValue={city?.slug ?? ''} className="input">
-                  <option value="">Todas as cidades</option>
+                <select id="f-cidade" name="cidade" defaultValue={city?.slug ?? 'todas'} className="input">
+                  <option value="todas">Todas as cidades</option>
                   {cities.map((c) => <option key={c.id} value={c.slug}>{c.name}–{c.uf}</option>)}
                 </select>
               </div>
               <div>
                 <label htmlFor="f-bairro" className="label">Bairro</label>
                 <select id="f-bairro" name="bairro" defaultValue={neighborhood?.slug ?? ''} className="input" disabled={!city}>
-                  <option value="">{city ? 'Toda a cidade' : 'Escolha a cidade primeiro'}</option>
+                  <option value="">{city ? 'Todos os bairros' : 'Escolha a cidade primeiro'}</option>
                   {neighborhoods.map((n) => <option key={n.id} value={n.slug}>{n.name}</option>)}
                 </select>
               </div>
@@ -117,6 +129,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
 
         <section aria-labelledby="resultados" aria-live="polite">
           <h2 id="resultados" className="sr-only">Resultados</h2>
+          {pending && <ContinueContact providerId={pending.id} message={messageFor(pending)} cleanUrl={returnTo} />}
           {applied.length > 0 && (
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {applied.map((f) => (
@@ -144,7 +157,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
               <p className="text-lg font-semibold">Nenhum prestador encontrado{q ? ` para “${q}”` : ''}.</p>
               <p className="mt-1 text-stone-700">Tente retirar um filtro ou procurar na cidade inteira:</p>
               <ul className="mt-3 flex flex-wrap gap-2">
-                {neighborhood && <li><Link className="btn-primary" href={href(sp, { bairro: undefined })}>Procurar em toda {city?.name}</Link></li>}
+                {neighborhood && <li><Link className="btn-primary" href={href(sp, { bairro: undefined })}>Buscar em toda {city?.name}</Link></li>}
                 {applied.filter((f) => !f.label.startsWith('Bairro')).map((f) => (
                   <li key={f.label}><Link className="btn-outline" href={href(sp, f.remove)}>Retirar “{f.label}”</Link></li>
                 ))}
@@ -155,7 +168,10 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
             <>
               <p className="mb-3 text-stone-700">{total === 1 ? '1 prestador encontrado' : `${total} prestadores encontrados`}</p>
               <ul className="grid gap-3 xl:grid-cols-2">
-                {results.map((p) => <ProviderCard key={p.id} p={p} query={ctxStr} />)}
+                {results.map((p) => (
+                  <ProviderCard key={p.id} p={p} photo={photoUrl(p.photo_path)} query={ctxStr}
+                    contact={{ loggedIn: !!user, message: messageFor(p), returnTo }} />
+                ))}
               </ul>
               {neighborhood && total < 3 && (
                 <p className="mt-4 rounded-xl bg-brand-50 p-3">

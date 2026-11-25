@@ -22,6 +22,7 @@ export interface City { id: number; name: string; uf: string; slug: string; time
 export interface ProviderCardData {
   id: string; slug: string; display_name: string; photo_path: string | null;
   main_service: string | null; area_label: string | null; serves_online: boolean; available_today: boolean;
+  main_category?: string | null;
 }
 
 export const MISSING_LABEL: Record<string, string> = {

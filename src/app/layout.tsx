@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import './globals.css';
-import { Header } from '@/components/Header';
+import { Header, MobileNav } from '@/components/Header';
 import { APP_NAME, PILOT_TAGLINE } from '@/config/brand';
 
 export const metadata: Metadata = {
@@ -26,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/sou-prestador" className="underline">Sou prestador</Link>
           </div>
         </footer>
+        <MobileNav />
       </body>
     </html>
   );

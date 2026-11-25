@@ -42,6 +42,13 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
       <h1 className="text-2xl font-extrabold">Painel do prestador</h1>
       {sp.publicado && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900">Perfil publicado! Agora você aparece na busca.</p>}
       {sp.erro && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-900">{sp.erro}</p>}
+      {p.status !== 'draft' && !p.serves_whole_city && !p.serves_online && areaIds.size === 0 && (
+        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900" data-testid="confirm-area">
+          <p className="font-semibold">Confirme sua área de atendimento.</p>
+          <p className="mt-1">Seu perfil tem só o endereço de cadastro. Diga se atende toda {city?.name ?? 'a cidade'} ou bairros selecionados para aparecer na busca certa.</p>
+          <Link className="btn-primary mt-3" href="/painel/atendimento">Confirmar área</Link>
+        </div>
+      )}
 
       <section className="card p-5" aria-labelledby="estado">
         <h2 id="estado" className="sr-only">Estado do perfil</h2>

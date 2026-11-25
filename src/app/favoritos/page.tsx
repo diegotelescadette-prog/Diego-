@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ProviderCard } from '@/components/ProviderCard';
-import { getUser } from '@/lib/data';
+import { getPilotCity, getUser, photoUrl } from '@/lib/data';
+import { generalMessage } from '@/lib/whatsapp';
 import { createClient } from '@/lib/supabase/server';
 import type { ProviderCardData } from '@/lib/types';
 
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Favoritos() {
   const user = (await getUser())!;
+  const city = await getPilotCity();
   const supabase = await createClient();
   const { data: favs } = await supabase.from('favorites').select('provider_id').eq('user_id', user.id).order('created_at', { ascending: false });
   const ids = (favs ?? []).map((f) => f.provider_id);
@@ -39,7 +41,10 @@ export default async function Favoritos() {
           <Link href="/buscar" className="btn-primary mt-3">Buscar prestadores</Link>
         </div>
       ) : (
-        <ul className="mt-4 grid gap-3">{cards.map((c) => <ProviderCard key={c.id} p={c} />)}</ul>
+        <ul className="mt-4 grid gap-3">{cards.map((c) => (
+          <ProviderCard key={c.id} p={c} photo={photoUrl(c.photo_path)}
+            contact={{ loggedIn: true, returnTo: '/favoritos', message: generalMessage(c.main_service ?? 'um serviço', city.name, c.area_label === 'Atendimento online') }} />
+        ))}</ul>
       )}
     </div>
   );

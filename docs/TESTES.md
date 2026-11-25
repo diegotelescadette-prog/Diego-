@@ -14,7 +14,22 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
-## Cenários executados (25/11/2026) — todos passando
+## Rodada 2 (25/11/2026): bairro opcional, área de atendimento e novo visual — todos passando
+
+Unitários (9), banco/API (13) e E2E (13 cenários × computador e celular = 26). Novos cenários verificados:
+
+- Encanador que atende toda a cidade (Hidro Cidade, demo) aparece no Carandá Bosque, no Centro e em “Todos os bairros”.
+- Encanador que atende só o Carandá Bosque (Marcos, demo) aparece em “Todos os bairros” e no Carandá Bosque, e fica fora do Centro.
+  Vale para a busca geral e para o “Preciso para hoje”.
+- “Preciso para hoje” sem bairro: o visitante abre o WhatsApp sem conta, com a mensagem “… hoje em Campo Grande.”
+- Área do dia menor que a habitual (Carlos: atende Carlota, mas hoje só Centro e Amambaí).
+- Busca por bairro vazia: “Buscar em toda Campo Grande” (mantém o serviço) e “Ver todos os prestadores desse serviço”.
+- Busca geral: tocar no card pede login na primeira vez e abre o WhatsApp direto ao voltar; já logado, abre direto.
+- Cadastro: é preciso escolher “Atendo em toda Campo Grande” ou “Atendo em bairros selecionados”.
+- Perfil antigo só com endereço (Zé Reformas, demo) fica fora da busca e vê o aviso “Confirme sua área de atendimento”.
+- Serviço presencial entra no “Preciso para hoje”; serviço só online não entra; o administrador pode tirar um serviço da lista.
+
+## Cenários executados na primeira versão (25/11/2026) — todos passando
 
 Unitários (7): CPF (dígitos), telefone/WhatsApp com DDD, redirecionamento seguro, mensagens do WhatsApp.
 

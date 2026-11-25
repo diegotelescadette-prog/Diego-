@@ -6,8 +6,18 @@ export function serviceInSentence(name: string): string {
   return name;
 }
 
-export function urgentMessage(service: string, neighborhood: string, city: string): string {
-  return `Olá! Encontrei seu perfil no ${APP_NAME}. Preciso de ${serviceInSentence(service)} hoje no bairro ${neighborhood}, em ${city}. Qual horário você consegue atender?`;
+/** Sem bairro escolhido ("Todos os bairros"), a mensagem diz só a cidade. */
+export function urgentMessage(service: string, neighborhood: string | null, city: string): string {
+  const where = neighborhood ? `no bairro ${neighborhood}, em ${city}` : `em ${city}`;
+  return `Olá! Encontrei seu perfil no ${APP_NAME}. Preciso de ${serviceInSentence(service)} hoje ${where}. Qual horário você consegue atender?`;
+}
+
+/** Texto da área para os cards: "Atende toda Campo Grande" ou "Atende: Centro, Amambaí". */
+export function areaText(label: string | null | undefined): string | null {
+  if (!label) return null;
+  if (label.startsWith('Toda ')) return `Atende toda ${label.slice(5)}`;
+  if (label === 'Atendimento online') return label;
+  return `Atende: ${label}`;
 }
 
 export function generalMessage(service: string, place: string | null, online: boolean): string {

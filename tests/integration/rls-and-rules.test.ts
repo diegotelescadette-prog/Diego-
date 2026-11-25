@@ -110,15 +110,24 @@ test('Atendo hoje: padrão, restrição e validação no servidor', async () => 
   assert.match(paused.error?.message ?? '', /Publique/);
 });
 
-test('busca urgente: bairro, cidade inteira, fora do bairro e especialidade fora do piloto', async () => {
+test('busca urgente: bairro opcional, cidade inteira, fora do bairro e serviço fora do "Preciso para hoje"', async () => {
   const { nb } = await ids();
-  const slugs = async (svc: string, b: string) => ((await anon().rpc('urgent_search', { p_service_slug: svc, p_neighborhood_id: nb(b) })).data ?? []).map((r: { slug: string }) => r.slug);
-  assert.deepEqual(await slugs('encanador', 'centro'), ['carlos-demo']);
-  assert.deepEqual(await slugs('encanador', 'aero-rancho'), ['marcos-demo'], 'Marcos só no Aero Rancho');
-  assert.deepEqual(await slugs('encanador', 'carlota'), [], 'Carlos atende Carlota, mas hoje só Centro/Amambaí');
+  const slugs = async (svc: string, b: string | null) => ((await anon().rpc('urgent_search', { p_service_slug: svc, p_neighborhood_id: b ? nb(b) : null })).data ?? []).map((r: { slug: string }) => r.slug).sort();
+  assert.deepEqual(await slugs('encanador', 'centro'), ['carlos-demo', 'hidro-demo']);
+  assert.deepEqual(await slugs('encanador', 'caranda-bosque'), ['hidro-demo', 'marcos-demo'], 'Marcos só no Carandá Bosque; Hidro na cidade toda');
+  assert.deepEqual(await slugs('encanador', 'carlota'), ['hidro-demo'], 'Carlos atende Carlota, mas hoje só Centro/Amambaí');
+  // Todos os bairros: cidade inteira + quem confirmou bairros (área do dia)
+  assert.deepEqual(await slugs('encanador', null), ['carlos-demo', 'hidro-demo', 'marcos-demo'], 'sem bairro = toda Campo Grande');
+  assert.ok(!(await slugs('encanador', null)).includes('paulo-demo'), 'pausado fora');
   assert.ok((await slugs('eletricista', 'universitario')).includes('pantanal-demo'), 'cidade inteira aparece em qualquer bairro');
   assert.ok(!(await slugs('eletricista', 'universitario')).includes('sergio-demo'), 'suspenso fora');
-  assert.deepEqual(await slugs('diarista', 'centro'), [], 'fora do piloto');
+  assert.deepEqual(await slugs('diarista', 'centro'), ['bia-demo'], 'serviço presencial entra no Preciso para hoje');
+  // administrador pode tirar um serviço do "Preciso para hoje"
+  await admin.from('services').update({ urgent_pilot: false }).eq('slug', 'diarista');
+  try { assert.deepEqual(await slugs('diarista', 'centro'), [], 'fora do Preciso para hoje'); }
+  finally { await admin.from('services').update({ urgent_pilot: true }).eq('slug', 'diarista'); }
+  const { data: online } = await admin.from('services').update({ urgent_pilot: true }).eq('slug', 'tradutor').select('urgent_pilot').single();
+  assert.equal(online!.urgent_pilot, false, 'serviço só online nunca entra');
   assert.deepEqual(await slugs('tecnico-de-ar-condicionado', 'centro'), [], 'sem disponibilidade');
 });
 
@@ -126,13 +135,22 @@ test('busca geral: bairro x área declarada, cidade inteira, sinônimos e sem ac
   const s = async (args: object) => ((await anon().rpc('search_providers', args)).data ?? []).map((r: { slug: string }) => r.slug);
   assert.deepEqual(await s({ p_service_slug: 'piscineiro', p_city_slug: 'campo-grande-ms', p_neighborhood_slug: 'caranda-bosque' }), ['rafa-demo']);
   assert.ok((await s({ p_service_slug: 'eletricista', p_city_slug: 'campo-grande-ms', p_neighborhood_slug: 'nova-lima' })).includes('pantanal-demo'));
-  assert.deepEqual((await s({ p_q: 'vazamento' })).sort(), ['carlos-demo', 'marcos-demo']);
+  assert.deepEqual((await s({ p_q: 'vazamento' })).sort(), ['carlos-demo', 'hidro-demo', 'marcos-demo']);
   assert.deepEqual(await s({ p_q: 'limpar piscina' }), ['rafa-demo']);
   assert.deepEqual(await s({ p_q: 'formatar computador' }), ['leo-demo']);
   assert.deepEqual(await s({ p_q: 'T.I.' }), ['leo-demo']);
   assert.deepEqual(await s({ p_q: 'tecnico de ti' }), ['leo-demo']);
   assert.deepEqual(await s({ p_q: 'eletrica pantanal' }), ['pantanal-demo'], 'nome sem acento');
   assert.deepEqual(await s({ p_online: true }), ['leo-demo']);
+  // exemplos pedidos: cidade inteira x bairro
+  const enc = async (b?: string) => (await s({ p_service_slug: 'encanador', p_city_slug: 'campo-grande-ms', p_neighborhood_slug: b ?? null })).sort();
+  assert.deepEqual(await enc(), ['carlos-demo', 'hidro-demo', 'marcos-demo'], 'Todos os bairros');
+  assert.deepEqual(await enc('caranda-bosque'), ['hidro-demo', 'marcos-demo'], 'Carandá Bosque: cidade inteira + bairro');
+  assert.deepEqual(await enc('centro'), ['carlos-demo', 'hidro-demo'], 'Centro: Marcos (só Carandá Bosque) fica fora');
+  // perfil antigo só com endereço (sem área escolhida) não aparece
+  assert.ok(!(await s({ p_q: 'pedreiro' })).includes('ze-demo'), 'sem área confirmada fica fora da busca');
+  // categoria
+  assert.deepEqual((await s({ p_category_slug: 'hidraulica-e-manutencao' })).sort(), ['carlos-demo', 'hidro-demo', 'marcos-demo']);
   const today = await s({ p_today: true, p_city_slug: 'campo-grande-ms', p_neighborhood_slug: 'centro' });
   assert.ok(today.includes('bia-demo') && today.includes('carlos-demo') && today.includes('pantanal-demo') && !today.includes('rafa-demo'));
 });
@@ -146,8 +164,15 @@ test('contato urgente (API): válido, desativado, vencido, fora do bairro, fora 
   assert.equal(u.hostname, 'wa.me');
   assert.equal(u.searchParams.get('text'), 'Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
   assert.equal((await urgentContact({ providerId: carlos, serviceId: svc('encanador'), neighborhoodId: nb('aero-rancho') })).status, 409, 'fora do bairro');
+  // sem bairro: mensagem diz só a cidade
+  const noNb = await urgentContact({ providerId: await profileId('marcos'), serviceId: svc('encanador'), neighborhoodId: null });
+  assert.equal(noNb.status, 200, 'Todos os bairros');
+  assert.equal(new URL(noNb.body.url).searchParams.get('text'), 'Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
+  assert.equal((await urgentContact({ providerId: await profileId('marcos'), serviceId: svc('encanador'), neighborhoodId: nb('centro') })).status, 409, 'Marcos não atende o Centro');
   const bia = await profileId('bia');
-  assert.equal((await urgentContact({ providerId: bia, serviceId: svc('diarista'), neighborhoodId: nb('centro') })).status, 409, 'fora do piloto');
+  await admin.from('services').update({ urgent_pilot: false }).eq('slug', 'diarista');
+  try { assert.equal((await urgentContact({ providerId: bia, serviceId: svc('diarista'), neighborhoodId: nb('centro') })).status, 409, 'fora do Preciso para hoje'); }
+  finally { await admin.from('services').update({ urgent_pilot: true }).eq('slug', 'diarista'); }
   const paulo = await profileId('paulo');
   assert.equal((await urgentContact({ providerId: paulo, serviceId: svc('encanador'), neighborhoodId: nb('centro') })).status, 409, 'pausado');
 
@@ -155,7 +180,7 @@ test('contato urgente (API): válido, desativado, vencido, fora do bairro, fora 
   await admin.from('availability_today').update({ expires_at: new Date(Date.now() - 1000).toISOString() }).eq('provider_id', carlos);
   assert.equal((await urgentContact({ providerId: carlos, serviceId: svc('encanador'), neighborhoodId: nb('centro') })).status, 409, 'vencido');
   const { data: list } = await anon().rpc('urgent_search', { p_service_slug: 'encanador', p_neighborhood_id: nb('centro') });
-  assert.equal(list!.length, 0, 'vencido some da lista');
+  assert.ok(!list!.some((r: { slug: string }) => r.slug === 'carlos-demo'), 'vencido some da lista');
 
   // desativação manual pelo prestador
   const joanaC = await signIn('prestador-joana');
@@ -175,7 +200,7 @@ test('contato urgente (API): válido, desativado, vencido, fora do bairro, fora 
 
 test('contato urgente tem limite de frequência', async () => {
   const { svc, nb } = await ids();
-  const body = { providerId: await profileId('marcos'), serviceId: svc('encanador'), neighborhoodId: nb('aero-rancho') };
+  const body = { providerId: await profileId('marcos'), serviceId: svc('encanador'), neighborhoodId: nb('caranda-bosque') };
   const statuses: number[] = [];
   for (let i = 0; i < 22; i++) statuses.push((await urgentContact(body, '10.9.9.9')).status);
   assert.equal(statuses.filter((s) => s === 200).length, 20);

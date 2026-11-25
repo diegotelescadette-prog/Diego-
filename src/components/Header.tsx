@@ -2,16 +2,25 @@ import Link from 'next/link';
 import { Logo } from './Logo';
 import { getIsAdmin, getUser } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
+import { BottomNav } from './BottomNav';
+
+async function hasOwnProfile(userId: string | undefined) {
+  if (!userId) return false;
+  const supabase = await createClient();
+  const { data } = await supabase.from('provider_profiles').select('id').eq('id', userId).maybeSingle();
+  return !!data;
+}
+
+export async function MobileNav() {
+  const user = await getUser();
+  const hasProfile = await hasOwnProfile(user?.id);
+  return <BottomNav proHref={hasProfile ? '/painel' : '/sou-prestador'} proLabel={hasProfile ? 'Meu perfil' : 'Sou prestador'} />;
+}
 
 export async function Header() {
   const user = await getUser();
   const isAdmin = await getIsAdmin();
-  let hasProfile = false;
-  if (user) {
-    const supabase = await createClient();
-    const { data } = await supabase.from('provider_profiles').select('id').eq('id', user.id).maybeSingle();
-    hasProfile = !!data;
-  }
+  const hasProfile = await hasOwnProfile(user?.id);
   return (
     <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2">
@@ -40,7 +49,7 @@ export async function Header() {
             </details>
           ) : (
             <>
-              <Link href="/sou-prestador" className="btn-ghost whitespace-nowrap px-2 text-sm sm:px-4 sm:text-base">Sou prestador</Link>
+              <Link href="/sou-prestador" className="btn-ghost hidden whitespace-nowrap sm:inline-flex">Sou prestador</Link>
               <Link href="/entrar" className="btn-outline min-h-10 px-3 py-1.5 text-sm sm:text-base">Entrar</Link>
             </>
           )}
