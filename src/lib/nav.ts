@@ -67,15 +67,19 @@ export function searchItems(v: NavViewer): NavItem[] {
     { href: '/vagas', label: 'Procurar vaga', icon: 'briefcase', match: ['/vagas', '/minhas-candidaturas'], group: work, hint: 'Vagas abertas em Campo Grande' },
     { href: '/vagas/meu-curriculo', label: 'Cadastrar currículo', icon: 'file', match: ['/vagas/meu-curriculo'], group: work, hint: 'Empresas encontram você' },
     { href: '/vagas/nova', label: 'Anunciar vaga', icon: 'megaphone', match: ['/vagas/nova', '/minhas-vagas'], group: work, hint: 'Grátis, receba currículos' },
-    v.hasProfile
-      ? { href: '/painel', label: 'Painel do prestador', icon: 'tool', match: [], group: pro, hint: 'Fotos, área e “Atendo hoje”' }
-      : { href: '/sou-prestador', label: 'Quero oferecer serviços', icon: 'tool', match: ['/sou-prestador'], group: pro, hint: 'Crie seu perfil grátis' },
+    ...(v.hasProfile
+      ? [
+          { href: '/publicar', label: 'Publicar um trabalho', icon: 'photo', match: ['/publicar'], group: pro, hint: 'Foto ou vídeo do que você faz' },
+          { href: '/painel', label: 'Painel do prestador', icon: 'tool', match: [], group: pro, hint: 'Perfil, área e “Atendo hoje”' },
+        ] as NavItem[]
+      : [{ href: '/sou-prestador', label: 'Quero oferecer serviços', icon: 'tool', match: ['/sou-prestador'], group: pro, hint: 'Crie seu perfil grátis' }] as NavItem[]),
   ];
 }
 
 export const PROVIDER_ITEMS: NavItem[] = [
   { href: '/painel', label: 'Visão geral', icon: 'gauge' },
   { href: '/painel/perfil', label: 'Meu perfil', icon: 'user' },
+  { href: '/publicar', label: 'Publicar um trabalho', icon: 'megaphone' },
   { href: '/painel/servicos', label: 'Serviços e fotos', icon: 'photo' },
   { href: '/painel/atendimento', label: 'Onde atendo', icon: 'pin' },
   { href: '/painel/disponibilidade', label: 'Disponibilidade', icon: 'clock' },
@@ -90,6 +94,7 @@ export const ADMIN_SECTIONS = [
   { key: 'catalogo', label: 'Catálogo', icon: 'book' },
   { key: 'sugestoes', label: 'Sugestões', icon: 'bulb' },
   { key: 'denuncias', label: 'Denúncias', icon: 'flag' },
+  { key: 'publicacoes', label: 'Publicações', icon: 'photo' },
   { key: 'vagas', label: 'Vagas', icon: 'briefcase' },
   { key: 'historico', label: 'Histórico', icon: 'history' },
   { key: 'config', label: 'Configurações', icon: 'gear' },
@@ -140,10 +145,11 @@ export function screenTitle(pathname: string, section?: string | null): string {
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
     '/conta': 'Minha conta', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
-    '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Meu currículo', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
+    '/publicar': 'Publicar um trabalho', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Meu currículo', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };
   if (exact[pathname]) return exact[pathname];
   if (pathname.startsWith('/p/')) return 'Perfil do prestador';
+  if (pathname.startsWith('/publicacoes/')) return 'Publicação';
   if (pathname.startsWith('/minhas-vagas/')) return 'Candidatos da vaga';
   if (pathname.startsWith('/vagas/')) return pathname.endsWith('/editar') ? 'Editar vaga' : 'Vaga de emprego';
   return '';

@@ -10,6 +10,9 @@ const REASONS: Record<string, string> = {
   contato: 'Entre para chamar o prestador no WhatsApp.',
   favorito: 'Entre para salvar nos favoritos.',
   denuncia: 'Entre para denunciar um perfil.',
+  comentar: 'Entre para comentar a publicação.',
+  util: 'Entre para marcar a publicação como útil.',
+  publicar: 'Entre com sua conta de prestador para publicar.',
 };
 
 export default async function Entrar({ searchParams }: { searchParams: Promise<{ next?: string; motivo?: string; erro?: string }> }) {

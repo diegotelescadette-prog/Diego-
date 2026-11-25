@@ -21,12 +21,14 @@ export async function POST(req: Request) {
 
   const form = await req.formData().catch(() => null);
   const file = form?.get('file');
-  const kind = form?.get('kind') === 'work' ? 'work' : 'profile';
+  const k = form?.get('kind');
+  const kind = k === 'work' ? 'work' : k === 'post' ? 'post' : 'profile';
   if (!(file instanceof File)) return NextResponse.json({ error: 'Selecione uma imagem' }, { status: 400 });
   if (file.size > MAX_INPUT) return NextResponse.json({ error: 'A imagem deve ter até 8 MB' }, { status: 413 });
 
-  const { data: profile } = await supabase.from('provider_profiles').select('id, photo_path').eq('id', user.id).maybeSingle();
+  const { data: profile } = await supabase.from('provider_profiles').select('id, photo_path, status').eq('id', user.id).maybeSingle();
   if (!profile) return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
+  if (kind === 'post' && profile.status !== 'published') return NextResponse.json({ error: 'Publique seu perfil antes de postar' }, { status: 403 });
   if (kind === 'work') {
     const { count } = await supabase.from('provider_work_photos').select('id', { count: 'exact', head: true }).eq('provider_id', user.id);
     if ((count ?? 0) >= MAX_WORK_PHOTOS) return NextResponse.json({ error: `Limite de ${MAX_WORK_PHOTOS} fotos de trabalhos` }, { status: 400 });
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
     if ((meta.width ?? 0) * (meta.height ?? 0) > 50_000_000) {
       return NextResponse.json({ error: 'Imagem com resolução muito alta' }, { status: 413 });
     }
-    const size = kind === 'profile' ? 600 : 1400;
+    const size = kind === 'profile' ? 600 : kind === 'post' ? 1600 : 1400;
     // .rotate() aplica a orientação; sem .withMetadata() o sharp descarta EXIF (inclui GPS).
     out = await sharp(input).rotate().resize({ width: size, height: size, fit: kind === 'profile' ? 'cover' : 'inside', withoutEnlargement: kind !== 'profile' })
       .webp({ quality: 80 }).toBuffer();
@@ -51,8 +53,11 @@ export async function POST(req: Request) {
   }
 
   const path = `${user.id}/${kind}-${crypto.randomUUID()}.webp`;
-  const { error: upErr } = await supabase.storage.from('profile-photos').upload(path, out, { contentType: 'image/webp', upsert: false });
+  const bucket = kind === 'post' ? 'post-media' : 'profile-photos';
+  const { error: upErr } = await supabase.storage.from(bucket).upload(path, out, { contentType: 'image/webp', upsert: false });
   if (upErr) return NextResponse.json({ error: 'Falha ao salvar a imagem' }, { status: 500 });
+  // Foto de publicação: só o arquivo; a publicação é criada depois, com todas as mídias.
+  if (kind === 'post') return NextResponse.json({ path });
 
   if (kind === 'profile') {
     await supabase.from('provider_profiles').update({ photo_path: path }).eq('id', user.id);

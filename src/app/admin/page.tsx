@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/server';
 import { ADMIN_SECTIONS, adminSection } from '@/lib/nav';
 import { STATUS_LABEL, type City, type ProviderStatus } from '@/lib/types';
 import { JOB_REPORT_REASON, JOB_STATUS_LABEL, jobState } from '@/lib/jobs';
+import { adminPostAction } from '@/app/publicacoes/actions';
+import { POST_REPORT_REASON } from '@/lib/posts-shared';
 
 export const metadata: Metadata = { title: 'Administração' };
 export const dynamic = 'force-dynamic';
@@ -57,6 +59,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<SP
       {aba === 'sugestoes' && <Sugestoes sb={sb} />}
       {aba === 'denuncias' && <Denuncias sb={sb} sp={sp} city={city} cities={cities} />}
       {aba === 'perfis' && <Perfis sb={sb} sp={sp} city={city} cities={cities} />}
+      {aba === 'publicacoes' && <Publicacoes sb={sb} />}
       {aba === 'vagas' && <Vagas sb={sb} />}
       {aba === 'historico' && <Historico sb={sb} />}
       {aba === 'config' && <Config />}
@@ -447,6 +450,77 @@ async function Historico({ sb }: { sb: SB }) {
 const JOB_REASON: Record<string, string> = JOB_REPORT_REASON;
 
 /** Vagas: denúncias em aberto e as vagas mais recentes. A moderação não tem acesso aos currículos. */
+async function Publicacoes({ sb }: { sb: SB }) {
+  const [{ data: reports, error }, { data: recent }] = await Promise.all([
+    sb.from('post_reports').select('id, reason, details, created_at, post_id, comment_id, posts!inner(body, status, provider_profiles!inner(display_name)), post_comments(body, author_name, status)')
+      .eq('status', 'aberta').order('created_at', { ascending: false }).limit(100),
+    sb.from('posts').select('id, body, status, created_at, provider_profiles!inner(display_name)').order('created_at', { ascending: false }).limit(30),
+  ]);
+  type P = { body: string; status: string; provider_profiles: { display_name: string } };
+  const cut = (t: string) => (t.length > 180 ? `${t.slice(0, 180)}…` : t);
+  return (
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Denúncias de publicações e comentários</h2>
+        {error && <p role="alert" className="card p-4 text-red-800">Não foi possível carregar as denúncias.</p>}
+        {!error && (reports ?? []).length === 0 && <p className="card p-4">Nenhuma denúncia em análise.</p>}
+        {(reports ?? []).map((r) => {
+          const po = r.posts as unknown as P;
+          const c = r.post_comments as unknown as { body: string; author_name: string; status: string } | null;
+          return (
+            <div key={r.id} className="card p-4" data-testid="denuncia-publicacao">
+              <p className="font-bold">#{r.id} · {POST_REPORT_REASON[r.reason] ?? r.reason} · {c ? 'Comentário' : 'Publicação'}</p>
+              <p className="mt-1">De <strong>{c ? c.author_name : po.provider_profiles.display_name}</strong> em <Link className="underline" href={`/publicacoes/${r.post_id}`}>publicação de {po.provider_profiles.display_name}</Link></p>
+              <blockquote className="mt-2 rounded-xl bg-stone-50 p-3 text-stone-800">{cut(c ? c.body : po.body || '(só fotos ou vídeo)')}</blockquote>
+              {r.details && <p className="mt-1 text-stone-700">Detalhes: {r.details}</p>}
+              <form action={adminPostAction} className="mt-3 space-y-2">
+                <input type="hidden" name="report_id" value={r.id} /><input type="hidden" name="post_id" value={r.post_id} />
+                {r.comment_id && <input type="hidden" name="comment_id" value={r.comment_id} />}
+                <label className="label" htmlFor={`pn-${r.id}`}>Motivo (aparece no histórico)</label>
+                <input id={`pn-${r.id}`} name="note" className="input" />
+                <div className="flex flex-wrap gap-2">
+                  <SubmitButton name="op" value="remover" className="btn-danger">{c ? 'Remover comentário' : 'Remover publicação'}</SubmitButton>
+                  <SubmitButton name="op" value="improcedente" className="btn-outline">Improcedente</SubmitButton>
+                </div>
+              </form>
+            </div>
+          );
+        })}
+      </section>
+      <section className="space-y-3">
+        <h2 className="text-lg font-bold">Publicações recentes</h2>
+        <div className="card overflow-x-auto p-2">
+          <table className="w-full text-left text-sm">
+            <thead><tr className="text-stone-600"><th className="p-2">Publicação</th><th className="p-2">Situação</th><th className="p-2">Data</th><th className="p-2">Ação</th></tr></thead>
+            <tbody>
+              {(recent ?? []).length === 0 && <tr><td className="p-2" colSpan={4}>Nenhuma publicação.</td></tr>}
+              {(recent ?? []).map((po) => {
+                const pr = po.provider_profiles as unknown as { display_name: string };
+                return (
+                  <tr key={po.id} className="border-t border-stone-100 align-top">
+                    <td className="p-2"><Link className="underline" href={`/publicacoes/${po.id}`}>{pr.display_name}</Link><br /><span className="text-stone-600">{cut(po.body || '(só fotos ou vídeo)')}</span></td>
+                    <td className="p-2">{po.status === 'removido' ? 'Removida' : 'No ar'}</td>
+                    <td className="whitespace-nowrap p-2">{new Date(po.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Campo_Grande' })}</td>
+                    <td className="p-2">
+                      {po.status !== 'removido' && (
+                        <form action={adminPostAction} className="flex flex-wrap items-center gap-2">
+                          <input type="hidden" name="post_id" value={po.id} />
+                          <input name="note" className="input min-h-9 w-44 py-1 text-sm" placeholder="Motivo" aria-label={`Motivo para remover a publicação de ${pr.display_name}`} />
+                          <SubmitButton name="op" value="remover" className="btn-danger min-h-9 px-3 text-sm">Remover</SubmitButton>
+                        </form>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 async function Vagas({ sb }: { sb: SB }) {
   const [{ data: reports, error }, { data: jobs }] = await Promise.all([
     sb.from('job_reports').select('id, reason, details, created_at, job_id, jobs!inner(title, company_name, status)').eq('status', 'aberta').order('created_at', { ascending: false }).limit(100),

@@ -41,16 +41,19 @@ function readBody(req) {
   return new Promise((resolve) => { const chunks = []; req.on('data', (c) => chunks.push(c)); req.on('end', () => resolve(Buffer.concat(chunks))); });
 }
 
+const PUBLIC_BUCKETS = new Set(['profile-photos', 'post-media']);
+const mimeOf = (f) => ({ '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.webm': 'video/webm' })[path.extname(f).toLowerCase()] ?? 'image/webp';
+
 async function storage(req, res) {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname.replace(/^\/storage\/v1/, '');
   const json = (code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
   let m = p.match(/^\/object\/public\/([^/]+)\/(.+)$/);
   if (m && req.method === 'GET') {
-    if (m[1] !== 'profile-photos') return json(400, { statusCode: '404', error: 'Bucket not found' }); // só o bucket público
+    if (!PUBLIC_BUCKETS.has(m[1])) return json(400, { statusCode: '404', error: 'Bucket not found' }); // só os buckets públicos
     const file = path.join(STORAGE_DIR, m[1], decodeURIComponent(m[2]));
     if (!file.startsWith(STORAGE_DIR) || !fs.existsSync(file)) return json(404, { error: 'not_found' });
-    res.writeHead(200, { 'content-type': 'image/webp', 'cache-control': 'public, max-age=60' });
+    res.writeHead(200, { 'content-type': mimeOf(file), 'cache-control': 'public, max-age=60' });
     return fs.createReadStream(file).pipe(res);
   }
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '');
@@ -63,8 +66,9 @@ async function storage(req, res) {
     const ct = req.headers['content-type'] || '';
     if (m[1] === 'profile-photos' && !ct.startsWith('image/webp')) return json(415, { error: 'invalid_mime_type' });
     if (m[1] === 'curriculos' && !ct.startsWith('application/pdf')) return json(415, { error: 'invalid_mime_type' });
+    if (m[1] === 'post-media' && !/^(image\/webp|video\/(mp4|quicktime|webm))/.test(ct)) return json(415, { error: 'invalid_mime_type' });
     const body = await readBody(req);
-    if (body.length > (m[1] === 'curriculos' ? 4 : 2) * 1024 * 1024) return json(413, { error: 'Payload too large' });
+    if (body.length > ({ curriculos: 4, 'post-media': 50 }[m[1]] ?? 2) * 1024 * 1024) return json(413, { error: 'Payload too large' });
     const file = path.join(STORAGE_DIR, m[1], name);
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, body);

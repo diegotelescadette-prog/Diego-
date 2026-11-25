@@ -20,8 +20,9 @@ test('área pelo caminho e barra inferior só na busca', () => {
 test('menu por perfil: visitante, prestador e admin só veem a área permitida', () => {
   const labels = (a: Parameters<typeof navItems>[0], v: typeof visitor) => navItems(a, v).map((i) => i.label);
   assert.deepEqual(labels('busca', visitor), ['Início', 'Preciso para hoje', 'Prestadores de serviço', 'Favoritos', 'Procurar vaga', 'Cadastrar currículo', 'Anunciar vaga', 'Quero oferecer serviços']);
+  assert.ok(labels('busca', provider).includes('Publicar um trabalho'));
   assert.ok(labels('busca', provider).includes('Painel do prestador'));
-  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Meu perfil', 'Serviços e fotos', 'Onde atendo', 'Disponibilidade', 'Prévia do perfil', 'Minha conta', 'Buscar serviços']);
+  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Meu perfil', 'Publicar um trabalho', 'Serviços e fotos', 'Onde atendo', 'Disponibilidade', 'Prévia do perfil', 'Minha conta', 'Buscar serviços']);
   // sem permissão, a área administrativa mostra o menu de busca
   assert.equal(labels('admin', provider)[0], 'Início');
   assert.equal(labels('admin', adm)[0], 'Visão geral');

@@ -1,28 +1,15 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useWhatsApp } from './useWhatsApp';
 import { Avatar } from './Avatar';
 import { WhatsAppIcon } from './CategoryIcon';
 import type { FeedPost as Post } from '@/lib/feed';
 
 /** Publicação do feed da tela inicial: texto do prestador, fotos de trabalho e contato. */
 export function FeedPost({ post, loggedIn, message }: { post: Post; loggedIn: boolean; message: string }) {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const profile = `/p/${post.slug}`;
   const extra = post.photoCount - post.photos.length;
-
-  async function whatsapp() {
-    if (!loggedIn) { window.location.assign(`/entrar?motivo=contato&next=${encodeURIComponent(profile)}`); return; }
-    setBusy(true); setErr(null);
-    const res = await fetch('/api/contact/general', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ providerId: post.id, message }),
-    }).catch(() => null);
-    const body = res?.ok ? await res.json().catch(() => ({})) : {};
-    if (body.url) { window.location.assign(body.url); return; }
-    setBusy(false);
-    setErr(res?.status === 429 ? 'Muitas tentativas em pouco tempo. Aguarde alguns minutos.' : 'Não foi possível abrir o WhatsApp agora. Tente novamente.');
-  }
+  const { open: whatsapp, busy, err } = useWhatsApp(post.id, profile, loggedIn, message);
 
   return (
     <article className="post" data-testid="feed-post" aria-labelledby={`post-${post.id}`}>

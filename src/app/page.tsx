@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { FeedPost } from '@/components/FeedPost';
+import { PostCard } from '@/components/PostCard';
+import { getPosts } from '@/lib/posts';
 import { Avatar } from '@/components/Avatar';
 import { Glyph } from '@/components/CategoryIcon';
 import { getCatalog, getPilotCity, getUser } from '@/lib/data';
@@ -14,14 +16,21 @@ const BOLT = 'M13 2 4 14h7l-1 8 9-12h-7z';
 const CAMERA = 'M4 8h3l2-3h6l2 3h3v11H4zM12 10.5a3 3 0 1 0 .01 0';
 
 /** Tela inicial: busca no topo e, embaixo, os trabalhos que os prestadores da cidade publicam. */
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ antes?: string }> }) {
+  const { antes } = await searchParams;
+  const before = antes && !Number.isNaN(Date.parse(antes)) ? new Date(antes).toISOString() : undefined;
   const city = await getPilotCity();
   const user = await getUser();
   const supabase = await createClient();
-  const [catalog, feed, jobs, own] = await Promise.all([
+  const PAGE = 15;
+  const [catalog, feed, jobs, own, posts] = await Promise.all([
     getCatalog(), getFeed(city.slug), getLatestJobs(),
     user ? supabase.from('provider_profiles').select('id').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null }),
+    getPosts({ citySlug: city.slug, before, limit: PAGE }),
   ]);
+  // Prestadores que ainda não publicaram aparecem depois das publicações (com as fotos do perfil).
+  const posted = new Set(posts.map((p) => p.author.id));
+  const others = before ? [] : feed.filter((p) => !posted.has(p.id));
   const isProvider = !!own.data;
   const today = feed.filter((p) => p.availableToday);
   const place = `${city.name}`;
@@ -48,19 +57,27 @@ export default async function Home() {
           </nav>
         </section>
 
-        <Link href={isProvider ? '/painel/servicos' : '/sou-prestador'} className="post composer" data-testid="composer">
+        <Link href={isProvider ? '/publicar' : '/sou-prestador'} className="post composer" data-testid="composer">
           <span className="grid h-11 w-11 flex-none place-items-center rounded-full bg-brand-50 text-brand-700"><Glyph d={CAMERA} size={22} /></span>
-          <span className="composer-in">{isProvider ? 'Mostre um trabalho seu: adicione fotos' : 'É prestador? Mostre seus trabalhos aqui'}</span>
+          <span className="composer-in">{isProvider ? 'Mostre um trabalho seu: foto ou vídeo' : 'É prestador? Mostre seus trabalhos aqui'}</span>
         </Link>
 
         <section aria-labelledby="feed-titulo" className="space-y-4">
           <h2 id="feed-titulo" className="px-1 text-lg font-bold">Trabalhos em {city.name}</h2>
-          {feed.length ? feed.map((p) => (
-            <FeedPost key={p.id} post={p} loggedIn={!!user} message={generalMessage(p.service ?? 'um serviço', place, false)} />
-          )) : (
-            <div className="post p-5 text-stone-700">Ainda não há prestadores publicados. <Link href="/sou-prestador" className="font-semibold text-brand-700 underline">Seja o primeiro</Link>.</div>
+          {posts.map((p) => (
+            <PostCard key={p.id} post={p} viewerId={user?.id ?? null} message={generalMessage(p.author.service ?? 'um serviço', place, false)} />
+          ))}
+          {posts.length === PAGE && (
+            <Link href={`/?antes=${encodeURIComponent(posts[posts.length - 1].createdAt)}#feed-titulo`} className="btn-outline w-full">Ver publicações mais antigas</Link>
           )}
-          {feed.length > 0 && <Link href="/buscar" className="btn-outline w-full">Ver todos os prestadores</Link>}
+          {others.length > 0 && posts.length > 0 && <h2 className="px-1 pt-2 text-lg font-bold">Mais prestadores em {city.name}</h2>}
+          {others.map((p) => (
+            <FeedPost key={p.id} post={p} loggedIn={!!user} message={generalMessage(p.service ?? 'um serviço', place, false)} />
+          ))}
+          {!posts.length && !others.length && (
+            <div className="post p-5 text-stone-700">{before ? 'Não há publicações mais antigas.' : <>Ainda não há prestadores publicados. <Link href="/sou-prestador" className="font-semibold text-brand-700 underline">Seja o primeiro</Link>.</>}</div>
+          )}
+          {(posts.length > 0 || others.length > 0) && <Link href="/buscar" className="btn-outline w-full">Ver todos os prestadores</Link>}
         </section>
       </div>
 
