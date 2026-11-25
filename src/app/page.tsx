@@ -67,8 +67,8 @@ export default async function Home() {
           <p className="mt-1 text-stone-700">Procurando trabalho? Envie seu currículo para vagas de Campo Grande. Contratando? Anuncie grátis e receba currículos.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/vagas" className="btn-primary">Ver vagas</Link>
-          <Link href="/vagas/nova" className="btn-outline">Anunciar vaga</Link>
+          <Link href="/vagas/nova" className="btn-primary">Oferecer trabalho</Link>
+          <Link href="/vagas" className="btn-outline">Enviar currículo</Link>
         </div>
       </section>
 

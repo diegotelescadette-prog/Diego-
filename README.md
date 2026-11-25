@@ -37,17 +37,19 @@ O cabeçalho mostra o nome da tela e as ações de conta. No celular, o botão *
 
 | Rota | O que faz |
 | --- | --- |
-| `/vagas` | Vagas abertas, busca por cargo/empresa e filtros de contratação e formato |
+| `/vagas` | Duas áreas, **Oferecer trabalho** e **Enviar currículo**, e as vagas abertas, busca por cargo/empresa e filtros de contratação e formato |
 | `/vagas/[id]` | Detalhe da vaga e candidatura: nome, e-mail, WhatsApp (opcional), mensagem, **currículo em PDF até 4 MB** e autorização de envio |
 | `/vagas/nova`, `/vagas/[id]/editar` | Qualquer conta anuncia (empresa ou pessoa), aceitando as regras (vaga real, sem cobrança, uso só na seleção). Fica no ar 30 dias |
 | `/minhas-vagas`, `/minhas-vagas/[id]` | Quem publicou: candidatos, baixar currículo, situação (Recebida, Currículo visto, Em contato, Não selecionada), encerrar, reabrir por 30 dias, excluir |
 | `/minhas-candidaturas` | Candidato acompanha a situação, baixa o que enviou e retira a candidatura (apaga o PDF) |
+| `/vagas/meu-curriculo` | **Enviar currículo** sem vaga específica (banco de currículos): ocultar, mostrar e apagar; vence em 6 meses, salvar renova |
+| `/vagas/banco` | Banco de currículos: só para contas com vaga aberta (a administração não consulta); até 60 downloads/dia |
 | `/admin?aba=vagas` | Denúncias de vagas e remoção com motivo (fica no histórico). A moderação **não** vê currículos |
 
 - Currículos ficam no bucket **privado** `curriculos`, na pasta do candidato; o servidor confere a assinatura real do PDF. Download só por `/api/vagas/curriculo/[id]`, liberado ao candidato e a quem publicou (RLS), com `no-store`.
 - Retenção: apagados ao retirar a candidatura, ao excluir a vaga ou a conta, e automaticamente 90 dias depois que a vaga encerra (limpeza disparada no máximo 1x/hora a partir de `/vagas`).
 - Limites no banco: 5 vagas/dia e 20 abertas por conta; 20 candidaturas/dia; uma candidatura por vaga; não se candidata à própria vaga.
-- Produção já existente: rode `supabase/producao/atualizacoes/2026-11-25-vagas.sql` uma vez no SQL Editor.
+- Produção já existente: rode os arquivos de `supabase/producao/atualizacoes/` ainda não aplicados, em ordem, no SQL Editor.
 
 ### Regras da evolução dos painéis (migração `20261125000600_paineis.sql`, aditiva)
 

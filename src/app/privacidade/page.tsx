@@ -23,6 +23,7 @@ export default function Privacidade() {
           <li><strong>O que enviamos</strong>: ao se candidatar, seu nome, e-mail, WhatsApp (se informar), mensagem e currículo em PDF vão <strong>somente para quem publicou a vaga</strong>, com a sua autorização (consentimento, LGPD art. 7º, I). Nada disso aparece em páginas públicas e a moderação também não tem acesso aos currículos.</li>
           <li><strong>Onde fica</strong>: o PDF é guardado em área privada de armazenamento, e o download só é liberado para você e para quem publicou a vaga.</li>
           <li><strong>Por quanto tempo</strong>: até você retirar a candidatura (o arquivo é apagado na hora), até quem publicou excluir a vaga, ou no máximo 90 dias depois que a vaga encerra, quando apagamos automaticamente.</li>
+          <li><strong>Banco de currículos</strong>: se você deixar o currículo sem escolher uma vaga, ele fica visível só para contas com vaga aberta publicada aqui (a administração não consulta). Você pode ocultar ou apagar quando quiser; ele vence em 6 meses (salvar de novo renova) e, vencido há mais de 30 dias, é apagado.</li>
           <li><strong>Quem publica a vaga</strong> se compromete a usar os currículos só para aquela seleção, sem repassar a terceiros, e a não cobrar nada dos candidatos.</li>
         </ul>
       </section>

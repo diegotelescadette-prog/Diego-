@@ -18,14 +18,14 @@ export function normalizeQuery(q: string): string {
   return q.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
-/** Retenção (LGPD): apaga currículos de vagas encerradas há mais de 90 dias.
+/** Retenção (LGPD): apaga currículos de vagas encerradas há mais de 90 dias e do banco vencidos há mais de 30.
  *  Roda no máximo uma vez por hora, depois de responder a página. */
 export async function purgeOldResumes() {
   try {
     if (!(await hitLimit('limpeza-curriculos', 'global', 1, 3600))) return;
     const admin = createAdminClient();
-    const { data } = await admin.rpc('purge_old_applications');
-    const paths = ((data ?? []) as { resume_path: string }[]).map((r) => r.resume_path);
+    const [{ data }, { data: talent }] = await Promise.all([admin.rpc('purge_old_applications'), admin.rpc('purge_old_talent')]);
+    const paths = [...((data ?? []) as { resume_path: string }[]), ...((talent ?? []) as { resume_path: string }[])].map((r) => r.resume_path);
     for (let i = 0; i < paths.length; i += 100) await admin.storage.from('curriculos').remove(paths.slice(i, i + 100));
   } catch {
     // tenta de novo na próxima janela

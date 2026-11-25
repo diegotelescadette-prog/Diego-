@@ -14,6 +14,14 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 5 (25/11/2026): Oferecer trabalho / Enviar currículo e banco de currículos — todos passando
+
+Unitários (15), banco/API (27) e E2E (26 cenários × computador e celular = 52).
+
+- Banco: só quem tem vaga aberta consulta; encerrar todas as vagas tira o acesso; visitante, usuário comum e administração não veem.
+- Dono cria, oculta, mostra e apaga; não usa arquivo de outra pessoa nem define o prazo; salvar renova 6 meses. Vencido some e é apagado após 30 dias.
+- Quem contrata busca por cargo, baixa o PDF e abre o WhatsApp; conta sem vaga vê o banco fechado e o download dá 404.
+
 ## Rodada 4 (25/11/2026): vagas de emprego e currículos — todos passando
 
 Unitários (15), banco/API (24) e E2E (22 cenários × computador e celular = 44). O cenário antigo “busca sem resultados” oscilou uma vez
