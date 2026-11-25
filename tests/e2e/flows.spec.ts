@@ -10,7 +10,15 @@ test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Preciso para hoje' })).toBeVisible();
   await expect(page.getByText('Campo Grande–MS').first()).toBeVisible();
+  // Tela inicial: a lista começa fechada; sem escolher, o botão pede o serviço e abre a lista inteira.
+  await expect(page.getByText('Encanador', { exact: true })).toBeHidden();
+  await page.getByRole('button', { name: 'Ver quem atende hoje' }).click();
+  await expect(page.getByText('Escolha um serviço para continuar.')).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
   await page.getByText('Encanador', { exact: true }).click();
+  // Escolhido: a lista fecha e fica só o serviço, com opção de trocar.
+  await expect(page.getByText('Pedreiro', { exact: true })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Trocar serviço' })).toBeVisible();
   await page.getByLabel('2. Em qual bairro?').selectOption({ label: 'Centro' });
   await page.getByRole('button', { name: 'Ver quem atende hoje' }).click();
   await expect(page).toHaveURL(/\/hoje\?servico=encanador&bairro=centro/);

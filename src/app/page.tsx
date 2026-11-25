@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { UrgentForm, toUrgentList } from '@/components/UrgentForm';
-import { CategoryIcon, Glyph, PIN_PATH, WhatsAppIcon } from '@/components/CategoryIcon';
+import { CategoryIcon, Glyph, PIN_PATH } from '@/components/CategoryIcon';
 import { getCatalog, getNeighborhoods, getPilotCity, getSynonymsByService, getUrgentCatalog } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
-import { PILOT_CITY_LABEL, PILOT_TAGLINE, URGENT_TAGLINE } from '@/config/brand';
+import { PILOT_CITY_LABEL, URGENT_TAGLINE } from '@/config/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,69 +15,66 @@ export default async function Home() {
     supabase.rpc('search_providers', { p_city_slug: city.slug, p_today: true, p_limit: 1 }),
   ]);
   const online = Number((live.data as { total_count: number }[] | null)?.[0]?.total_count ?? 0);
+  // Primeiras categorias sempre à vista; o resto abre em "Ver mais categorias".
+  const SHOWN = 6;
+  const catLink = (c: (typeof catalog)[number]) => (
+    <li key={c.slug}>
+      <Link href={`/buscar?categoria=${c.slug}&cidade=${city.slug}`} className="catbtn">
+        <CategoryIcon slug={c.slug} />
+        <span>{c.name}</span>
+      </Link>
+    </li>
+  );
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{PILOT_TAGLINE}</h1>
       <div id="preciso-para-hoje">
         <section aria-labelledby="hoje-titulo" className="band">
           <span className="chip-dark"><Glyph d={PIN_PATH} size={16} /> {PILOT_CITY_LABEL}</span>
-          <h2 id="hoje-titulo" className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Preciso para hoje</h2>
+          <h1 id="hoje-titulo" className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Preciso para hoje</h1>
           <p className="mt-2 max-w-xl text-lg text-white/90">{URGENT_TAGLINE}</p>
           {online > 0 && (
             <p className="live mt-3"><span className="dot" />{online === 1 ? '1 profissional disponível' : `${online} profissionais disponíveis`} hoje na cidade</p>
           )}
         </section>
         <div className="card lift p-5 sm:p-6">
-          <UrgentForm categories={toUrgentList(urgent, synonyms)} neighborhoods={neighborhoods} />
-          <p className="mt-4 flex items-center gap-2 text-sm text-stone-600">
-            <span className="text-zap-600"><WhatsAppIcon size={20} /></span>Sem cadastro: um toque e você fala com o profissional.
-          </p>
+          <UrgentForm categories={toUrgentList(urgent, synonyms)} neighborhoods={neighborhoods} home />
         </div>
       </div>
 
-      <section aria-labelledby="busca-titulo">
-        <form action="/buscar" method="get" role="search">
-          <label htmlFor="q-home" className="mb-2 block text-xl font-bold" id="busca-titulo">Buscar prestadores</label>
+      <section aria-labelledby="busca-titulo" id="categorias">
+        <h2 id="busca-titulo" className="text-xl font-bold">Sem pressa? Busque e compare</h2>
+        <p className="mt-1 text-stone-700">Veja perfis e fotos dos profissionais e escolha com calma.</p>
+        <form action="/buscar" method="get" role="search" className="mt-3">
           <div className="sb-row">
             <Glyph d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4" size={20} />
-            <input id="q-home" name="q" aria-label="O que você procura?" placeholder="Serviço, nome ou problema: vazamento, pintor…" />
+            <input id="q-home" name="q" aria-label="O que você procura?" placeholder="Serviço ou nome do profissional" />
             <input type="hidden" name="cidade" value={city.slug} />
-            <button className="btn-primary min-h-10 px-3 text-sm" type="submit">Buscar prestadores</button>
+            <button className="btn-primary min-h-10 px-4 text-sm" type="submit" aria-label="Buscar prestadores">Buscar</button>
           </div>
         </form>
+        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">{catalog.slice(0, SHOWN).map(catLink)}</ul>
+        {catalog.length > SHOWN && (
+          <details className="morecats mt-2">
+            <summary className="cursor-pointer py-2 text-sm font-semibold text-brand-700 underline">Ver mais {catalog.length - SHOWN} categorias</summary>
+            <ul className="mt-1 grid grid-cols-2 gap-2 sm:grid-cols-3">{catalog.slice(SHOWN).map(catLink)}</ul>
+          </details>
+        )}
       </section>
 
-      <section aria-labelledby="cats-titulo" id="categorias">
-        <h2 id="cats-titulo" className="text-xl font-bold">Explore por categoria</h2>
-        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-          {catalog.map((c) => (
-            <li key={c.slug}>
-              <Link href={`/buscar?categoria=${c.slug}&cidade=${city.slug}`} className="catbtn">
-                <CategoryIcon slug={c.slug} />
-                <span>{c.name}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section aria-labelledby="vagas-titulo" className="card flex flex-wrap items-center gap-4 p-5 sm:p-6">
-        <div className="min-w-0 flex-1">
-          <h2 id="vagas-titulo" className="text-xl font-bold">Vagas de emprego</h2>
-          <p className="mt-1 text-stone-700">Procurando trabalho? Envie seu currículo para vagas de Campo Grande. Contratando? Anuncie grátis e receba currículos.</p>
+      <section aria-label="Mais no Resolve Aqui" className="grid gap-3 sm:grid-cols-2">
+        <div className="card p-5">
+          <h2 className="flex items-center gap-2 text-lg font-bold">Vagas de emprego</h2>
+          <p className="mt-1 text-stone-700">Contratando ou procurando trabalho em Campo Grande? É grátis.</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link href="/vagas/nova" className="btn-primary px-3 text-center text-sm">Oferecer trabalho</Link>
+            <Link href="/vagas" className="btn-outline px-3 text-center text-sm">Enviar currículo</Link>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/vagas/nova" className="btn-primary">Oferecer trabalho</Link>
-          <Link href="/vagas" className="btn-outline">Enviar currículo</Link>
+        <div className="card pro p-5">
+          <h2 className="text-lg font-bold">Você é prestador?</h2>
+          <p className="mt-1 text-stone-700">Crie seu perfil grátis pelo celular e receba clientes no WhatsApp.</p>
+          <Link href="/sou-prestador" className="btn-hoje mt-3 w-full text-sm">Quero oferecer meus serviços</Link>
         </div>
-      </section>
-
-      <section aria-labelledby="prestador-titulo" className="card pro flex flex-wrap items-center gap-4 p-5 sm:p-6">
-        <div className="min-w-0 flex-1">
-          <h2 id="prestador-titulo" className="text-xl font-bold">Você é prestador?</h2>
-          <p className="mt-1 text-stone-700">Crie seu perfil pelo celular em duas etapas, diga quais bairros você atende e avise quando estiver disponível hoje.</p>
-        </div>
-        <Link href="/sou-prestador" className="btn-hoje">Quero oferecer meus serviços</Link>
       </section>
     </div>
   );

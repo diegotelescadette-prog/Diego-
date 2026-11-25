@@ -4,4 +4,4 @@ export const PILOT_CITY_SLUG = 'campo-grande-ms';
 export const PILOT_CITY_LABEL = 'Campo Grande–MS';
 export const PILOT_TAGLINE = 'Encontre prestadores em Campo Grande';
 // Atalho do fluxo urgente (bairro opcional).
-export const URGENT_TAGLINE = 'Veja quem confirmou disponibilidade hoje e chame no WhatsApp, sem cadastro. O bairro é opcional.';
+export const URGENT_TAGLINE = 'Escolha o serviço e chame no WhatsApp quem pode atender hoje. Sem cadastro.';
