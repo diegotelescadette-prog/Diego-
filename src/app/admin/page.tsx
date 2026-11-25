@@ -8,8 +8,8 @@ import { createClient } from '@/lib/supabase/server';
 import { ADMIN_SECTIONS, adminSection } from '@/lib/nav';
 import { STATUS_LABEL, type City, type ProviderStatus } from '@/lib/types';
 import { JOB_REPORT_REASON, JOB_STATUS_LABEL, jobState } from '@/lib/jobs';
-import { adminPostAction } from '@/app/publicacoes/actions';
-import { POST_REPORT_REASON } from '@/lib/posts-shared';
+import { adminPostAction } from '@/app/comunidade/actions';
+import { KIND_LABEL, POST_REPORT_REASON, type PostKind } from '@/lib/posts-shared';
 
 export const metadata: Metadata = { title: 'Administração' };
 export const dynamic = 'force-dynamic';
@@ -416,10 +416,13 @@ const ACTION_LABEL: Record<string, string> = {
   suspender_perfil: 'Suspendeu perfil', reativar_perfil: 'Reativou perfil', avaliar_denuncia: 'Avaliou denúncia',
   insert: 'Criou', update: 'Alterou', delete: 'Removeu',
   remover_vaga: 'Removeu vaga', encerrar_vaga: 'Encerrou vaga', avaliar_denuncia_vaga: 'Avaliou denúncia de vaga',
+  remover_publicacao: 'Ocultou publicação', remover_comentario: 'Ocultou comentário', avaliar_denuncia_publicacao: 'Avaliou denúncia de publicação',
+  autor_ocultou_comentario: 'Autor ocultou comentário', autor_mostrou_comentario: 'Autor mostrou comentário',
 };
 const TARGET_LABEL: Record<string, string> = {
   provider: 'Perfil', report: 'Denúncia', services: 'Serviço', service_categories: 'Categoria', service_synonyms: 'Sinônimo',
   app_settings: 'Configuração', service_suggestions: 'Sugestão', job: 'Vaga', job_report: 'Denúncia de vaga',
+  post: 'Publicação', comment: 'Comentário', post_report: 'Denúncia de publicação',
 };
 
 async function Historico({ sb }: { sb: SB }) {
@@ -452,11 +455,11 @@ const JOB_REASON: Record<string, string> = JOB_REPORT_REASON;
 /** Vagas: denúncias em aberto e as vagas mais recentes. A moderação não tem acesso aos currículos. */
 async function Publicacoes({ sb }: { sb: SB }) {
   const [{ data: reports, error }, { data: recent }] = await Promise.all([
-    sb.from('post_reports').select('id, reason, details, created_at, post_id, comment_id, posts!inner(body, status, provider_profiles!inner(display_name)), post_comments(body, author_name, status)')
+    sb.from('post_reports').select('id, reason, details, created_at, post_id, comment_id, posts!inner(body, status, kind, author_name), post_comments(body, author_name, status)')
       .eq('status', 'aberta').order('created_at', { ascending: false }).limit(100),
-    sb.from('posts').select('id, body, status, created_at, provider_profiles!inner(display_name)').order('created_at', { ascending: false }).limit(30),
+    sb.from('posts').select('id, body, status, kind, created_at, author_name').order('created_at', { ascending: false }).limit(30),
   ]);
-  type P = { body: string; status: string; provider_profiles: { display_name: string } };
+  type P = { body: string; status: string; kind: string; author_name: string | null };
   const cut = (t: string) => (t.length > 180 ? `${t.slice(0, 180)}…` : t);
   return (
     <div className="space-y-6">
@@ -470,7 +473,7 @@ async function Publicacoes({ sb }: { sb: SB }) {
           return (
             <div key={r.id} className="card p-4" data-testid="denuncia-publicacao">
               <p className="font-bold">#{r.id} · {POST_REPORT_REASON[r.reason] ?? r.reason} · {c ? 'Comentário' : 'Publicação'}</p>
-              <p className="mt-1">De <strong>{c ? c.author_name : po.provider_profiles.display_name}</strong> em <Link className="underline" href={`/publicacoes/${r.post_id}`}>publicação de {po.provider_profiles.display_name}</Link></p>
+              <p className="mt-1">De <strong>{c ? c.author_name : po.author_name ?? 'Conta sem nome'}</strong> em <Link className="underline" href={`/comunidade/${r.post_id}`}>{KIND_LABEL[po.kind as PostKind] ?? 'Publicação'} de {po.author_name ?? 'conta sem nome'}</Link></p>
               <blockquote className="mt-2 rounded-xl bg-stone-50 p-3 text-stone-800">{cut(c ? c.body : po.body || '(só fotos ou vídeo)')}</blockquote>
               {r.details && <p className="mt-1 text-stone-700">Detalhes: {r.details}</p>}
               <form action={adminPostAction} className="mt-3 space-y-2">
@@ -479,7 +482,7 @@ async function Publicacoes({ sb }: { sb: SB }) {
                 <label className="label" htmlFor={`pn-${r.id}`}>Motivo (aparece no histórico)</label>
                 <input id={`pn-${r.id}`} name="note" className="input" />
                 <div className="flex flex-wrap gap-2">
-                  <SubmitButton name="op" value="remover" className="btn-danger">{c ? 'Remover comentário' : 'Remover publicação'}</SubmitButton>
+                  <SubmitButton name="op" value="remover" className="btn-danger">{c ? 'Ocultar comentário' : 'Ocultar publicação'}</SubmitButton>
                   <SubmitButton name="op" value="improcedente" className="btn-outline">Improcedente</SubmitButton>
                 </div>
               </form>
@@ -495,18 +498,18 @@ async function Publicacoes({ sb }: { sb: SB }) {
             <tbody>
               {(recent ?? []).length === 0 && <tr><td className="p-2" colSpan={4}>Nenhuma publicação.</td></tr>}
               {(recent ?? []).map((po) => {
-                const pr = po.provider_profiles as unknown as { display_name: string };
+                const pr = { display_name: (po.author_name as string | null) ?? 'Conta sem nome' };
                 return (
                   <tr key={po.id} className="border-t border-stone-100 align-top">
-                    <td className="p-2"><Link className="underline" href={`/publicacoes/${po.id}`}>{pr.display_name}</Link><br /><span className="text-stone-600">{cut(po.body || '(só fotos ou vídeo)')}</span></td>
-                    <td className="p-2">{po.status === 'removido' ? 'Removida' : 'No ar'}</td>
+                    <td className="p-2"><Link className="underline" href={`/comunidade/${po.id}`}>{pr.display_name}</Link> · {KIND_LABEL[po.kind as PostKind] ?? ''}<br /><span className="text-stone-600">{cut(po.body || '(só fotos ou vídeo)')}</span></td>
+                    <td className="p-2">{po.status === 'removido' ? 'Ocultada' : 'No ar'}</td>
                     <td className="whitespace-nowrap p-2">{new Date(po.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Campo_Grande' })}</td>
                     <td className="p-2">
                       {po.status !== 'removido' && (
                         <form action={adminPostAction} className="flex flex-wrap items-center gap-2">
                           <input type="hidden" name="post_id" value={po.id} />
-                          <input name="note" className="input min-h-9 w-44 py-1 text-sm" placeholder="Motivo" aria-label={`Motivo para remover a publicação de ${pr.display_name}`} />
-                          <SubmitButton name="op" value="remover" className="btn-danger min-h-9 px-3 text-sm">Remover</SubmitButton>
+                          <input name="note" className="input min-h-9 w-44 py-1 text-sm" placeholder="Motivo" aria-label={`Motivo para ocultar a publicação de ${pr.display_name}`} />
+                          <SubmitButton name="op" value="remover" className="btn-danger min-h-9 px-3 text-sm">Ocultar</SubmitButton>
                         </form>
                       )}
                     </td>

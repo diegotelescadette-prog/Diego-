@@ -4,7 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 /**
  * Cliente privilegiado (service_role). Usar SOMENTE em código de servidor e
  * apenas para: gerar link do WhatsApp, limites de frequência, slug do perfil
- * e exclusão de conta. A chave nunca vai para o navegador.
+ * exclusão de conta e links assinados de mídias de publicações já liberadas pela RLS.
+ * A chave nunca vai para o navegador.
  */
 export function createAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

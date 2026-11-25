@@ -92,18 +92,29 @@ async function main() {
   for (const [local, name] of Object.entries(demo.memberNames ?? {})) {
     await must(sb.from('member_names').upsert({ user_id: userBy.get(local)!, name }), 'nome');
   }
+  const svc = async (slug: string) => (await must(sb.from('services').select('id').eq('slug', slug).single(), 'serviço')).id as number;
+  const cat = async (slug: string) => (await must(sb.from('service_categories').select('id').eq('slug', slug).single(), 'categoria')).id as number;
   for (const po of demo.posts ?? []) {
-    const authorId = userBy.get(`prestador-${po.author}`)!;
-    const color = demo.providers.find((x: { key: string }) => x.key === po.author).color;
-    const post = await must(sb.from('posts').insert({ author_id: authorId, body: po.body }).select('id').single(), 'publicação');
-    for (const [k, label] of (po.photos ?? []).entries()) {
+    const authorId = userBy.get(po.author)!;
+    const key = String(po.author).replace(/^prestador-/, '');
+    const color = demo.providers.find((x: { key: string }) => x.key === key)?.color ?? '#9a3412';
+    const post = await must(sb.from('posts').insert({
+      author_id: authorId, kind: po.kind, body: po.body, price_label: po.price ?? null,
+      service_id: po.service ? await svc(po.service) : null, category_id: po.category ? await cat(po.category) : null,
+      neighborhood_id: po.neighborhood ? nb(po.neighborhood) : null,
+    }).select('id').single(), 'publicação');
+    for (const [k, [label, tag]] of (po.photos ?? []).entries()) {
       const path = `${authorId}/post-demo-${post.id.slice(0, 8)}-${k}.webp`;
       await sb.storage.from('post-media').upload(path, await workPhoto(label, color, '#1c1917'), { contentType: 'image/webp', upsert: true });
-      await must(sb.from('post_media').insert({ post_id: post.id, kind: 'foto', path, sort: k }), 'mídia');
+      await must(sb.from('post_media').insert({ post_id: post.id, kind: 'foto', path, sort: k, label: tag }), 'mídia');
     }
-    for (const c of po.comments ?? []) await must(sb.from('post_comments').insert({ post_id: post.id, author_id: userBy.get(c.by)!, body: c.body }), 'comentário');
+    for (const c of po.comments ?? []) {
+      await must(sb.from('post_comments').insert({
+        post_id: post.id, author_id: userBy.get(c.by)!, body: c.body, provider_id: c.provider ? userBy.get(`prestador-${c.provider}`)! : null,
+      }), 'comentário');
+    }
     for (const u of po.useful ?? []) await must(sb.from('post_reactions').insert({ post_id: post.id, user_id: userBy.get(u)! }), 'útil');
-    console.log(`✓ publicação de ${po.author}`);
+    console.log(`✓ publicação (${po.kind}) de ${po.author}`);
   }
 
   // Vagas de demonstração (publicadas por uma conta "empresa" fictícia).
