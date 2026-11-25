@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isValidCpf, normalizePhone, normalizeWhatsapp, safeNext, slugify } from '../../src/lib/validation.ts';
+import { isValidCpf, normalizePhone, normalizeWhatsapp, safeNext, slugify, nextFromEmailLink } from '../../src/lib/validation.ts';
 
 test('CPF: dígitos verificadores (só formato)', () => {
   assert.equal(isValidCpf('529.982.247-25'), true);
@@ -28,3 +28,16 @@ test('Redirecionamento seguro após login', () => {
 });
 
 test('slug', () => assert.equal(slugify('João Encanador & Cia'), 'joao-encanador-cia'));
+
+test('next do link de e-mail: aceita só o próprio site e desembrulha /auth/confirm', () => {
+  const o = ['https://www.resolveaqui.com.br'];
+  assert.equal(nextFromEmailLink('/painel', o), '/painel');
+  assert.equal(nextFromEmailLink('https://www.resolveaqui.com.br/auth/confirm?next=/painel', o), '/painel');
+  assert.equal(nextFromEmailLink('https://www.resolveaqui.com.br/auth/confirm?next=%2Fredefinir-senha', o), '/redefinir-senha');
+  assert.equal(nextFromEmailLink('https://www.resolveaqui.com.br/auth/confirm', o), '/');
+  assert.equal(nextFromEmailLink('https://www.resolveaqui.com.br/favoritos?x=1', o), '/favoritos?x=1');
+  assert.equal(nextFromEmailLink('https://golpe.com/auth/confirm?next=/painel', o), '/');
+  assert.equal(nextFromEmailLink('https://www.resolveaqui.com.br/auth/confirm?next=//golpe.com', o), '/');
+  assert.equal(nextFromEmailLink('nada', o), '/');
+  assert.equal(nextFromEmailLink(null, o), '/');
+});

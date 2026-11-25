@@ -1,13 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import { safeNext } from '@/lib/validation';
+import { nextFromEmailLink } from '@/lib/validation';
 
 /** Retorno dos links de e-mail (confirmação de conta e recuperação de senha).
  *  Aceita o fluxo PKCE (?code=) e o de token_hash (template recomendado). */
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
-  const next = safeNext(url.searchParams.get('next'), '/');
+  const origins = [url.origin];
+  try { if (process.env.NEXT_PUBLIC_SITE_URL) origins.push(new URL(process.env.NEXT_PUBLIC_SITE_URL).origin); } catch {}
+  const next = nextFromEmailLink(url.searchParams.get('next'), origins, '/');
   const code = url.searchParams.get('code');
   const tokenHash = url.searchParams.get('token_hash');
   const type = url.searchParams.get('type') as EmailOtpType | null;

@@ -56,6 +56,20 @@ export function safeNext(next: string | null | undefined, fallback = '/'): strin
   return next;
 }
 
+/** "next" vindo do link do e-mail. O template do Supabase pode mandar o endereço completo
+ *  ({{ .RedirectTo }} = https://site/auth/confirm?next=/painel): aceita só se for do próprio site
+ *  e, se apontar para /auth/confirm, usa o "next" de dentro. Sempre termina em safeNext. */
+export function nextFromEmailLink(raw: string | null | undefined, allowedOrigins: string[], fallback = '/'): string {
+  let v = raw ?? '';
+  if (/^https?:\/\//i.test(v)) {
+    let u: URL;
+    try { u = new URL(v); } catch { return fallback; }
+    if (!allowedOrigins.includes(u.origin)) return fallback;
+    v = u.pathname === '/auth/confirm' ? (u.searchParams.get('next') ?? fallback) : u.pathname + u.search;
+  }
+  return safeNext(v, fallback);
+}
+
 export function slugify(s: string): string {
   return s
     .normalize('NFKD')

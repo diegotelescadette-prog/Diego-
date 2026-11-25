@@ -61,7 +61,7 @@ export async function resendConfirmation(_: AuthState, form: FormData): Promise<
   const email = Email.safeParse(form.get('email'));
   if (!email.success) return { errors: { email: 'Informe um e-mail válido' } };
   const supabase = await createClient();
-  await supabase.auth.resend({ type: 'signup', email: email.data, options: { emailRedirectTo: `${await siteUrl()}/auth/confirm` } });
+  await supabase.auth.resend({ type: 'signup', email: email.data, options: { emailRedirectTo: `${await siteUrl()}/auth/confirm?next=%2F` } });
   return { ok: true, message: 'Se houver uma conta pendente com esse e-mail, reenviamos a confirmação.' };
 }
 

@@ -42,17 +42,19 @@ O cabeçalho mostra o nome da tela e as ações de conta. No celular, o botão *
 ## Configuração com um projeto Supabase
 
 1. Crie um projeto em supabase.com.
-2. Aplique as migrações (`supabase/migrations`, em ordem): `supabase link --project-ref <ref>` e `supabase db push`
-   (ou cole os arquivos no SQL Editor). Elas criam tabelas, funções, RLS, bucket `profile-photos` com políticas
-   e o **catálogo de lançamento** (17 categorias, 125 serviços, sinônimos, Campo Grande com 68 bairros — revise a lista de bairros com a operação).
-3. Copie `.env.example` para `.env.local` e preencha URL, chave anon, **service_role (somente servidor)**,
-   `NEXT_PUBLIC_SITE_URL`, `CPF_ENCRYPTION_KEY` (`openssl rand -base64 32`) e `RATE_LIMIT_SALT`.
+2. Aplique o banco: no SQL Editor, cole `supabase/producao/1-banco-completo.sql` (todas as migrações, em ordem,
+   numa transação; gere de novo com `bash scripts/gerar-sql-producao.sh` quando houver migração nova) e clique em Run.
+   Ou, pela CLI: `supabase link --project-ref <ref>` e `supabase db push`. Isso cria tabelas, funções, RLS, bucket `profile-photos`
+   e o **catálogo de lançamento** (17 categorias, 125 serviços, sinônimos, Campo Grande com 68 bairros), **sem dados de demonstração**.
+3. Copie `.env.example` para `.env.local` (ou cadastre na Vercel) e preencha URL, chave pública (anon ou *publishable*),
+   chave secreta (**service_role ou *secret*, somente servidor**), `NEXT_PUBLIC_SITE_URL`, `CPF_ENCRYPTION_KEY` (`openssl rand -base64 32`)
+   e `RATE_LIMIT_SALT`. `NEXT_PUBLIC_*` entra no build: mudou, publique de novo.
 4. Em Authentication → URL Configuration: Site URL = sua URL; Redirect URLs inclua `https://SEU-SITE/auth/confirm**`.
-   Configure um SMTP próprio (o SMTP padrão do Supabase tem limite baixo).
-   Opcional (recomendado, funciona em outro aparelho): nos templates de e-mail use
-   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ .RedirectTo }}` — a rota aceita os dois formatos.
-5. Defina o primeiro administrador pelo SQL (não existe tela para isso, de propósito):
-   `insert into public.user_roles(user_id, role) values ('<uuid do usuário>', 'admin');`
+   Em Authentication → Emails, use os modelos em português de `supabase/producao/emails/` (o link funciona em qualquer aparelho;
+   a rota `/auth/confirm` aceita `?code=` e `?token_hash=`, e só aceita `next` do próprio site).
+   Configure um SMTP próprio antes de abrir ao público (o SMTP padrão do Supabase envia poucos e-mails por hora).
+5. Crie sua conta no site, confirme o e-mail e rode `supabase/producao/2-primeiro-admin.sql` com o seu e-mail
+   (não existe tela para virar administrador, de propósito).
 6. `npm install && npm run build && npm start` (ou `npm run dev`).
 7. Dados de demonstração (fictícios, separados do lançamento): `npm run seed:demo`. **Não rode em produção.**
    Contas: `admin@demo.resolveaqui.test`, `cliente@…`, `prestador-<chave>@…` com senha `demo-senha-123`.
