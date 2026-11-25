@@ -88,11 +88,11 @@ export function UrgentResults({ items, serviceId, serviceSlug, categorySlug, nei
                     <span className="badge-hoje">● Atende hoje</span>
                     <span className="text-sm text-stone-700">Horário a combinar pelo WhatsApp</span>
                   </span>
+                  <span className="pc-wa-label" aria-hidden="true"><WhatsAppIcon size={18} />{busy === item.id ? 'Abrindo…' : 'Chamar no WhatsApp'}</span>
                 </span>
-                <span className="pc-wa" aria-hidden="true">{busy === item.id ? '…' : <WhatsAppIcon size={26} />}</span>
               </button>
               <div className="border-t border-stone-100 px-4 py-2">
-                <Link className="text-sm font-semibold text-brand-700 underline" href={`/p/${item.slug}?hoje=1&servico=${serviceSlug}${neighborhoodSlug ? `&bairro=${neighborhoodSlug}` : ''}`}>Ver perfil</Link>
+                <Link className="text-sm font-semibold text-brand-700 underline" href={`/p/${item.slug}?hoje=1&servico=${serviceSlug}${neighborhoodSlug ? `&bairro=${neighborhoodSlug}` : ''}&voltar=${encodeURIComponent(`/hoje?servico=${serviceSlug}${neighborhoodSlug ? `&bairro=${neighborhoodSlug}` : ''}`)}`}>Ver perfil</Link>
               </div>
             </li>
           ))}

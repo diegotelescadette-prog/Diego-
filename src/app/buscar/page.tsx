@@ -7,7 +7,7 @@ import { generalMessage } from '@/lib/whatsapp';
 import { createClient } from '@/lib/supabase/server';
 import type { ProviderCardData } from '@/lib/types';
 
-export const metadata: Metadata = { title: 'Buscar prestadores' };
+export const metadata: Metadata = { title: 'Buscar serviços' };
 export const dynamic = 'force-dynamic';
 
 type SP = { q?: string; servico?: string; categoria?: string; cidade?: string; bairro?: string; online?: string; hoje?: string; pagina?: string; chamar?: string };
@@ -62,17 +62,19 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
   if (neighborhood) ctx.set('bairro', neighborhood.slug);
   if (city) ctx.set('cidade', city.slug);
   if (online) ctx.set('online', '1');
-  const ctxStr = ctx.toString() ? `?${ctx}` : '';
 
   // Mensagem do card (busca geral). Local: bairro + cidade, ou só a cidade.
   const place = neighborhood ? `${neighborhood.name}, ${city?.name}` : city?.name ?? null;
   const messageFor = (p: ProviderCardData) => generalMessage(service?.name ?? p.main_service ?? 'um serviço', place, online || (!place && p.serves_online));
   const returnTo = href({ ...sp, chamar: undefined }, { pagina: sp.pagina });
   const pending = user && sp.chamar ? results.find((r) => r.slug === sp.chamar) : undefined;
+  ctx.set('voltar', returnTo); // "Voltar aos resultados" no perfil mantém todos os filtros
+  const ctxStr = `?${ctx}`;
+  const countText = error ? null : total === 1 ? '1 prestador encontrado' : `${total} prestadores encontrados`;
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold sm:text-3xl">Buscar prestadores</h1>
+      <h1 className="text-2xl font-extrabold sm:text-3xl">Buscar serviços</h1>
       <form action="/buscar" method="get" role="search" className="mt-4 flex flex-col gap-2 sm:flex-row">
         <label htmlFor="q" className="sr-only">Nome, serviço ou problema</label>
         <input id="q" name="q" defaultValue={q} className="input" placeholder="Nome, serviço ou problema (ex.: vazamento)" />
@@ -85,12 +87,18 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
         <button className="btn-primary" type="submit">Buscar</button>
       </form>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[280px_1fr]">
-        <div>
-          <FiltersPanel count={applied.length}>
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="lg:order-2">
+          <FiltersPanel count={applied.length} summary={countText ? <span data-testid="result-count">{countText}</span> : null}>
             <form action="/buscar" method="get" className="space-y-4">
               {q && <input type="hidden" name="q" value={q} />}
-              {category && <input type="hidden" name="categoria" value={category.slug} />}
+              <div>
+                <label htmlFor="f-categoria" className="label">Categoria</label>
+                <select id="f-categoria" name="categoria" defaultValue={category?.slug ?? ''} className="input">
+                  <option value="">Todas as categorias</option>
+                  {catalog.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
+                </select>
+              </div>
               <div>
                 <label htmlFor="f-servico" className="label">Serviço</label>
                 <select id="f-servico" name="servico" defaultValue={service?.slug ?? ''} className="input">
@@ -127,7 +135,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
           </FiltersPanel>
         </div>
 
-        <section aria-labelledby="resultados" aria-live="polite">
+        <section aria-labelledby="resultados" aria-live="polite" className="min-w-0 lg:order-1">
           <h2 id="resultados" className="sr-only">Resultados</h2>
           {pending && <ContinueContact providerId={pending.id} message={messageFor(pending)} cleanUrl={returnTo} />}
           {applied.length > 0 && (
@@ -166,7 +174,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
             </div>
           ) : (
             <>
-              <p className="mb-3 text-stone-700">{total === 1 ? '1 prestador encontrado' : `${total} prestadores encontrados`}</p>
+              <p className="mb-3 hidden font-semibold text-stone-800 lg:block">{countText}</p>
               <ul className="grid gap-3 xl:grid-cols-2">
                 {results.map((p) => (
                   <ProviderCard key={p.id} p={p} photo={photoUrl(p.photo_path)} query={ctxStr}

@@ -14,6 +14,19 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 3 (25/11/2026): navegação lateral e painéis — todos passando
+
+Unitários (11), banco/API (18) e E2E (17 cenários × computador e celular = 34). Antes da mudança: 8, 13 e 26, todos passando
+(o cenário “busca sem resultados” oscilava; a espera foi trocada por uma asserção de URL e ficou estável em 8 repetições).
+
+- Menu: opção atual com `aria-current` e texto “atual”; navegação por teclado; gaveta do celular fecha com Escape, devolve o foco e fecha ao navegar.
+- Acesso: visitante em `/painel/*` vai ao login com retorno; usuário comum vê “Acesso restrito” no admin e as funções do banco recusam (prestador e visitante).
+- Indicadores: publicados, disponíveis hoje e sem área conferem com as listas abertas (Campo Grande); cobertura por categoria conta cada profissional uma vez.
+- Revalidação do “Atendo hoje”: tirar um bairro do dia da área habitual ajusta; tirar todos desativa.
+- Busca urgente: cidade inteira inclui as duas coberturas; Centro inclui Hidro Cidade e exclui Marcos (só Carandá Bosque); diarista (fora dos quatro iniciais) aparece.
+- Prestador ajusta o dia (só Centro, só Encanador), confere na busca do visitante, “Ver perfil” abre só o perfil e volta aos resultados, pausa e reativa com o estado mantido após recarregar.
+- Admin suspende e reativa com confirmação e motivo; o histórico mostra o responsável e o perfil.
+
 ## Rodada 2 (25/11/2026): bairro opcional, área de atendimento e novo visual — todos passando
 
 Unitários (9), banco/API (13) e E2E (13 cenários × computador e celular = 26). Novos cenários verificados:

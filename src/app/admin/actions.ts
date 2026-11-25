@@ -6,13 +6,19 @@ import { getIsAdmin } from '@/lib/data';
 import { slugify } from '@/lib/validation';
 
 // Toda escrita também é barrada pela RLS (is_admin()) e registrada no histórico por gatilho.
+// A permissão é conferida no servidor em cada ação (e de novo no banco).
 async function admin() {
-  if (!(await getIsAdmin())) redirect('/');
+  if (!(await getIsAdmin())) redirect('/admin');
   return createClient();
 }
-const done = (aba: string, msg?: string): never => {
+const done = (aba: string, msg?: string, back?: FormDataEntryValue | null): never => {
   revalidatePath('/', 'layout');
-  redirect(`/admin?aba=${aba}${msg ? `&msg=${encodeURIComponent(msg)}` : ''}`);
+  // Volta para a mesma lista (filtros preservados) quando o destino é uma página do admin.
+  const b = typeof back === 'string' && /^\/admin\?aba=[a-z]+(&|$)/.test(back) ? new URL(back, 'http://x') : null;
+  const qs = b ? b.searchParams : new URLSearchParams({ aba });
+  qs.delete('msg');
+  if (msg) qs.set('msg', msg);
+  redirect(`/admin?${qs}`);
 };
 
 export async function toggleCategory(form: FormData) {
@@ -24,6 +30,15 @@ export async function toggleService(form: FormData) {
   const sb = await admin();
   await sb.from('services').update({ active: form.get('active') === '1' }).eq('id', Number(form.get('id')));
   done('catalogo');
+}
+export async function toggleUrgent(form: FormData) {
+  const sb = await admin();
+  const on = form.get('urgent') === '1';
+  const { data, error } = await sb.from('services').update({ urgent_pilot: on }).eq('id', Number(form.get('id'))).select('name, urgent_pilot, mode').single();
+  if (error || !data) done('catalogo', 'Não foi possível alterar. Tente de novo.');
+  done('catalogo', on && !data!.urgent_pilot
+    ? `“${data!.name}” é só online e não pode entrar no “Preciso para hoje”`
+    : `“${data!.name}” ${data!.urgent_pilot ? 'agora aparece' : 'saiu'} no “Preciso para hoje”`);
 }
 export async function createService(form: FormData) {
   const sb = await admin();
@@ -80,15 +95,20 @@ export async function resolveReport(form: FormData) {
   if (!error && form.get('suspend') === 'on') {
     await sb.rpc('admin_set_provider_status', { p_provider: String(form.get('provider_id')), p_status: 'suspended', p_note: `Denúncia #${id}${note ? `: ${note}` : ''}` });
   }
-  done('denuncias', error ? error.message : 'Denúncia avaliada');
+  done('denuncias', error ? error.message : 'Denúncia avaliada', form.get('back'));
 }
 
+const STATUS_RESULT: Record<string, string> = {
+  suspended: 'Perfil suspenso', published: 'Perfil reativado e publicado', paused: 'Perfil pausado',
+  draft: 'Perfil reativado como rascunho (cadastro incompleto)',
+};
 export async function setProviderStatus(form: FormData) {
   const sb = await admin();
+  const name = String(form.get('name') ?? '').trim();
   const { data, error } = await sb.rpc('admin_set_provider_status', {
     p_provider: String(form.get('provider_id')), p_status: String(form.get('status')), p_note: String(form.get('note') ?? ''),
   });
-  done('perfis', error ? error.message : `Perfil agora: ${data}`);
+  done('perfis', error ? `Não foi possível alterar: ${error.message}` : `${STATUS_RESULT[String(data)] ?? `Estado: ${data}`}${name ? `: ${name}` : ''}`, form.get('back'));
 }
 
 export async function saveCpfSetting(form: FormData) {

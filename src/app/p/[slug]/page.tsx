@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { safeNext } from '@/lib/validation';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ProfileDetails } from '@/components/ProfileDetails';
@@ -12,7 +13,7 @@ import { STATUS_LABEL } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-type SP = { servico?: string; bairro?: string; cidade?: string; online?: string; hoje?: string };
+type SP = { servico?: string; bairro?: string; cidade?: string; online?: string; hoje?: string; voltar?: string };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const p = await loadProfile({ slug: (await params).slug });
@@ -65,8 +66,16 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
     </>
   ) : null;
 
+  // Volta para a mesma busca, com todos os filtros (só caminhos internos de busca).
+  const back = sp.voltar && /^\/(buscar|hoje|favoritos)(\?|$)/.test(safeNext(sp.voltar, '')) ? sp.voltar : null;
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      {back && (
+        <Link href={back} className="inline-flex min-h-11 items-center gap-1 font-semibold text-brand-700 underline" data-testid="back-to-results">
+          <span aria-hidden="true">←</span> Voltar aos resultados
+        </Link>
+      )}
       {p.status !== 'published' && (
         <p role="status" className="rounded-xl bg-amber-50 p-3 text-amber-900">
           Prévia — este perfil está <strong>{STATUS_LABEL[p.status]}</strong> e não aparece para visitantes.

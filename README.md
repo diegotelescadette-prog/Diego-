@@ -7,20 +7,37 @@ Stack: **Next.js 15 (App Router) + TypeScript + Tailwind 4 + Supabase** (Auth, P
 
 > O nome do app fica em `NEXT_PUBLIC_APP_NAME` / `src/config/brand.ts`.
 
-## Telas
+## Telas e navegação
+
+No computador, **menu lateral esquerdo** com ícone, rótulo e a opção atual destacada (barra, negrito e o texto “atual”).
+O cabeçalho mostra o nome da tela e as ações de conta. No celular, o botão **Menu** abre a mesma lista como gaveta
+(Escape fecha e devolve o foco); na área de busca ficam também os atalhos inferiores. O menu muda conforme a área em uso.
+
+| Área | Botões laterais |
+| --- | --- |
+| Para quem busca | Início (`/`), Preciso para hoje (`/#preciso-para-hoje` → `/hoje`), Buscar serviços (`/buscar`), Categorias (`/#categorias`), Favoritos (`/favoritos`), Sou prestador (`/sou-prestador`) ou Painel do prestador (`/painel`) |
+| Prestador | Visão geral (`/painel`), Meu perfil (`/painel/perfil`), Serviços e fotos (`/painel/servicos`), Onde atendo (`/painel/atendimento`), Disponibilidade (`/painel/disponibilidade`), Prévia do perfil (`/painel/previa`), Minha conta (`/conta`), Buscar serviços |
+| Administração | Visão geral, Prestadores, Catálogo, Sugestões, Denúncias, Histórico, Configurações (`/admin?aba=…`), Voltar à busca |
 
 | Rota | O que faz |
 | --- | --- |
-| `/` | Início: “Preciso para hoje” (lista de serviços com filtro e bairro opcional), busca geral, categorias e “Sou prestador” |
-| `/hoje?servico=&bairro=` | Resultados de quem confirmou “Atende hoje”, com “Chamar no WhatsApp” sem login |
-| `/buscar` | Busca geral por nome, serviço ou problema; filtros (painel lateral / botão “Filtros” no celular) |
-| `/p/[slug]` | Perfil público: serviços, área, descrição, fotos, WhatsApp, favoritos, denúncia |
-| `/entrar`, `/cadastrar`, `/recuperar-senha`, `/redefinir-senha` | Conta com e-mail e senha, confirmação de e-mail e retorno à página de origem |
-| `/sou-prestador` → `/painel/perfil` → `/painel/atendimento` → `/painel/previa` | Pré-cadastro em 2 etapas + prévia + “Publicar meu perfil” |
-| `/painel` | Estado (Rascunho/Publicado/Pausado/Suspenso), editar, pausar/reativar, **Atendo hoje** |
-| `/favoritos`, `/conta` | Favoritos; ativar perfil profissional; excluir conta e dados |
-| `/admin` | Catálogo e sinônimos, sugestões, denúncias, suspensão/reativação, histórico, coleta de CPF |
-| `/privacidade`, `/sugerir-servico` | Aviso de privacidade; “Sugerir um serviço” |
+| `/` | “Encontre prestadores em Campo Grande”: “Preciso para hoje” em destaque (bairro opcional), busca geral e categorias |
+| `/hoje?servico=&bairro=` | Quem confirmou “Atende hoje”, com “Chamar no WhatsApp” sem login |
+| `/buscar` | Busca por serviço, profissional ou problema. Filtros à direita no computador e em gaveta no celular; contagem e filtros ativos removíveis; endereço compartilhável |
+| `/p/[slug]` | Perfil público; “Voltar aos resultados” mantém os filtros |
+| `/painel` | Visão geral: Próximo passo, Meu perfil (estado e visibilidade), Atendo hoje, Área de atendimento, Perfil público (ver e copiar link) |
+| `/painel/perfil` | Rascunho: etapa 1 do pré-cadastro. Publicado: nome, apresentação e contato |
+| `/painel/servicos` | Especialidades, serviço principal, foto do perfil e fotos de trabalhos (mesmas validações) |
+| `/painel/atendimento` → `/painel/previa` | Etapa 2 e prévia com “Publicar meu perfil” |
+| `/painel/disponibilidade` | Ativar, ajustar serviços e bairros do dia, desativar |
+| `/admin` | Indicadores reais por cidade, cobertura por categoria, listas filtráveis, moderação com confirmação e histórico com responsável |
+| `/entrar`, `/cadastrar`, `/recuperar-senha`, `/redefinir-senha`, `/favoritos`, `/conta`, `/privacidade`, `/sugerir-servico` | Sem mudança |
+
+### Regras da evolução dos painéis (migração `20261125000600_paineis.sql`, aditiva)
+
+- Cobertura do perfil: cidade inteira, bairros, só online ou **pendente**. “Perfis sem área confirmada” = fora do rascunho, com endereço de referência e cobertura pendente.
+- Mudou a área habitual ou os serviços com “Atendo hoje” ativo: o dia é **revalidado** (mantém o que continua válido; desativa se nada sobrar). O “Preciso para hoje” pela cidade inteira também exige cobertura confirmada.
+- Indicadores e listas do admin usam a mesma função (`admin_providers`), então cada número abre a lista com os mesmos critérios. Todas as funções do admin recusam quem não é administrador.
 
 ## Configuração com um projeto Supabase
 

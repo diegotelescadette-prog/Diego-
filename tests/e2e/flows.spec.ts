@@ -164,7 +164,8 @@ test('busca sem resultados sugere retirar filtro e manter a consulta', async ({ 
   await page.goto('/buscar?q=piscina&cidade=campo-grande-ms&bairro=aero-rancho');
   await expect(page.getByTestId('empty-search')).toContainText('Nenhum prestador encontrado para “piscina”');
   await page.getByRole('link', { name: 'Buscar em toda Campo Grande' }).click();
-  await page.waitForURL((u) => !u.searchParams.has('bairro'));
+  // navegação no cliente: aguarda a URL sem depender do evento "load" (era instável)
+  await expect(page).not.toHaveURL(/bairro=/);
   await expect(page.getByLabel('Nome, serviço ou problema')).toHaveValue('piscina');
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Rafa Piscinas' })).toBeVisible();
 });
@@ -285,19 +286,25 @@ test('admin suspende e reativa perfil com histórico; suspenso sai da busca', as
   await login(page, demoEmail('admin'));
   await page.waitForURL((u) => u.pathname === '/admin');
   await page.goto('/admin?aba=perfis&q=Frio');
-  const row = page.locator('.card').filter({ hasText: 'Frio Bom Climatização' });
-  await row.getByPlaceholder('Motivo (obrigatório)').fill('Teste automatizado');
+  const row = page.getByTestId('admin-provider').filter({ hasText: 'Frio Bom Climatização' });
   await row.getByRole('button', { name: 'Suspender' }).click();
-  await expect(page.getByText('Perfil agora: suspended')).toBeVisible();
+  await expect(row.getByText('Suspender Frio Bom Climatização (demo)?')).toBeVisible(); // confirmação
+  await row.getByPlaceholder('Motivo (obrigatório)').fill('Teste automatizado');
+  await row.getByRole('button', { name: 'Confirmar suspensão' }).click();
+  await expect(page.getByText('Perfil suspenso: Frio Bom Climatização (demo)')).toBeVisible();
+  await expect(page).toHaveURL(/q=Frio/); // volta para a mesma lista filtrada
   const visitor = await page.context().browser()!.newPage();
   await visitor.goto('/buscar?q=frio bom');
   await expect(visitor.getByTestId('empty-search')).toBeVisible();
   await page.goto('/admin?aba=historico');
-  await expect(page.getByText(/Teste automatizado \(de published para suspended\)/).first()).toBeVisible();
+  const log = page.locator('tr').filter({ hasText: /Teste automatizado \(de published para suspended\)/ }).first();
+  await expect(log).toContainText('admin@demo.resolveaqui.test'); // responsável
+  await expect(log).toContainText('Perfil: Frio Bom Climatização (demo)');
   await page.goto('/admin?aba=perfis&q=Frio');
-  await row.getByPlaceholder('Motivo (obrigatório)').fill('Revisado');
   await row.getByRole('button', { name: 'Reativar' }).click();
-  await expect(page.getByText('Perfil agora: published')).toBeVisible();
+  await row.getByPlaceholder('Motivo (obrigatório)').fill('Revisado');
+  await row.getByRole('button', { name: 'Confirmar reativação' }).click();
+  await expect(page.getByText('Perfil reativado e publicado: Frio Bom Climatização (demo)')).toBeVisible();
   await visitor.reload();
   await expect(visitor.getByTestId('provider-card').filter({ hasText: 'Frio Bom' })).toBeVisible();
   await visitor.close();

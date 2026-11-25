@@ -14,9 +14,14 @@ import { MISSING_LABEL, STATUS_LABEL } from '@/lib/types';
 export const metadata: Metadata = { title: 'Prévia do perfil' };
 export const dynamic = 'force-dynamic';
 
-const FIX_LINK: Record<string, string> = { address: '/painel/atendimento', city: '/painel/atendimento', area: '/painel/atendimento' };
+const FIX_LINK: Record<string, string> = {
+  address: '/painel/atendimento#cep', city: '/painel/atendimento#city_id', area: '/painel/atendimento#area-title',
+  photo: '/painel/servicos#photo-label', services: '/painel/servicos#svc-filter', main_service: '/painel/servicos#main_service',
+  display_name: '/painel/perfil#display_name', phone: '/painel/perfil#phone', whatsapp: '/painel/perfil#phone', cpf: '/painel/perfil#cpf',
+};
 
-export default async function Previa() {
+export default async function Previa({ searchParams }: { searchParams: Promise<{ hoje?: string }> }) {
+  const sp = await searchParams;
   const user = (await getUser())!;
   const p = await loadProfile({ id: user.id });
   if (!p) redirect('/painel/perfil');
@@ -25,8 +30,10 @@ export default async function Previa() {
   const miss = (missing ?? []) as string[];
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <Stepper current={3} />
+      {p.status === 'draft' && <Stepper current={3} />}
       <h1 className="text-2xl font-extrabold">Prévia do seu perfil</h1>
+      {sp.hoje === 'ajustada' && <p role="status" className="rounded-xl bg-amber-50 p-3 text-amber-900">Área salva. O “Atendo hoje” foi ajustado para os bairros que continuam na sua área.</p>}
+      {sp.hoje === 'removida' && <p role="status" className="rounded-xl bg-amber-50 p-3 text-amber-900">Área salva. O “Atendo hoje” foi desativado porque a área de hoje saiu da sua cobertura. Ative de novo no painel.</p>}
       <p className="text-stone-700">Estado atual: <strong>{STATUS_LABEL[p.status]}</strong></p>
 
       <section aria-labelledby="busca-prev">

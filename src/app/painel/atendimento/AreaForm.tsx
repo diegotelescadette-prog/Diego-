@@ -88,7 +88,7 @@ export function AreaForm({ initial, cities, neighborhoods, canOnline }: {
       </section>
       <section aria-labelledby="ref-title" className="space-y-4 border-t border-stone-200 pt-5">
         <div>
-          <h2 id="ref-title" className="text-lg font-bold">Endereço de referência</h2>
+          <h2 id="ref-title" className="flex flex-wrap items-center gap-2 text-lg font-bold">Endereço de referência <span className="tag bg-stone-200 text-stone-800">Privado</span></h2>
           <p className="text-sm text-stone-600">Privado. Não aparece no perfil — os clientes veem só a região que você atende.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">

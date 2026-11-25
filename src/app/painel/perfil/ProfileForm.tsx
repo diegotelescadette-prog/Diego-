@@ -13,9 +13,12 @@ export interface ProfileInitial {
   services: number[]; main: number | null; cpfLast2: string | null; status: string;
 }
 
-export function ProfileForm({ initial, catalog, cpf }: {
-  initial: ProfileInitial; catalog: Category[]; cpf: { enabled: boolean; purpose: string | null };
+/** section: 'tudo' = etapa 1 do pré-cadastro; 'perfil' = nome, apresentação e contato; 'servicos' = especialidades e fotos. */
+export function ProfileForm({ initial, catalog, cpf, section = 'tudo' }: {
+  initial: ProfileInitial; catalog: Category[]; cpf: { enabled: boolean; purpose: string | null }; section?: 'tudo' | 'perfil' | 'servicos';
 }) {
+  const showContact = section !== 'servicos';
+  const showServices = section !== 'perfil';
   const [state, action] = useActionState(saveProfileStep, undefined);
   const [same, setSame] = useState(!initial.whatsapp || initial.whatsapp === initial.phone);
   const e = state?.errors ?? {};
@@ -24,14 +27,15 @@ export function ProfileForm({ initial, catalog, cpf }: {
 
   return (
     <form action={action} className="space-y-5" noValidate>
+      <input type="hidden" name="section" value={section} />
       {state?.message && (
         <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'}`}>{state.message}</p>
       )}
+      {showContact && (
+        <>
       <Field id="display_name" label="Nome profissional" error={e.display_name} hint="Como os clientes vão ver você. Ex.: João Encanador.">
         <input id="display_name" name="display_name" defaultValue={v('display_name')} maxLength={80} className="input" autoComplete="name" {...inv('display_name')} />
       </Field>
-
-      <ProfilePhotoUploader initialUrl={initial.photoUrl} error={e.photo} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="phone" label="Telefone com DDD" error={e.phone} hint="Não aparece no perfil nem na busca.">
@@ -67,17 +71,27 @@ export function ProfileForm({ initial, catalog, cpf }: {
         </div>
       )}
 
-      <ServicePicker catalog={catalog} selected={initial.services} main={initial.main} error={e.services} mainError={e.main_service} />
+        </>
+      )}
 
-      <Field id="bio" label={<>Descrição curta <span className="font-normal text-stone-500">(opcional)</span></>} error={e.bio} hint="Até 600 caracteres. Conte sua experiência e o que você resolve.">
+      {showServices && <ProfilePhotoUploader initialUrl={initial.photoUrl} error={e.photo} />}
+      {showServices && <ServicePicker catalog={catalog} selected={initial.services} main={initial.main} error={e.services} mainError={e.main_service} />}
+
+      {showContact && <Field id="bio" label={<>Descrição curta <span className="font-normal text-stone-500">(opcional)</span></>} error={e.bio} hint="Até 600 caracteres. Conte sua experiência e o que você resolve.">
         <textarea id="bio" name="bio" defaultValue={v('bio')} maxLength={600} rows={4} className="input" {...inv('bio')} />
-      </Field>
+      </Field>}
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        {initial.status === 'draft' && <SubmitButton name="intent" value="rascunho" className="btn-ghost" pendingText="Salvando…">Salvar rascunho</SubmitButton>}
-        <SubmitButton name="intent" value="continuar" className="btn-primary" pendingText="Salvando…">
-          {initial.status === 'draft' ? 'Salvar e continuar' : 'Salvar alterações'}
-        </SubmitButton>
+        {section === 'tudo' ? (
+          <>
+            {initial.status === 'draft' && <SubmitButton name="intent" value="rascunho" className="btn-ghost" pendingText="Salvando…">Salvar rascunho</SubmitButton>}
+            <SubmitButton name="intent" value="continuar" className="btn-primary" pendingText="Salvando…">
+              {initial.status === 'draft' ? 'Salvar e continuar' : 'Salvar alterações'}
+            </SubmitButton>
+          </>
+        ) : (
+          <SubmitButton name="intent" value="salvar" className="btn-primary" pendingText="Salvando…">Salvar alterações</SubmitButton>
+        )}
       </div>
     </form>
   );

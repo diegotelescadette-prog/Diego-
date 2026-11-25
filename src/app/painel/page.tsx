@@ -3,11 +3,13 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { AvailabilityPanel } from './AvailabilityPanel';
 import { setProfileStatus } from './actions';
+import { loadPanel, nextStep } from './overview';
+import { PublishForm } from './previa/PublishForm';
+import { CopyLink } from '@/components/CopyLink';
 import { SubmitButton } from '@/components/SubmitButton';
-import { getNeighborhoods, getUser } from '@/lib/data';
-import { loadProfile } from '@/lib/profile';
-import { createClient } from '@/lib/supabase/server';
-import { MISSING_LABEL, STATUS_HELP, STATUS_LABEL } from '@/lib/types';
+import { getUser } from '@/lib/data';
+import { siteUrl } from '@/lib/site';
+import { STATUS_LABEL } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Painel do prestador' };
 export const dynamic = 'force-dynamic';
@@ -17,90 +19,110 @@ const STATUS_STYLE = { draft: 'bg-stone-200 text-stone-900', published: 'bg-gree
 export default async function Painel({ searchParams }: { searchParams: Promise<{ publicado?: string; erro?: string }> }) {
   const sp = await searchParams;
   const user = (await getUser())!;
-  const p = await loadProfile({ id: user.id });
-  if (!p) redirect('/painel/perfil');
-  const supabase = await createClient();
-  const [{ data: missing }, { data: avail }, { data: areas }, { data: city }] = await Promise.all([
-    supabase.rpc('profile_missing_fields', { p_provider: user.id }),
-    supabase.from('availability_today').select('*').eq('provider_id', user.id).gt('expires_at', new Date().toISOString()).maybeSingle(),
-    supabase.from('provider_areas').select('neighborhood_id').eq('provider_id', user.id),
-    p.city ? supabase.from('cities').select('timezone, name').eq('id', p.city.id).single() : Promise.resolve({ data: null }),
-  ]);
-  const miss = (missing ?? []) as string[];
-  const inPerson = p.services.filter((s) => s.active && (s.mode === 'presencial' || s.mode === 'ambos'));
-  const cityNbs = p.city ? await getNeighborhoods(p.city.id) : [];
-  const areaIds = new Set((areas ?? []).map((a) => a.neighborhood_id));
-  const areaNbs = p.serves_whole_city ? cityNbs : cityNbs.filter((n) => areaIds.has(n.id));
-  const tz = city?.timezone ?? 'America/Campo_Grande';
-  const fmt = (iso: string) => {
-    const end = new Date(new Date(iso).getTime() - 60_000);
-    return `${new Intl.DateTimeFormat('pt-BR', { timeZone: tz, hour: '2-digit', minute: '2-digit' }).format(end)} de hoje (horário de ${city?.name ?? 'Campo Grande'})`;
-  };
+  const d = await loadPanel(user.id);
+  if (!d) redirect('/painel/perfil');
+  const { p, coverage, today, cityName } = d;
+  const step = nextStep(d);
+  const visible = p.status === 'published' && coverage !== 'pendente';
+  const visibility = p.status === 'published'
+    ? (visible ? 'Visível na busca.' : 'Fora da busca até você confirmar a área de atendimento.')
+    : p.status === 'draft' ? 'Ainda não aparece na busca. Complete o cadastro e publique.'
+    : p.status === 'paused' ? 'Oculto da busca enquanto estiver pausado. Quem salvou nos favoritos também deixa de ver.'
+    : 'Fora da busca e sem contato por decisão da moderação.';
+  const publicUrl = `${await siteUrl()}/p/${p.slug}`;
+  const areaText = coverage === 'cidade' ? `Toda ${cityName}`
+    : coverage === 'bairros' ? d.areaNames.join(', ')
+    : coverage === 'online' ? 'Somente atendimento online'
+    : 'Área ainda não confirmada';
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <h1 className="text-2xl font-extrabold">Painel do prestador</h1>
+      <div>
+        <h1 className="text-2xl font-extrabold">Visão geral</h1>
+        <p className="text-stone-700">{p.display_name || 'Seu perfil profissional'}</p>
+      </div>
       {sp.publicado && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900">Perfil publicado! Agora você aparece na busca.</p>}
       {sp.erro && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-900">{sp.erro}</p>}
-      {p.status !== 'draft' && !p.serves_whole_city && !p.serves_online && areaIds.size === 0 && (
-        <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900" data-testid="confirm-area">
-          <p className="font-semibold">Confirme sua área de atendimento.</p>
-          <p className="mt-1">Seu perfil tem só o endereço de cadastro. Diga se atende toda {city?.name ?? 'a cidade'} ou bairros selecionados para aparecer na busca certa.</p>
-          <Link className="btn-primary mt-3" href="/painel/atendimento">Confirmar área</Link>
-        </div>
+
+      {step && (
+        <section aria-labelledby="proximo" className="card border-2 border-amber-300 bg-amber-50/60 p-5" data-testid={coverage === 'pendente' && p.status !== 'draft' ? 'confirm-area' : 'next-step'}>
+          <h2 id="proximo" className="text-sm font-bold uppercase tracking-wide text-amber-900">Próximo passo</h2>
+          {coverage === 'pendente' && p.status !== 'draft' && <p className="mt-1 text-lg font-semibold text-amber-950">Confirme sua área de atendimento.</p>}
+          <p className="mt-1 text-amber-950">{step.text}</p>
+          <Link className="btn-primary mt-3" href={step.href}>{step.cta}</Link>
+        </section>
       )}
 
       <section className="card p-5" aria-labelledby="estado">
-        <h2 id="estado" className="sr-only">Estado do perfil</h2>
-        <p className="flex flex-wrap items-center gap-2 text-lg">
-          Estado do perfil: <span className={`rounded-full px-3 py-0.5 font-bold ${STATUS_STYLE[p.status]}`} data-testid="status">{STATUS_LABEL[p.status]}</span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="estado" className="text-xl font-bold">Meu perfil</h2>
+          <span className={`tag ${STATUS_STYLE[p.status]}`} data-testid="status">{STATUS_LABEL[p.status]}</span>
+        </div>
+        <p className="mt-2 flex items-center gap-2 text-stone-800" data-testid="visibility">
+          <span aria-hidden="true">{visible ? '●' : '○'}</span>{visibility}
         </p>
-        <p className="mt-1 text-stone-700">{STATUS_HELP[p.status]}</p>
-        {p.status === 'draft' && miss.length > 0 && (
-          <p className="mt-2 text-stone-700">Falta: {miss.map((m) => MISSING_LABEL[m] ?? m).join(', ')}.</p>
+        {p.status === 'suspended' && (
+          <div className="mt-3 rounded-xl bg-red-50 p-3 text-red-950">
+            <p className="font-semibold">Seu perfil foi suspenso pela moderação.</p>
+            <p className="mt-1">Enquanto estiver suspenso, ele não aparece na busca e não recebe contatos. A reativação depende de uma nova análise da equipe de moderação. Você pode manter seus dados atualizados e consultar ou excluir sua conta em <Link className="underline" href="/conta">Minha conta</Link>.</p>
+          </div>
         )}
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          {p.status === 'draft' && <Link className="btn-primary" href={miss.some((m) => ['address', 'city', 'area'].includes(m)) && !miss.some((m) => !['address', 'city', 'area'].includes(m)) ? '/painel/atendimento' : miss.length ? '/painel/perfil' : '/painel/previa'}>Continuar cadastro</Link>}
-          <Link className="btn-outline" href="/painel/perfil">Editar perfil</Link>
-          <Link className="btn-outline" href="/painel/atendimento">Editar área de atendimento</Link>
-          <Link className="btn-ghost" href="/painel/previa">Ver como aparece na busca</Link>
+          {p.status === 'draft' && d.missing.length > 0 && step && <Link className="btn-primary" href={step.href}>Continuar cadastro</Link>}
+          {p.status === 'draft' && d.missing.length === 0 && <PublishForm label="Publicar meu perfil" />}
+          {p.status === 'published' && <Link className="btn-outline" href={`/p/${p.slug}`}>Ver perfil público</Link>}
           {p.status === 'published' && (
             <form action={setProfileStatus}><input type="hidden" name="status" value="paused" />
-              <SubmitButton className="btn-ghost w-full">Pausar publicação</SubmitButton></form>
+              <SubmitButton className="btn-ghost w-full" pendingText="Pausando…">Pausar publicação</SubmitButton></form>
           )}
           {p.status === 'paused' && (
             <form action={setProfileStatus}><input type="hidden" name="status" value="published" />
-              <SubmitButton className="btn-primary w-full">Reativar publicação</SubmitButton></form>
+              <SubmitButton className="btn-primary w-full" pendingText="Reativando…">Reativar publicação</SubmitButton></form>
           )}
+          <Link className="btn-ghost" href="/painel/perfil">Editar perfil</Link>
         </div>
       </section>
 
       <section className="card border-hoje-500/40 p-5" aria-labelledby="hoje">
         <h2 id="hoje" className="mb-3 text-xl font-bold">Atendo hoje</h2>
-        {p.status !== 'published' ? (
+        {today.blocked === 'not_published' ? (
           <p className="text-stone-700">Disponível depois que seu perfil estiver <strong>Publicado</strong>.</p>
-        ) : inPerson.length === 0 ? (
-          <p className="text-stone-700">O “Atendo hoje” vale para serviços presenciais. Adicione um serviço presencial ao seu perfil.</p>
-        ) : !p.serves_whole_city && areaNbs.length === 0 ? (
-          <p className="text-stone-700">Cadastre bairros atendidos para usar o “Atendo hoje”.</p>
+        ) : today.blocked === 'no_in_person' ? (
+          <p className="text-stone-700">O “Atendo hoje” vale para serviços presenciais. Adicione um em <Link className="underline" href="/painel/servicos">Serviços e fotos</Link>.</p>
+        ) : today.blocked === 'no_area' ? (
+          <p className="text-stone-700">Confirme sua área de atendimento para usar o “Atendo hoje”.</p>
         ) : (
-          <AvailabilityPanel
-            cityName={city?.name ?? 'Campo Grande'}
-            services={inPerson.map((s) => ({ id: s.id, name: s.name, urgent_pilot: s.urgent_pilot }))}
-            areaNeighborhoods={areaNbs}
-            servesWholeCity={p.serves_whole_city}
-            active={avail ? {
-              until: fmt(avail.expires_at), whole_city: avail.whole_city,
-              services: inPerson.filter((s) => avail.service_ids.includes(s.id)).map((s) => ({ id: s.id, name: s.name, urgent_pilot: s.urgent_pilot })),
-              neighborhoods: cityNbs.filter((n) => avail.neighborhood_ids.includes(n.id)).map((n) => n.name),
-            } : null}
-          />
+          <AvailabilityPanel key={today.active ? 'on' : 'off'} cityName={cityName} services={today.services} areaNeighborhoods={today.areaNeighborhoods}
+            servesWholeCity={p.serves_whole_city} active={today.active} />
         )}
       </section>
 
-      {p.status === 'published' && (
-        <p className="text-sm"><Link className="text-brand-700 underline" href={`/p/${p.slug}`}>Abrir meu perfil público</Link></p>
-      )}
+      <section className="card p-5" aria-labelledby="area">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="area" className="text-xl font-bold">Área de atendimento</h2>
+          <Link className="btn-ghost" href="/painel/atendimento">Editar área</Link>
+        </div>
+        <p className="mt-1 text-stone-800" data-testid="area-summary">{areaText}{p.serves_online && coverage !== 'online' ? ' · Atendimento online' : ''}</p>
+        <p className="mt-1 text-sm text-stone-600">Seu endereço de referência é privado e não aparece para os clientes.</p>
+      </section>
+
+      <section className="card p-5" aria-labelledby="publico">
+        <h2 id="publico" className="text-xl font-bold">Perfil público</h2>
+        {visible ? (
+          <>
+            <p className="mt-1 text-stone-700">Confira como os clientes veem você e compartilhe seu link.</p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start">
+              <Link className="btn-outline" href={`/p/${p.slug}`}>Ver perfil público</Link>
+              <CopyLink url={publicUrl} />
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="mt-1 text-stone-700">O link público funciona quando o perfil estiver publicado e com a área confirmada.</p>
+            <Link className="btn-outline mt-3" href="/painel/previa">Ver prévia</Link>
+          </>
+        )}
+      </section>
     </div>
   );
 }

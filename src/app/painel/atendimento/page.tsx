@@ -5,7 +5,7 @@ import { AreaForm } from './AreaForm';
 import { getCities, getNeighborhoods, getUser } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 
-export const metadata: Metadata = { title: 'Onde você atende' };
+export const metadata: Metadata = { title: 'Onde atendo' };
 export const dynamic = 'force-dynamic';
 
 export default async function AtendimentoStep() {
@@ -23,8 +23,9 @@ export default async function AtendimentoStep() {
   const canOnline = (svc ?? []).some((r) => ['online', 'ambos'].includes((r.services as unknown as { mode: string })?.mode));
   return (
     <div className="mx-auto max-w-2xl">
-      <Stepper current={2} />
-      <h1 className="text-2xl font-extrabold">Onde você atende</h1>
+      {p.status === 'draft' && <Stepper current={2} />}
+      <h1 className="text-2xl font-extrabold">{p.status === 'draft' ? 'Onde você atende' : 'Onde atendo'}</h1>
+      <p className="text-stone-700">A área escolhida define em quais buscas você aparece. O endereço de referência é privado.</p>
       <div className="card mt-4 p-5">
         <AreaForm
           cities={cities} neighborhoods={neighborhoods} canOnline={canOnline}

@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import './globals.css';
-import { Header, MobileNav } from '@/components/Header';
+import { AppShell } from '@/components/AppShell';
+import { getIsAdmin, getUser } from '@/lib/data';
+import { createClient } from '@/lib/supabase/server';
 import { APP_NAME, PILOT_TAGLINE } from '@/config/brand';
 
 export const metadata: Metadata = {
@@ -10,23 +12,31 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#0f5f73' };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+async function hasOwnProfile(userId: string | undefined) {
+  if (!userId) return false;
+  const supabase = await createClient();
+  const { data } = await supabase.from('provider_profiles').select('id').eq('id', userId).maybeSingle();
+  return !!data;
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getUser();
+  const [isAdmin, hasProfile] = await Promise.all([getIsAdmin(), hasOwnProfile(user?.id)]);
+  const footer = (
+    <footer className="border-t border-stone-200 bg-white">
+      <div className="mx-auto flex max-w-7xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-stone-600">
+        <span>© {new Date().getFullYear()} {APP_NAME} · Piloto em Campo Grande–MS</span>
+        <Link href="/privacidade" className="underline">Privacidade</Link>
+        <Link href="/sou-prestador" className="underline">Sou prestador</Link>
+      </div>
+    </footer>
+  );
   return (
     <html lang="pt-BR">
       <body className="flex min-h-dvh flex-col">
-        <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:p-2">
-          Pular para o conteúdo
-        </a>
-        <Header />
-        <main id="conteudo" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
-        <footer className="border-t border-stone-200 bg-white">
-          <div className="mx-auto flex max-w-6xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-stone-600">
-            <span>© {new Date().getFullYear()} {APP_NAME} · Piloto em Campo Grande–MS</span>
-            <Link href="/privacidade" className="underline">Privacidade</Link>
-            <Link href="/sou-prestador" className="underline">Sou prestador</Link>
-          </div>
-        </footer>
-        <MobileNav />
+        <AppShell viewer={{ loggedIn: !!user, hasProfile, isAdmin, email: user?.email ?? null }} footer={footer}>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

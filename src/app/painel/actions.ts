@@ -34,33 +34,37 @@ export async function ensureProfile() {
 export async function saveProfileStep(_: FormState, form: FormData): Promise<FormState> {
   const { supabase, user } = await requireUser();
   const intent = String(form.get('intent') ?? 'continuar');
-  const { data: profile } = await supabase.from('provider_profiles').select('status, slug, photo_path, display_name').eq('id', user.id).single();
+  // 'tudo' = pré-cadastro (etapa 1); 'perfil' = nome, apresentação e contato; 'servicos' = especialidades e fotos.
+  const section = (['perfil', 'servicos'] as const).find((x) => x === form.get('section')) ?? 'tudo';
+  const doContact = section !== 'servicos';
+  const doServices = section !== 'perfil';
+  const { data: profile } = await supabase.from('provider_profiles').select('status, slug, photo_path, display_name, main_service_id').eq('id', user.id).single();
   if (!profile) return { message: 'Perfil não encontrado' };
-  const strict = intent === 'continuar' || profile.status !== 'draft';
+  const strict = (intent === 'continuar' && section === 'tudo') || profile.status !== 'draft';
   const errors: Record<string, string> = {};
 
-  const displayName = String(form.get('display_name') ?? '').trim().replace(/\s+/g, ' ');
-  if (displayName.length > 80) errors.display_name = 'Use até 80 caracteres';
-  else if (strict && displayName.length < 3) errors.display_name = 'Informe seu nome profissional';
+  const displayName = doContact ? String(form.get('display_name') ?? '').trim().replace(/\s+/g, ' ') : profile.display_name;
+  if (doContact && displayName.length > 80) errors.display_name = 'Use até 80 caracteres';
+  else if (doContact && strict && displayName.length < 3) errors.display_name = 'Informe seu nome profissional';
 
-  const phoneRaw = String(form.get('phone') ?? '');
+  const phoneRaw = doContact ? String(form.get('phone') ?? '') : '';
   const phone = phoneRaw ? normalizePhone(phoneRaw) : null;
   if (phoneRaw && !phone) errors.phone = 'Telefone inválido. Use DDD + número, ex.: (67) 99999-1234';
-  else if (strict && !phone) errors.phone = 'Informe um telefone com DDD';
+  else if (doContact && strict && !phone) errors.phone = 'Informe um telefone com DDD';
 
   const sameNumber = form.get('same_whatsapp') === 'on';
   const waRaw = sameNumber ? phoneRaw : String(form.get('whatsapp') ?? '');
   const whatsapp = waRaw ? normalizeWhatsapp(waRaw) : null;
   if (sameNumber && errors.phone) { /* o erro do telefone já explica */ }
   else if (waRaw && !whatsapp) errors[sameNumber ? 'phone' : 'whatsapp'] = 'O WhatsApp precisa ser um celular com DDD, ex.: (67) 99999-1234';
-  else if (strict && !whatsapp) errors.whatsapp = 'Informe o WhatsApp para contato';
+  else if (doContact && strict && !whatsapp) errors.whatsapp = 'Informe o WhatsApp para contato';
 
   const cpfSetting = await getSetting<CpfSetting>('cpf_collection');
   const cpfEnabled = !!cpfSetting?.enabled;
   const { data: priv } = await supabase.from('provider_private').select('cpf_ciphertext').eq('provider_id', user.id).maybeSingle();
   let cpfCipher: string | undefined;
   let cpfLast2: string | undefined;
-  if (cpfEnabled) {
+  if (cpfEnabled && doContact) {
     const cpfRaw = String(form.get('cpf') ?? '');
     if (cpfRaw) {
       if (!isValidCpf(cpfRaw)) errors.cpf = 'CPF inválido. Confira os números digitados';
@@ -71,52 +75,73 @@ export async function saveProfileStep(_: FormState, form: FormData): Promise<For
 
   const all = await getAllServices();
   const serviceIds = [...new Set(form.getAll('services').map(Number))].filter((id) => all.some((s) => s.id === id));
-  if (serviceIds.length > 10) errors.services = 'Escolha até 10 serviços';
-  else if (strict && serviceIds.length === 0) errors.services = 'Escolha pelo menos um serviço';
-  let mainId = Number(form.get('main_service')) || null;
-  if (serviceIds.length === 1) mainId = serviceIds[0];
-  if (mainId && !serviceIds.includes(mainId)) mainId = null;
-  if (strict && serviceIds.length > 0 && !mainId) errors.main_service = 'Indique o serviço principal';
+  let mainId = doServices ? Number(form.get('main_service')) || null : profile.main_service_id;
+  if (doServices) {
+    if (serviceIds.length > 10) errors.services = 'Escolha até 10 serviços';
+    else if (strict && serviceIds.length === 0) errors.services = 'Escolha pelo menos um serviço';
+    if (serviceIds.length === 1) mainId = serviceIds[0];
+    if (mainId && !serviceIds.includes(mainId)) mainId = null;
+    if (strict && serviceIds.length > 0 && !mainId) errors.main_service = 'Indique o serviço principal';
+  }
 
   const bio = String(form.get('bio') ?? '').trim();
-  if (bio.length > 600) errors.bio = 'Use até 600 caracteres';
+  if (doContact && bio.length > 600) errors.bio = 'Use até 600 caracteres';
 
-  if (intent === 'continuar' && !profile.photo_path) errors.photo = 'Envie uma foto de perfil';
+  if (doServices && (intent === 'continuar' || (section === 'servicos' && profile.status !== 'draft')) && !profile.photo_path) errors.photo = 'Envie uma foto de perfil';
 
   if (Object.keys(errors).length) {
     return { errors, message: 'Corrija os campos destacados.', values: keep(form, ['display_name', 'phone', 'whatsapp', 'bio']) };
   }
 
-  const { error: e1 } = await supabase.from('provider_profiles').update({
-    display_name: displayName, bio: bio || null, main_service_id: mainId,
-    draft_step: intent === 'continuar' ? 2 : 1,
-  }).eq('id', user.id);
-  if (e1) return { message: 'Não foi possível salvar. Tente de novo.' };
+  const patch: Record<string, unknown> = {};
+  if (doContact) Object.assign(patch, { display_name: displayName, bio: bio || null });
+  if (doServices) patch.main_service_id = mainId;
+  if (section === 'tudo') patch.draft_step = intent === 'continuar' ? 2 : 1;
+  const { error: e1 } = await supabase.from('provider_profiles').update(patch).eq('id', user.id);
+  if (e1) return { message: 'Não foi possível salvar. Tente de novo.', values: keep(form, ['display_name', 'phone', 'whatsapp', 'bio']) };
 
   // serviços: substitui a seleção
-  const { data: current } = await supabase.from('provider_services').select('service_id').eq('provider_id', user.id);
-  const cur = (current ?? []).map((r) => r.service_id as number);
-  const toDel = cur.filter((id) => !serviceIds.includes(id));
-  const toAdd = serviceIds.filter((id) => !cur.includes(id));
-  if (toDel.length) await supabase.from('provider_services').delete().eq('provider_id', user.id).in('service_id', toDel);
-  if (toAdd.length) await supabase.from('provider_services').insert(toAdd.map((service_id) => ({ provider_id: user.id, service_id })));
+  let toDel: number[] = [], toAdd: number[] = [];
+  if (doServices) {
+    const { data: current } = await supabase.from('provider_services').select('service_id').eq('provider_id', user.id);
+    const cur = (current ?? []).map((r) => r.service_id as number);
+    toDel = cur.filter((id) => !serviceIds.includes(id));
+    toAdd = serviceIds.filter((id) => !cur.includes(id));
+    const r1 = toDel.length ? await supabase.from('provider_services').delete().eq('provider_id', user.id).in('service_id', toDel) : { error: null };
+    const r2 = toAdd.length ? await supabase.from('provider_services').insert(toAdd.map((service_id) => ({ provider_id: user.id, service_id }))) : { error: null };
+    if (r1.error || r2.error) return { message: 'Não foi possível salvar os serviços. Tente de novo.' };
+  }
 
-  const privPatch: Record<string, unknown> = { provider_id: user.id, phone, whatsapp };
-  if (cpfCipher) { privPatch.cpf_ciphertext = cpfCipher; privPatch.cpf_last2 = cpfLast2; }
-  const { error: e2 } = await supabase.from('provider_private').upsert(privPatch);
-  if (e2) return { message: 'Não foi possível salvar os dados de contato.' };
+  if (doContact) {
+    const privPatch: Record<string, unknown> = { provider_id: user.id, phone, whatsapp };
+    if (cpfCipher) { privPatch.cpf_ciphertext = cpfCipher; privPatch.cpf_last2 = cpfLast2; }
+    const { error: e2 } = await supabase.from('provider_private').upsert(privPatch);
+    if (e2) return { message: 'Não foi possível salvar os dados de contato.', values: keep(form, ['display_name', 'phone', 'whatsapp', 'bio']) };
+  }
 
   // Endereço amigável enquanto rascunho
   const base = slugify(displayName);
-  if (profile.status === 'draft' && base && !profile.slug.startsWith(base + '-')) {
+  if (doContact && profile.status === 'draft' && base && !profile.slug.startsWith(base + '-')) {
     await createAdminClient().from('provider_profiles')
       .update({ slug: `${base}-${crypto.randomBytes(2).toString('hex')}` }).eq('id', user.id);
   }
-  if (toDel.length || toAdd.length) await supabase.rpc('clear_available_today');
+  // Serviços mudaram: o "Atendo hoje" fica só com o que continua no perfil.
+  const today = toDel.length || toAdd.length ? await revalidateToday(supabase) : null;
 
-  revalidatePath('/painel', 'layout');
-  if (intent === 'continuar') redirect('/painel/atendimento');
-  return { ok: true, message: 'Rascunho salvo.' };
+  revalidatePath('/', 'layout');
+  if (intent === 'continuar' && section === 'tudo') redirect('/painel/atendimento');
+  return { ok: true, message: savedMessage(profile.status === 'draft' && section === 'tudo' ? 'Rascunho salvo.' : 'Alterações salvas.', today) };
+}
+
+type SB = Awaited<ReturnType<typeof createClient>>;
+async function revalidateToday(supabase: SB): Promise<string | null> {
+  const { data } = await supabase.rpc('revalidate_my_available_today');
+  return (data as string | null) ?? null;
+}
+function savedMessage(base: string, today: string | null) {
+  if (today === 'ajustada') return `${base} O “Atendo hoje” foi ajustado para os serviços e a área que continuam no seu perfil.`;
+  if (today === 'removida') return `${base} O “Atendo hoje” foi desativado porque os serviços ou a área de hoje saíram do seu perfil.`;
+  return base;
 }
 
 // ----------------------------------------------------------------- Etapa 2
@@ -181,15 +206,20 @@ export async function saveAreaStep(_: FormState, form: FormData): Promise<FormSt
   }).eq('id', user.id);
   if (e1 || e2) return { message: 'Não foi possível salvar. Tente de novo.' };
 
-  await supabase.from('provider_areas').delete().eq('provider_id', user.id);
-  if (!wholeCity && validNb.length) {
-    await supabase.from('provider_areas').insert(validNb.map((neighborhood_id) => ({ provider_id: user.id, neighborhood_id })));
-  }
-  await supabase.rpc('clear_available_today');
+  const { data: oldAreas } = await supabase.from('provider_areas').select('neighborhood_id').eq('provider_id', user.id);
+  const prev = (oldAreas ?? []).map((a) => a.neighborhood_id as number);
+  const next = wholeCity ? [] : validNb;
+  const toRemove = prev.filter((id) => !next.includes(id));
+  const toInsert = next.filter((id) => !prev.includes(id));
+  const r1 = toRemove.length ? await supabase.from('provider_areas').delete().eq('provider_id', user.id).in('neighborhood_id', toRemove) : { error: null };
+  const r2 = toInsert.length ? await supabase.from('provider_areas').insert(toInsert.map((neighborhood_id) => ({ provider_id: user.id, neighborhood_id }))) : { error: null };
+  if (r1.error || r2.error) return { message: 'Não foi possível salvar os bairros. Tente de novo.', values: keep(form, ['cep', 'number', 'complement']) };
+  // Cobertura habitual mudou: revalida a área do dia antes de aparecer na busca ou liberar contato.
+  const today = await revalidateToday(supabase);
 
-  revalidatePath('/painel', 'layout');
-  if (intent === 'continuar') redirect('/painel/previa');
-  return { ok: true, message: 'Rascunho salvo.' };
+  revalidatePath('/', 'layout');
+  if (intent === 'continuar') redirect(`/painel/previa${today === 'ajustada' || today === 'removida' ? `?hoje=${today}` : ''}`);
+  return { ok: true, message: savedMessage('Rascunho salvo.', today) };
 }
 
 // ----------------------------------------------------------------- Publicação e estado
@@ -225,15 +255,16 @@ export async function enableToday(_: FormState, form: FormData): Promise<FormSta
   const { error } = await supabase.rpc('set_available_today', {
     p_service_ids: services, p_neighborhood_ids: nbs, p_whole_city: wholeCity,
   });
-  if (error) return { message: error.message };
+  if (error) return { message: `${error.message}. Tente novamente.` };
   revalidatePath('/', 'layout');
-  return { ok: true };
+  return { ok: true, message: form.get('ajuste') === '1' ? 'Disponibilidade de hoje atualizada.' : '“Atendo hoje” ativado.' };
 }
 
 export async function disableToday() {
   const { supabase } = await requireUser();
-  await supabase.rpc('clear_available_today');
+  const { error } = await supabase.rpc('clear_available_today');
   revalidatePath('/', 'layout');
+  if (error) redirect(`/painel?erro=${encodeURIComponent('Não foi possível desativar agora. Tente novamente.')}`);
 }
 
 // ----------------------------------------------------------------- Fotos

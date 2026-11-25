@@ -52,6 +52,7 @@ export function ProviderCard({ p, photo, query = '', contact }: { p: ProviderCar
         {p.main_service && <span className="mt-0.5 flex items-center gap-1.5 font-semibold text-stone-800"><CategoryIcon slug={p.main_category} size="sm" />{p.main_service}</span>}
         {p.area_label && <span className="mt-0.5 flex items-center gap-1 text-sm text-stone-600"><Glyph d={PIN_PATH} size={14} />{areaText(p.area_label)}</span>}
         {p.available_today && <span className="mt-1 block"><span className="badge-hoje">● Atende hoje</span></span>}
+        {contact && <span className="pc-wa-label" aria-hidden="true"><WhatsAppIcon size={18} />{busy ? 'Abrindo…' : 'Chamar no WhatsApp'}</span>}
       </span>
     </>
   );
@@ -61,7 +62,6 @@ export function ProviderCard({ p, photo, query = '', contact }: { p: ProviderCar
       {contact ? (
         <button type="button" className="pc" onClick={tap} disabled={!ready || busy} aria-label={`Chamar no WhatsApp: ${p.display_name}`}>
           {body}
-          <span className="pc-wa" aria-hidden="true">{busy ? '…' : <WhatsAppIcon size={26} />}</span>
         </button>
       ) : (
         <Link href={profileHref} className="pc">{body}</Link>

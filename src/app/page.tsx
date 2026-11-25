@@ -3,7 +3,7 @@ import { UrgentForm, toUrgentList } from '@/components/UrgentForm';
 import { CategoryIcon, Glyph, PIN_PATH, WhatsAppIcon } from '@/components/CategoryIcon';
 import { getCatalog, getNeighborhoods, getPilotCity, getSynonymsByService, getUrgentCatalog } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
-import { PILOT_CITY_LABEL, PILOT_TAGLINE } from '@/config/brand';
+import { PILOT_CITY_LABEL, PILOT_TAGLINE, URGENT_TAGLINE } from '@/config/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,11 +17,12 @@ export default async function Home() {
   const online = Number((live.data as { total_count: number }[] | null)?.[0]?.total_count ?? 0);
   return (
     <div className="space-y-8">
-      <div>
+      <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{PILOT_TAGLINE}</h1>
+      <div id="preciso-para-hoje">
         <section aria-labelledby="hoje-titulo" className="band">
           <span className="chip-dark"><Glyph d={PIN_PATH} size={16} /> {PILOT_CITY_LABEL}</span>
-          <h1 id="hoje-titulo" className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Preciso para hoje</h1>
-          <p className="mt-2 max-w-xl text-lg text-white/90">{PILOT_TAGLINE}</p>
+          <h2 id="hoje-titulo" className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">Preciso para hoje</h2>
+          <p className="mt-2 max-w-xl text-lg text-white/90">{URGENT_TAGLINE}</p>
           {online > 0 && (
             <p className="live mt-3"><span className="dot" />{online === 1 ? '1 profissional disponível' : `${online} profissionais disponíveis`} hoje na cidade</p>
           )}
@@ -46,7 +47,7 @@ export default async function Home() {
         </form>
       </section>
 
-      <section aria-labelledby="cats-titulo">
+      <section aria-labelledby="cats-titulo" id="categorias">
         <h2 id="cats-titulo" className="text-xl font-bold">Explore por categoria</h2>
         <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {catalog.map((c) => (
