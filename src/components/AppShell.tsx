@@ -209,10 +209,10 @@ export function AppShell({ viewer, children, footer }: {
           <Link href="/" aria-label="Página inicial" className="md:w-[236px] md:flex-none"><Logo /></Link>
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <Suspense fallback={null}><Title /></Suspense>
-            <form action="/buscar" method="get" role="search" className="hidden min-w-0 flex-1 md:block md:max-w-md" data-testid="header-search">
+            {!path.startsWith('/buscar') && <form action="/buscar" method="get" role="search" className="hidden min-w-0 flex-1 md:block md:max-w-md" data-testid="header-search">
               <label htmlFor="hq" className="sr-only">Que serviço você procura?</label>
               <input id="hq" name="q" className="input min-h-10 rounded-full py-1.5" placeholder="Que serviço você procura?" enterKeyHint="search" />
-            </form>
+            </form>}
           </div>
           <nav aria-label="Conta" className="flex items-center gap-1 text-sm sm:text-base">
             <AccountActions viewer={viewer} />

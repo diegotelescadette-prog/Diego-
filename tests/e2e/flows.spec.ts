@@ -8,7 +8,7 @@ test.beforeAll(async () => { await reseed(); });
 test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => {
   const wa = await captureWhatsApp(page);
   await page.goto('/');
-  await page.getByRole('navigation', { name: 'Atalhos' }).getByRole('link', { name: 'Preciso para hoje' }).click();
+  await page.getByTestId('cta-hoje').click(); // atalho no começo da comunidade
   await expect(page).toHaveURL(/\/hoje$/);
   await expect(page.getByRole('heading', { name: 'Preciso para hoje' })).toBeVisible();
   await expect(page.getByText('Campo Grande–MS').first()).toBeVisible();
@@ -55,29 +55,33 @@ test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
 });
 
-test('início: busca no topo e trabalhos dos prestadores; WhatsApp do feed pede login uma vez', async ({ page }) => {
+test('início: comunidade com vitrine dos prestadores; WhatsApp pede login uma vez e volta ao contexto', async ({ page }) => {
   const wa = await captureWhatsApp(page);
   await page.goto('/');
+  await expect(page.getByTestId('cta-hoje')).toBeVisible();
+  await expect(page.getByTestId('composer')).toContainText('O que você quer compartilhar?');
   const posts = page.getByTestId('feed-post');
   await expect(posts.first()).toBeVisible();
-  // quem atende hoje e tem fotos vem primeiro; perfis pausados e suspensos não aparecem
+  // vitrine: quem atende hoje vem primeiro; perfis pausados e suspensos não aparecem
   await expect(posts.first()).toContainText('Atende hoje');
   await expect(page.getByText('Paulo Pausado')).toHaveCount(0);
   await expect(page.getByText('Sérgio Suspenso')).toHaveCount(0);
-  // prestador ainda sem publicação aparece com as fotos do perfil
-  const carlos = posts.filter({ hasText: 'Carlos Hidráulica (demo)' });
-  await expect(carlos.getByRole('link', { name: 'Ver as 3 fotos de Carlos Hidráulica (demo)' })).toBeVisible();
-  await expect(page.getByTestId('composer')).toHaveAttribute('href', '/sou-prestador');
+  const hidro = posts.filter({ hasText: 'Hidro Cidade (demo)' });
   // sem conta: o WhatsApp leva ao login e volta para o perfil
-  await carlos.getByRole('button', { name: /Chamar no WhatsApp/ }).click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fp%2Fcarlos-demo/);
+  await hidro.getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fp%2Fhidro-demo/);
   await login(page, demoEmail('cliente'));
-  await expect(page).toHaveURL(/\/p\/carlos-demo$/);
+  await expect(page).toHaveURL(/\/p\/hidro-demo$/);
   // com conta: direto do feed para o WhatsApp
   await page.goto('/');
-  await page.getByTestId('feed-post').filter({ hasText: 'Carlos Hidráulica (demo)' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  await page.getByTestId('feed-post').filter({ hasText: 'Hidro Cidade (demo)' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
   await expect.poll(() => wa.length).toBe(1);
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
+  // publicação profissional: sem conta, o WhatsApp volta para a publicação
+  await page.context().clearCookies();
+  await page.goto('/?tipo=trabalho');
+  await page.getByTestId('post').filter({ hasText: 'Carlos Hidráulica' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fcomunidade%2F/);
 });
 
 test('cidade inteira aparece em qualquer bairro; bairro do dia; serviço fora do "Preciso para hoje"', async ({ page }) => {
@@ -117,8 +121,9 @@ test('clique com disponibilidade vencida: avisa, atualiza e mantém serviço e b
 test('busca geral: sinônimo, login antes do contato, retorno ao mesmo perfil, favoritos', async ({ page, isMobile }) => {
   const wa = await captureWhatsApp(page);
   await page.goto('/');
-  await page.getByLabel('Que serviço você procura?').fill('limpar piscina');
-  await page.getByRole('button', { name: 'Buscar prestadores' }).click();
+  // busca do cabeçalho (computador) ou do topo da comunidade (celular)
+  await page.locator('input[name="q"]:visible').fill('limpar piscina');
+  await page.keyboard.press('Enter');
   await expect(page.getByText('“limpar piscina” inclui: Piscineiro')).toBeVisible();
   // filtro de bairro (Carandá Bosque) cruza a área declarada; endereço de referência é no Centro
   if (isMobile) await page.getByRole('button', { name: /^Filtros/ }).click();

@@ -195,11 +195,19 @@ declare nm text;
 begin
   if tg_op = 'UPDATE' then
     if auth.uid() is not null and not public.is_admin() then
-      if old.author_id <> auth.uid() or old.status = 'removido' then
+      if old.status = 'removido' then raise exception 'Comentário não encontrado' using errcode = '42501'; end if;
+      if old.author_id = auth.uid() then
+        -- quem escreveu corrige texto e indicação; o estado não muda
+        new.status := old.status;
+      elsif exists (select 1 from public.posts p where p.id = old.post_id and p.author_id = auth.uid()) then
+        -- autor da publicação (via hide_comment): só oculta ou mostra
+        if new.status not in ('visivel', 'oculto') then raise exception 'Estado inválido' using errcode = '42501'; end if;
+        new.body := old.body; new.provider_id := old.provider_id;
+      else
         raise exception 'Comentário não encontrado' using errcode = '42501';
       end if;
       new.post_id := old.post_id; new.author_id := old.author_id; new.author_name := old.author_name;
-      new.status := old.status; new.created_at := old.created_at; new.parent_id := old.parent_id;
+      new.created_at := old.created_at; new.parent_id := old.parent_id;
     end if;
     new.body := trim(new.body);
     if new.provider_id is not null and new.provider_id is distinct from old.provider_id and not public.provider_in_community(new.provider_id) then
