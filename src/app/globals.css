@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eef8fa;
+  --color-brand-100: #d5eef3;
+  --color-brand-600: #137085;
+  --color-brand-700: #0f5f73;
+  --color-brand-800: #0c4a5a;
+  --color-brand-900: #0a3a47;
+  --color-hoje-500: #f97316;
+  --color-hoje-600: #ea580c;
+  --color-hoje-700: #c2410c;
+  --color-zap-600: #15803d;
+  --color-zap-700: #166534;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body { @apply bg-stone-50 text-stone-900 antialiased; }
+
+/* Foco visível para navegação por teclado */
+:focus-visible { outline: 3px solid var(--color-hoje-500); outline-offset: 2px; border-radius: 6px; }
+
+@utility btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;  }
+@utility btn-primary { @apply btn bg-brand-700 text-white hover:bg-brand-800;  }
+@utility btn-hoje { @apply btn bg-hoje-600 text-white hover:bg-hoje-700;  }
+@utility btn-zap { @apply btn bg-zap-600 text-white hover:bg-zap-700;  }
+@utility btn-outline { @apply btn border-2 border-brand-700 bg-white text-brand-700 hover:bg-brand-50;  }
+@utility btn-ghost { @apply btn text-brand-700 hover:bg-brand-50;  }
+@utility btn-danger { @apply btn bg-red-700 text-white hover:bg-red-800;  }
+@utility card { @apply rounded-2xl border border-stone-200 bg-white shadow-sm;  }
+@utility label { @apply mb-1 block text-sm font-semibold text-stone-800;  }
+@utility input { @apply block min-h-11 w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-base text-stone-900 placeholder:text-stone-400 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-100;  }
+.input[aria-invalid="true"] { @apply border-red-600;  }
+@utility field-error { @apply mt-1 text-sm font-medium text-red-700;  }
+@utility hint { @apply mt-1 text-sm text-stone-600;  }
+@utility badge-hoje { @apply inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-sm font-bold text-amber-900;  }
+@utility chip { @apply inline-flex items-center gap-1 rounded-full border border-brand-600 bg-brand-50 px-3 py-1 text-sm font-medium text-brand-800;  }

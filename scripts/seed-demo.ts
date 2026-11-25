@@ -1,0 +1,81 @@
+// Carrega perfis FICTÍCIOS de demonstração (separados dos dados de lançamento).
+// Uso: npm run seed:demo  (lê .env.local; exige SUPABASE_SERVICE_ROLE_KEY)
+// Recria do zero todos os usuários do domínio de demonstração.
+import fs from 'node:fs';
+import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
+
+try { process.loadEnvFile('.env.local'); } catch { /* usa variáveis do ambiente */ }
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+if (!url || !key) throw new Error('Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY');
+const sb = createClient(url, key, { auth: { persistSession: false } });
+const demo = JSON.parse(fs.readFileSync('supabase/demo/providers.json', 'utf8'));
+const email = (local: string) => `${local}@${demo.emailDomain}`;
+
+async function must<T>(p: PromiseLike<{ data: T; error: unknown }>, what: string): Promise<T> {
+  const { data, error } = await p;
+  if (error) throw new Error(`${what}: ${JSON.stringify(error)}`);
+  return data;
+}
+
+async function avatar(name: string, color: string) {
+  const initials = name.replace(/\(demo\)/, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w: string) => w[0]).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="${color}"/>
+    <text x="200" y="245" font-size="150" font-family="Arial, sans-serif" font-weight="bold" fill="#fff" text-anchor="middle">${initials}</text></svg>`;
+  return sharp(Buffer.from(svg)).webp({ quality: 80 }).toBuffer();
+}
+
+async function main() {
+  // remove demo anterior
+  const { data: list } = await sb.auth.admin.listUsers({ perPage: 1000 });
+  for (const u of list.users.filter((u) => u.email?.endsWith(`@${demo.emailDomain}`))) await sb.auth.admin.deleteUser(u.id);
+
+  const create = async (local: string) =>
+    (await must(sb.auth.admin.createUser({ email: email(local), password: demo.password, email_confirm: true }), `criar ${local}`)).user!;
+
+  const adminUser = await create(demo.admin.email);
+  await must(sb.from('user_roles').insert({ user_id: adminUser.id, role: 'admin' }), 'papel admin');
+  for (const c of demo.clients) await create(c.email);
+
+  const city = await must(sb.from('cities').select('id, timezone').eq('slug', 'campo-grande-ms').single(), 'cidade');
+  const nbs = await must(sb.from('neighborhoods').select('id, slug').eq('city_id', city.id), 'bairros');
+  const svcs = await must(sb.from('services').select('id, slug'), 'serviços');
+  const nb = (s: string) => { const r = nbs.find((n) => n.slug === s); if (!r) throw new Error(`bairro ${s}`); return r.id; };
+  const sv = (s: string) => { const r = svcs.find((n) => n.slug === s); if (!r) throw new Error(`serviço ${s}`); return r.id; };
+  const { data: expires } = await sb.rpc('availability_expiry', { p_timezone: city.timezone });
+
+  let i = 0;
+  for (const p of demo.providers) {
+    i++;
+    const u = await create(`prestador-${p.key}`);
+    const photoPath = `${u.id}/profile-demo.webp`;
+    await sb.storage.from('profile-photos').upload(photoPath, await avatar(p.name, p.color), { contentType: 'image/webp', upsert: true });
+    await must(sb.from('provider_profiles').insert({
+      id: u.id, slug: `${p.key}-demo`, display_name: p.name, bio: p.bio, photo_path: photoPath,
+      main_service_id: sv(p.main), city_id: city.id, serves_whole_city: !!p.wholeCity, serves_online: !!p.online,
+      status: 'draft', draft_step: 3,
+    }), `perfil ${p.key}`);
+    await must(sb.from('provider_services').insert(p.services.map((s: string) => ({ provider_id: u.id, service_id: sv(s) }))), 'serviços');
+    if (p.areas) await must(sb.from('provider_areas').insert(p.areas.map((a: string) => ({ provider_id: u.id, neighborhood_id: nb(a) }))), 'áreas');
+    const n = String(i).padStart(4, '0');
+    await must(sb.from('provider_private').insert({
+      provider_id: u.id, phone: `6790000${n}`, whatsapp: `6790000${n}`,
+      ref_cep: '79002000', ref_street: 'Rua Fictícia', ref_number: String(100 + i), ref_neighborhood: p.ref, ref_city: 'Campo Grande', ref_uf: 'MS',
+    }), 'privado');
+    await must(sb.from('provider_profiles').update({ status: p.status ?? 'published', published_at: new Date().toISOString() }).eq('id', u.id), 'status');
+    if (p.today && (p.status ?? 'published') === 'published') {
+      const inPerson = p.services.map(sv);
+      await must(sb.from('availability_today').insert({
+        provider_id: u.id, city_id: city.id, whole_city: !!p.today.wholeCity, service_ids: inPerson,
+        neighborhood_ids: (p.today.neighborhoods ?? []).map(nb), expires_at: expires,
+      }), 'disponibilidade');
+    }
+    console.log(`✓ ${p.name}`);
+  }
+  console.log(`\nAdmin: ${email(demo.admin.email)} / ${demo.password}`);
+  console.log(`Cliente: ${email(demo.clients[0].email)} / ${demo.password}`);
+  console.log(`Prestadores: prestador-<chave>@${demo.emailDomain} / ${demo.password}`);
+}
+
+main().catch((e) => { console.error(e); process.exit(1); });

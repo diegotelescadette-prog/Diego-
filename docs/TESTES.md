@@ -1,0 +1,41 @@
+# Testes
+
+## Como rodar
+
+Precisa de um Supabase local. Com Docker: `supabase start` e aplique as migrações.
+Sem Docker (como foi feito aqui): `sudo dev/local-stack/start.sh` sobe Postgres 16 + GoTrue + PostgREST + um gateway
+em `http://localhost:54321` (storage simplificado e caixa de e-mails em `/_mail`). Coloque as chaves impressas no `.env.local`.
+
+```bash
+npm run seed:demo                  # dados fictícios
+npm run build && npm start         # app em :3000
+npm run test:unit                  # validações e mensagens
+npm run test:integration           # RLS, regras do banco e APIs (precisa do app rodando)
+npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
+```
+
+## Cenários executados (25/11/2026) — todos passando
+
+Unitários (7): CPF (dígitos), telefone/WhatsApp com DDD, redirecionamento seguro, mensagens do WhatsApp.
+
+Banco/API (13): visitante só vê publicados; pausado e suspenso fora da busca; dados privados restritos ao dono; número só por
+função de servidor; cada prestador só edita o próprio perfil; status não editável direto; suspenso não se reativa; papel de admin
+só pelo servidor; expiração à meia-noite de America/Campo_Grande (23:59, 00:01); “Atendo hoje” padrão, restrição e rejeição de bairro/serviço fora do perfil;
+busca urgente (bairro, cidade inteira, fora do bairro, fora do piloto, sem disponibilidade); busca geral (área declarada x endereço de referência, cidade inteira,
+sinônimos “vazamento”, “limpar piscina”, “formatar computador”, “T.I.”, sem acento, online, “Atende hoje”); contato urgente válido, desativado, vencido, fora do bairro,
+fora do piloto e pausado; limite de frequência (20 por 10 min); contato geral exige login; denúncia autenticada sem duplicar.
+
+E2E (10 cenários × computador e celular = 20): visita sem conta do início ao WhatsApp; cidade inteira; especialidade fora do piloto;
+clique com resultado vencido (aviso, lista atualizada, serviço e bairro mantidos, “Ver todos nesse bairro”); busca geral com sinônimo,
+filtro de bairro, login antes do contato, retorno ao mesmo perfil e mensagem editável; favoritos (salvar, listar, remover, pedir login);
+busca vazia com “Procurar em toda Campo Grande” mantendo a consulta; prestador cria conta, confirma e-mail, vê erros de validação ao lado do campo,
+envia foto com GPS (verificado: publicada sem EXIF), cadastra endereço e área, publica, ativa “Atendo hoje”, aparece para visitante,
+desativa em um toque, pausa (sai da busca) e reativa; recuperação de senha por e-mail; admin suspende (sai da busca) e reativa com histórico;
+admin adiciona sinônimo e desativa serviço mantendo vínculos.
+
+## Não executado / depende de configuração
+
+- Supabase real (Storage oficial, envio real de e-mail por SMTP, limites de autenticação da plataforma): testado com a stack local equivalente.
+- Consulta de CEP (ViaCEP): o ambiente de teste não tinha internet para esse serviço; o caminho de preenchimento manual foi testado.
+- Abertura real do WhatsApp: o teste intercepta o link `wa.me` e confere número e texto.
+- Expiração à meia-noite foi testada pela função de cálculo e simulando o vencimento, não esperando o relógio virar.
