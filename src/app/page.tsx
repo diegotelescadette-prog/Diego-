@@ -16,20 +16,23 @@ const MEGA = 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10';
 const SHIELD = 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5';
 const BOLT = 'M13 2 4 14h7l-1 8 9-12h-7z';
 
-/** Luz da manhã em ilustração plana: faixa índigo, sol lima com brilho suave e colinas em índigo escuro (sem gradiente). */
+/** Canteiro em ilustração plana: céu laranja, sol amarelo e a silhueta da cidade com um guindaste, em carvão (sem gradiente). */
 function Dawn() {
   return (
     <>
-      <span className="dawn-band" aria-hidden="true" />
       <svg className="dawn-sun" viewBox="0 0 140 140" aria-hidden="true">
-        <circle cx="70" cy="70" r="70" fill="#6a5af5" />
-        <circle cx="70" cy="70" r="48" fill="#d4f25a" />
+        <circle cx="70" cy="70" r="70" fill="#f9a05c" />
+        <circle cx="70" cy="70" r="50" fill="#ffc62b" />
       </svg>
-      <svg className="dawn-hills" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 52 L70 18 L120 40 L190 4 L262 44 L320 26 L400 50 V90 H0z" fill="#2a2290" />
-        <path d="M0 76 L90 50 L160 68 L240 44 L330 72 L400 58 V90 H0z" fill="#1c1666" />
+      <svg className="dawn-hills" viewBox="0 0 400 100" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <g fill="#1c1a17">
+          <path d="M250 100V22h4v78zM226 26h92v4h-92zM300 30h3v22h-3zM296 52h11v8h-11z" />
+          <path d="M0 100V70h22v-8h18v38zM46 100V54h26v46zM78 100V64h14V48h20v52zM118 100V72h28v28zM150 100V40h30v60zM186 100V60h22v40zM214 100V50h26v50zM262 100V66h30v34zM298 100V76h20v24zM324 100V58h28v42zM358 100V68h18v-6h24v38z" />
+        </g>
+        <g fill="#ffc62b">
+          <path d="M156 48h6v6h-6zM168 48h6v6h-6zM156 62h6v6h-6zM168 76h6v6h-6zM52 62h6v6h-6zM330 66h6v6h-6zM342 80h6v6h-6zM220 58h6v6h-6z" />
+        </g>
       </svg>
-      <span className="dawn-dot" aria-hidden="true" />
     </>
   );
 }
@@ -67,8 +70,8 @@ export default async function Home() {
       <header className="dawn" data-testid="home-dawn">
         <Dawn />
         <div className="dawn-text">
-          <h1 className="text-[32px] leading-tight text-white sm:text-[42px]">{greeting(city.timezone || 'America/Campo_Grande')}{name ? `, ${name}` : ''}.</h1>
-          <p className="mt-1 inline-block rounded-lg bg-ember-dark px-2 py-0.5 text-[17px] font-semibold text-white">Gente de confiança, perto de você.</p>
+          <h1 className="text-[32px] leading-tight text-[#1c1a17] sm:text-[42px]">{greeting(city.timezone || 'America/Campo_Grande')}{name ? `, ${name}` : ''}.</h1>
+          <p className="mt-1 inline-block rounded-lg bg-[#1c1a17] px-2 py-0.5 text-[17px] font-semibold text-white">Gente de confiança, perto de você.</p>
         </div>
       </header>
 

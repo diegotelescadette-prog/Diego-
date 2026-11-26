@@ -1,62 +1,69 @@
 @import "tailwindcss";
 
 @theme {
-  /* Paleta "Luz da Manhã": índigo (marca), coral e lima (acentos com moderação), tinta (texto), papel (fundo),
-     verde confiança (só selo Verificado e segurança). Os nomes antigos dos tokens ficam para não mudar a estrutura. */
-  --color-brand-50: #f4f2ff;
-  --color-brand-100: #ece9ff;
-  --color-brand-300: #c8c1ff;
-  --color-brand-400: #8f82f5;
-  --color-brand-600: #5d4cf2;
-  --color-brand-700: #4f3cf0;
-  --color-brand-800: #3a2fc0;
-  --color-brand-900: #2a2290;
-  --color-ink: #111014;
-  /* "Hoje" e destaques pontuais: lima com texto tinta */
-  --color-hoje-100: #f3f8d6;
-  --color-hoje-500: #d4f25a;
-  --color-hoje-600: #d4f25a;
-  --color-hoje-650: #c4e642;
-  --color-hoje-700: #4a5a0a;
-  --color-coral: #ff6b4a;
-  --color-coral-soft: #ffe4dc;
-  --color-gold: #ffc4b5;
-  --color-glow: #ece9ff;
-  --color-ember: #4f3cf0;
-  --color-ember-dark: #3a2fc0;
-  --color-copper: #4f3cf0;
-  --color-copper-dark: #3a2fc0;
-  /* Verde confiança: exclusivo do selo Verificado e de mensagens de segurança */
-  --color-oliva-50: #ddf4ea;
-  --color-oliva-600: #0b7a55;
-  --color-oliva-800: #0b5e42;
+  /* Paleta "Canteiro": laranja (marca), amarelo (Hoje e destaques), verde (Verificado, segurança e Comércio),
+     carvão (texto) e papel (fundo). Regra: nunca texto branco sobre o laranja #F47B20; sobre ele, sempre carvão.
+     brand-500 é o laranja da marca; brand-700 é o laranja escuro #B84A0E (links e fundos com texto branco).
+     Os nomes antigos dos tokens ficam para não mudar a estrutura das telas. */
+  --color-brand-50: #fff4ec;
+  --color-brand-100: #ffe8d6;
+  --color-brand-300: #ffc79f;
+  --color-brand-400: #f9a05c;
+  --color-brand-500: #f47b20;
+  --color-brand-600: #d9620f;
+  --color-brand-700: #b84a0e;
+  --color-brand-800: #9a3d0a;
+  --color-brand-900: #6e2a06;
+  --color-ink: #1c1a17;
+  /* "Hoje" e selos de destaque: amarelo com texto carvão */
+  --color-hoje-100: #fff4cc;
+  --color-hoje-500: #ffc62b;
+  --color-hoje-600: #ffc62b;
+  --color-hoje-650: #f2b705;
+  --color-hoje-700: #7a5a00;
+  /* Novidades, contador e anel dos Momentos: laranja (texto carvão por cima) */
+  --color-coral: #f47b20;
+  --color-coral-soft: #ffe8d6;
+  --color-gold: #ffd79a;
+  --color-glow: #ffe8d6;
+  --color-ember: #f47b20;
+  --color-ember-dark: #b84a0e;
+  --color-copper: #b84a0e;
+  --color-copper-dark: #9a3d0a;
+  /* Verde: selo Verificado (sempre com ícone e texto), segurança e "Concluído" */
+  --color-oliva-50: #e3f4e8;
+  --color-oliva-600: #1e7b4a;
+  --color-oliva-800: #17613a;
+  --color-lima: #7cc243;
   --color-zap-600: #1f7a4f;
   --color-zap-700: #17633f;
-  --color-paper: #f6f5f1;
-  /* Fundo de cards, campos e barras (branco no claro, grafite no escuro) */
+  --color-paper: #faf7f2;
+  /* Fundo de cards, campos e barras (branco no claro) */
   --color-surface: #ffffff;
-  --color-line: #e8e6ef;
-  /* Tons por módulo (fundo suave) */
-  --color-sand: #ffe4dc;
-  --color-sage: #ece9ff;
-  --color-sky: #ddf4ea;
-  --color-rose: #f3f8d6;
-  --color-lavender: #f1f0f5;
-  --color-mod-servicos: #9a2e12;
-  --color-mod-trabalho: #3a2fc0;
-  --color-mod-encontros: #0b5e42;
-  --color-mod-eventos: #4a5a0a;
-  /* Texto: tinta #111014; secundário #5F5B6B */
-  --color-stone-50: #f6f5f1;
-  --color-stone-100: #f1f0f5;
-  --color-stone-200: #e8e6ef;
-  --color-stone-300: #d6d3e0;
-  --color-stone-400: #9c98a8;
-  --color-stone-500: #5f5b6b;
-  --color-stone-600: #5f5b6b;
-  --color-stone-700: #423f4d;
-  --color-stone-800: #2a2833;
-  --color-stone-900: #111014;
+  --color-line: #ece5da;
+  /* Tons por módulo (fundo suave / texto e ícone) */
+  --color-sand: #ffe8d6;      /* Serviços */
+  --color-sage: #fff4cc;      /* Trabalho */
+  --color-sky: #e8eef2;       /* Encontros e eventos */
+  --color-rose: #e3f4e8;      /* Comércio */
+  --color-lavender: #f1ece3;  /* Comunidade */
+  --color-mod-servicos: #9a3d0a;
+  --color-mod-trabalho: #7a5a00;
+  --color-mod-encontros: #2f4858;
+  --color-mod-eventos: #2f4858;
+  --color-mod-comercio: #17613a;
+  --color-mod-comunidade: #4a4238;
+  /* Texto: carvão #1C1A17; secundário #66605A */
+  --color-stone-50: #faf7f2;
+  --color-stone-100: #f3eee6;
+  --color-stone-200: #ece5da;
+  --color-stone-300: #d9d0c3;
+  --color-stone-400: #a39a8e;
+  --color-stone-500: #66605a;
+  --color-stone-600: #66605a;
+  --color-stone-700: #4a453f;
+  --color-stone-800: #2e2b27;
+  --color-stone-900: #1c1a17;
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-serif: "Bricolage Grotesque Variable", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
 }
@@ -69,7 +76,7 @@ body { @apply bg-paper text-stone-900 antialiased; }
 :focus-visible { outline: 3px solid var(--color-brand-700); outline-offset: 2px; border-radius: 6px; }
 
 @utility btn { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-base font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;  }
-@utility btn-primary { @apply btn bg-brand-700 text-white hover:bg-brand-800;  }
+@utility btn-primary { @apply btn bg-brand-500 text-ink hover:bg-brand-400;  }
 @utility btn-hoje { @apply btn bg-hoje-600 text-ink hover:bg-hoje-650;  }
 @utility btn-zap { @apply btn bg-zap-600 text-white hover:bg-zap-700;  }
 @utility btn-outline { @apply btn border border-brand-300 bg-surface text-brand-800 hover:bg-brand-50;  }
@@ -95,7 +102,7 @@ body { @apply bg-paper text-stone-900 antialiased; }
 @media (min-width: 640px) { .band { padding: 36px 36px 84px; } }
 .chip-dark { display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgb(255 255 255 / .35); background: rgb(255 255 255 / .1); color: #fff; border-radius: 999px; padding: 4px 12px; font-size: 14px; font-weight: 500; }
 .live { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; background: rgb(255 255 255 / .12); border-radius: 999px; padding: 4px 12px; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-coral); flex: none; box-shadow: 0 0 0 3px rgb(255 107 74 / .25); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-coral); flex: none; box-shadow: 0 0 0 3px rgb(244 123 32 / .25); }
 .lift { position: relative; z-index: 1; margin: -60px 8px 0; border-radius: 22px;  }
 @media (min-width: 640px) { .lift { margin-inline: 24px; } }
 
@@ -388,37 +395,39 @@ h3 { font-family: var(--font-serif); font-weight: 600; }
 .star-opt:has(input:checked), .star-opt.on { color: var(--color-hoje-700); border-color: var(--color-hoje-500); background: var(--color-hoje-100); }
 .star-opt:has(input:focus-visible) { outline: 3px solid var(--color-brand-700); outline-offset: 2px; }
 .star-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.dawn { position: relative; overflow: hidden; border-radius: 24px; background: var(--color-ember); color: #fff; min-height: 210px; padding: 22px 20px 100px; isolation: isolate; }
-.dawn > .dawn-band { position: absolute; left: 0; right: 0; bottom: 0; height: 58%; background: var(--color-ember-dark); z-index: -3; }
+.dawn { position: relative; overflow: hidden; border-radius: 24px; background: #f47b20; color: #1c1a17; min-height: 210px; padding: 22px 20px 100px; isolation: isolate; }
 .dawn > .dawn-sun { position: absolute; right: 8%; bottom: 8px; width: 130px; height: 130px; z-index: -2; }
 .dawn > .dawn-hills { position: absolute; left: 0; bottom: 0; width: 100%; height: 86px; z-index: -1; }
 .dawn > .dawn-text { position: relative; max-width: 30rem; }
-.dawn > .dawn-dot { position: absolute; right: 6%; top: 18px; width: 14px; height: 14px; border-radius: 999px; background: var(--color-coral); z-index: -1; }
 @media (min-width: 640px) { .dawn { min-height: 240px; padding: 32px 32px 110px; } .dawn > .dawn-sun { width: 170px; height: 170px; right: 12%; } .dawn > .dawn-hills { height: 104px; } }
 
 /* ---------------------------------------------------------------------------
    Modo escuro: segue o aparelho (Automático) ou a escolha no rodapé (cookie "tema" → data-theme no <html>).
-   Os tokens mudam de valor; textos em índigo, vermelho e verde ganham tons claros para manter 4.5:1.
+   Os tokens mudam de valor; textos em laranja, vermelho e verde ganham tons claros para manter 4.5:1.
    --------------------------------------------------------------------------- */
 :root { color-scheme: light; }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-surface: #201d2c; --color-paper: #16141f; --color-line: #2e2a3d;
-  --color-stone-50: #1b1926; --color-stone-100: #262333; --color-stone-200: #2e2a3d; --color-stone-300: #3d3850;
-  --color-stone-400: #8a8599; --color-stone-500: #a9a4b8; --color-stone-600: #a9a4b8; --color-stone-700: #cfcbdb;
-  --color-stone-800: #e6e3ee; --color-stone-900: #ffffff;
-  --color-brand-50: #221d45; --color-brand-100: #2b2560; --color-brand-300: #5a4fc9; --color-brand-600: #7a6cf5;
-  --color-brand-700: #6d5ef5; --color-brand-800: #c8c1ff; --color-brand-900: #e0dbff;
-  --color-glow: #2b2560; --color-sage: #2b2560; --color-sand: #3a2420; --color-coral-soft: #3a2420;
-  --color-sky: #15362b; --color-oliva-50: #15362b; --color-rose: #2c3312; --color-hoje-100: #2c3312; --color-lavender: #262333;
-  --color-mod-servicos: #ffb39e; --color-mod-trabalho: #c8c1ff; --color-mod-encontros: #7fdcb5; --color-mod-eventos: #d4f25a;
-  --color-hoje-700: #d4f25a; --color-oliva-800: #7fdcb5; --color-gold: #5a3a30;
+  --color-surface: #221f18; --color-paper: #17150f; --color-line: #34302a;
+  --color-stone-50: #1c1a14; --color-stone-100: #2a261f; --color-stone-200: #34302a; --color-stone-300: #4a453d;
+  --color-stone-400: #857d72; --color-stone-500: #b3aa9e; --color-stone-600: #b3aa9e; --color-stone-700: #d4ccc0;
+  --color-stone-800: #ece6dc; --color-stone-900: #ffffff;
+  --color-brand-50: #2b2219; --color-brand-100: #3a2a1c; --color-brand-300: #6a4526; --color-brand-600: #ff9a4d;
+  --color-brand-700: #ff9a4d; --color-brand-800: #ffb27a; --color-brand-900: #ffd2b0;
+  --color-glow: #3a2a1c; --color-sage: #33290f; --color-sand: #3a2a1c; --color-coral-soft: #3a2a1c;
+  --color-sky: #1e272d; --color-oliva-50: #15301f; --color-rose: #15301f; --color-hoje-100: #33290f; --color-lavender: #2a261f;
+  --color-mod-servicos: #ffb27a; --color-mod-trabalho: #ffd34d; --color-mod-encontros: #a9c4d6; --color-mod-eventos: #a9c4d6;
+  --color-mod-comercio: #5ccb8a; --color-mod-comunidade: #d9cfc0;
+  --color-hoje-500: #ffd34d; --color-hoje-600: #ffd34d; --color-hoje-650: #ffdd73; --color-hoje-700: #ffd34d;
+  --color-oliva-600: #5ccb8a; --color-oliva-800: #5ccb8a; --color-gold: #4a3a1c; --color-coral: #ff9a4d;
 }
-:root[data-theme="dark"] :is(.text-brand-700, .text-brand-600) { color: #a99bff; }
+/* No escuro, fundos em laranja escuro ganham o laranja claro com texto carvão (nada de branco sobre laranja). */
+:root[data-theme="dark"] :is(.bg-brand-700, .bg-brand-800) { color: #1c1a17; }
+:root[data-theme="dark"] :is(.text-brand-700, .text-brand-600) { color: #ff9a4d; }
 :root[data-theme="dark"] :is(.text-red-700, .text-red-800, .text-red-900, .text-red-950, .field-error) { color: #ff8a80; }
-:root[data-theme="dark"] .text-oliva-600 { color: #3dd39a; }
+:root[data-theme="dark"] .text-oliva-600 { color: #5ccb8a; }
 :root[data-theme="dark"] .text-ink { color: #ffffff; }
-:root[data-theme="dark"] .text-brand-100 { color: #ece9ff; }
+:root[data-theme="dark"] .text-brand-100 { color: #ffe8d6; }
 :root[data-theme="dark"] .ic { color: color-mix(in srgb, var(--t) 40%, white); background: color-mix(in srgb, var(--t) 30%, var(--color-surface)); }
 .theme-opt[aria-pressed="true"] { font-weight: 700; color: var(--color-stone-900); text-decoration: none; }
 :root[data-theme="dark"] :is(.border-red-200) { border-color: #5a2a2a; }
@@ -426,5 +435,5 @@ h3 { font-family: var(--font-serif); font-weight: 600; }
 :root[data-theme="dark"] .story-ring > * { border-color: var(--color-paper); }
 
 /* Sino do topo: contador coral com texto escuro. */
-.bell-count { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--color-coral); color: #111014; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
+.bell-count { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--color-brand-500); color: #1c1a17; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
 .notif-unread { background: var(--color-brand-50); }

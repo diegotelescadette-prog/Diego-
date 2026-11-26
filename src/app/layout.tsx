@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = {
   width: 'device-width', initialScale: 1,
-  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#f6f5f1' }, { media: '(prefers-color-scheme: dark)', color: '#16141f' }],
+  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#faf7f2' }, { media: '(prefers-color-scheme: dark)', color: '#17150f' }],
 };
 
 /** No modo Automático, aplica o tema do aparelho antes de pintar (sem piscar) e acompanha a troca. */
