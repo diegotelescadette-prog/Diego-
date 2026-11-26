@@ -16,19 +16,20 @@ const MEGA = 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10';
 const SHIELD = 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5';
 const BOLT = 'M13 2 4 14h7l-1 8 9-12h-7z';
 
-/** Amanhecer em ilustração plana: faixas de céu, sol âmbar com brilho e montanhas em silhueta (sem gradiente). */
+/** Luz da manhã em ilustração plana: faixa índigo, sol lima com brilho suave e colinas em índigo escuro (sem gradiente). */
 function Dawn() {
   return (
     <>
       <span className="dawn-band" aria-hidden="true" />
       <svg className="dawn-sun" viewBox="0 0 140 140" aria-hidden="true">
-        <circle cx="70" cy="70" r="70" fill="#ffe9a8" />
-        <circle cx="70" cy="70" r="50" fill="#ef9614" />
+        <circle cx="70" cy="70" r="70" fill="#6a5af5" />
+        <circle cx="70" cy="70" r="48" fill="#d4f25a" />
       </svg>
       <svg className="dawn-hills" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 52 L70 18 L120 40 L190 4 L262 44 L320 26 L400 50 V90 H0z" fill="#2b1809" />
-        <path d="M0 76 L90 50 L160 68 L240 44 L330 72 L400 58 V90 H0z" fill="#14100c" />
+        <path d="M0 52 L70 18 L120 40 L190 4 L262 44 L320 26 L400 50 V90 H0z" fill="#2a2290" />
+        <path d="M0 76 L90 50 L160 68 L240 44 L330 72 L400 58 V90 H0z" fill="#1c1666" />
       </svg>
+      <span className="dawn-dot" aria-hidden="true" />
     </>
   );
 }

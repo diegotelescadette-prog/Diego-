@@ -142,3 +142,15 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - "Trocar chuveiro" por R$ 90: agendar para hoje, acompanhar Solicitado → Confirmado → A caminho → Em andamento → Concluído → Avaliação, pagamento na entrega e avaliação de 1 a 5.
 - Mais de um profissional: o cliente escolhe entre até 3 (nota, comparecimento, bairro, referências); outro cliente não abre o pedido; a equipe troca o profissional; o cliente cancela.
 - Equipe muda o preço do pacote e o cliente vê o novo valor. O contato só aparece depois da confirmação.
+
+## Rodada 12: Próximo, fase 2 (Trabalho e Oferecer trabalho) e paleta "Luz da Manhã"
+
+- Unidade 23/23, integração 54/54, e2e 104/104 (computador e Pixel 7).
+- Paleta "Luz da Manhã" (prompt v2) no lugar da "Amanhecer": índigo, coral e lima por tokens; Bricolage Grotesque e Inter; botões em pílula; logo com ponto índigo no "ó". Verde confiança só no selo Verificado e em segurança.
+- Vagas: filtros por área, bairro, tipo, faixa salarial e formato; selo "Empresa verificada"; bloco "Por que é seguro se candidatar"; botão fixo "Enviar meu currículo" no celular.
+- Currículo no app (/curriculo): barra "80% completo · falta adicionar uma referência", foto opcional, PDF.
+- Candidatura em um toque com o currículo do app; telefone só se a pessoa marcar. O PDF enviado continua como opção.
+- Minhas candidaturas: Enviado → Visualizado → Entrevista marcada → Aprovado/Não selecionado; confirmar ou recusar entrevista.
+- Quem contrata: primeira vaga fica guardada até a equipe conferir CNPJ/CPF e endereço (/admin/contratantes); depois entra na hora com o selo.
+- Painel da vaga: comparar 2 ou 3 currículos, abrir o candidato (vira "Visualizado"), convidar para entrevista (aparece na Agenda e em "Seu próximo encontro").
+- Prestador: "Pacotes que eu faço" (/painel/pacotes); pedidos de pacotes desmarcados não chegam a ele; comissão só em serviço concluído.
