@@ -78,7 +78,7 @@ async function main() {
     }), 'privado');
     for (const [k, label] of (p.work ?? []).entries()) {
       const path = `${u.id}/work-demo-${k}.webp`;
-      await sb.storage.from('profile-photos').upload(path, await workPhoto(label, p.color, '#0f172a'), { contentType: 'image/webp', upsert: true });
+      await sb.storage.from('profile-photos').upload(path, await workPhoto(label, p.color, '#4b5752'), { contentType: 'image/webp', upsert: true });
       await must(sb.from('provider_work_photos').insert({ provider_id: u.id, path, sort: k }), 'foto de trabalho');
     }
     await must(sb.from('provider_profiles').update({ status: p.status ?? 'published', published_at: new Date().toISOString() }).eq('id', u.id), 'status');
@@ -125,7 +125,7 @@ async function main() {
   for (const po of demo.posts ?? []) {
     const authorId = userBy.get(po.author)!;
     const key = String(po.author).replace(/^prestador-/, '');
-    const color = demo.providers.find((x: { key: string }) => x.key === key)?.color ?? '#9a3412';
+    const color = demo.providers.find((x: { key: string }) => x.key === key)?.color ?? '#b98a6a';
     const post = await must(sb.from('posts').insert({
       author_id: authorId, kind: po.kind, body: po.body, price_label: po.price ?? null,
       service_id: po.service ? await svc(po.service) : null, category_id: po.category ? await cat(po.category) : null,
@@ -133,7 +133,7 @@ async function main() {
     }).select('id').single(), 'publicação');
     for (const [k, [label, tag]] of (po.photos ?? []).entries()) {
       const path = `${authorId}/post-demo-${post.id.slice(0, 8)}-${k}.webp`;
-      await sb.storage.from('post-media').upload(path, await workPhoto(label, color, '#1c1917'), { contentType: 'image/webp', upsert: true });
+      await sb.storage.from('post-media').upload(path, await workPhoto(label, color, '#4b5752'), { contentType: 'image/webp', upsert: true });
       await must(sb.from('post_media').insert({ post_id: post.id, kind: 'foto', path, sort: k, label: tag }), 'mídia');
     }
     for (const c of po.comments ?? []) {

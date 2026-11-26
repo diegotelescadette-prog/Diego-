@@ -12,7 +12,8 @@ const png = (color: string) => sharp({ create: { width: 300, height: 200, channe
 
 test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volta ao post', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Comunidade de Campo Grande' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^(Bom dia|Boa tarde|Boa noite)$/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Da comunidade' })).toBeVisible();
   const posts = page.getByTestId('post');
   await expect(posts).toHaveCount(4);
   const pant = posts.filter({ hasText: 'Elétrica Pantanal (demo)' });
@@ -20,16 +21,15 @@ test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volt
   await expect(pant.getByTestId('last-comment')).toContainText('Ana Cliente (demo)');
   await expect(pant).toContainText('Trabalho');
   await expect(posts.filter({ hasText: 'Bia Faxina' })).toContainText('Diária a partir de R$ 180');
-  // vitrine dos prestadores enquanto há poucos posts
-  await expect(page.getByTestId('showcase')).toBeVisible();
-  // filtro por tipo e por bairro (cidade inteira entra)
-  await page.getByTestId('feed-tabs').getByRole('link', { name: 'Pedidos de indicação' }).click();
-  await expect(page).toHaveURL(/tipo=pedido/);
+  // tela inicial limpa: sem abas nem caixa de filtros; profissionais perto de você
+  await expect(page.getByTestId('near-you')).toBeVisible();
+  await expect(page.getByText('Filtrar por categoria e bairro')).toHaveCount(0);
+  // links antigos com filtro continuam funcionando e mostram como voltar a ver tudo
+  await page.goto('/?tipo=pedido');
   await expect(posts).toHaveCount(1);
-  await page.goto('/');
-  await page.getByText('Filtrar por categoria e bairro').click();
-  await page.getByLabel('Bairro', { exact: true }).selectOption({ label: 'Tiradentes' });
-  await page.getByRole('button', { name: 'Filtrar' }).click();
+  await expect(page.getByTestId('active-filters')).toContainText('Pedido de indicação');
+  const tiradentes = (await admin.from('neighborhoods').select('id').eq('slug', 'tiradentes').single()).data!.id;
+  await page.goto('/?bairro=' + tiradentes);
   await expect(page.getByTestId('active-filters')).toContainText('Tiradentes');
   await expect(posts).toHaveCount(2);
   await expect(posts.filter({ hasText: 'Quadro de luz trocado' })).toHaveCount(1); // atende a cidade toda

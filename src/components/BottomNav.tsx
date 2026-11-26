@@ -9,11 +9,11 @@ const PLUS = 'M12 5v14M5 12h14';
 const JOBS = 'M4 8h16v11H4zM9 8V5h6v3M4 13h16';
 const USER = 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0';
 
-/** Barra fixa no celular (some a partir de 768px): Comunidade · Buscar · Publicar · Vagas · Conta. */
+/** Barra fixa no celular (some a partir de 768px): Início · Buscar · Publicar · Vagas · Conta. */
 export function BottomNav({ accountHref }: { accountHref: string }) {
   const path = usePathname();
   const items = [
-    { href: '/', label: 'Comunidade', d: HOME, on: path === '/' || path.startsWith('/comunidade/') },
+    { href: '/', label: 'Início', d: HOME, on: path === '/' || path.startsWith('/comunidade/') },
     { href: '/buscar', label: 'Buscar', d: SEARCH, on: path.startsWith('/buscar') || path.startsWith('/p/') || path.startsWith('/hoje') },
     { href: '/publicar', label: 'Publicar', d: PLUS, on: path.startsWith('/publicar') || path.startsWith('/minhas-publicacoes'), primary: true },
     { href: '/vagas', label: 'Vagas', d: JOBS, on: path.startsWith('/vagas') || path.startsWith('/minhas-vagas') || path.startsWith('/minhas-candidaturas') },

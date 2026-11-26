@@ -8,7 +8,7 @@ import { generalMessage } from '@/lib/whatsapp';
 import { createClient } from '@/lib/supabase/server';
 import type { ProviderCardData } from '@/lib/types';
 
-export const metadata: Metadata = { title: 'Favoritos e salvos' };
+export const metadata: Metadata = { title: 'Salvos' };
 export const dynamic = 'force-dynamic';
 
 /** Favoritos: prestadores salvos e publicações salvas (?aba=publicacoes). */
@@ -26,7 +26,7 @@ export default async function Favoritos({ searchParams }: { searchParams: Promis
     const posts = await getPosts({ saved: true, limit: 50 });
     return (
       <div className="mx-auto max-w-2xl space-y-4">
-        <h1 className="text-2xl font-extrabold">Favoritos e salvos</h1>
+        <h1 className="text-2xl font-extrabold">Salvos</h1>
         {tabs}
         {posts.length === 0 ? (
           <div className="card p-6 text-center">
@@ -59,7 +59,7 @@ export default async function Favoritos({ searchParams }: { searchParams: Promis
   }
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-extrabold">Favoritos e salvos</h1>
+      <h1 className="text-2xl font-extrabold">Salvos</h1>
       {tabs}
       {cards.length === 0 ? (
         <div className="card mt-4 p-6 text-center">

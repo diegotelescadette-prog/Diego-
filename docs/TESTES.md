@@ -127,3 +127,9 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Consulta de CEP (ViaCEP): o ambiente de teste não tinha internet para esse serviço; o caminho de preenchimento manual foi testado.
 - Abertura real do WhatsApp: o teste intercepta o link `wa.me` e confere número e texto.
 - Expiração à meia-noite foi testada pela função de cálculo e simulando o vencimento, não esperando o relógio virar.
+
+## Rodada 10: visual suave (início limpo, barra lateral, perfil)
+
+- Unidade 16/16, integração 46/46, e2e 82/82 (computador e Pixel 7).
+- Início sem abas e sem caixa de filtros; links antigos com ?tipo= e ?bairro= continuam filtrando e mostram "Ver tudo".
+- Perfil com capa, números (publicações, acharam útil, salvaram) e abas Trabalhos, Sobre e Publicações.

@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { ProviderCardData } from '@/lib/types';
 import { track } from '@/lib/usage';
 
-export const metadata: Metadata = { title: 'Buscar serviços' };
+export const metadata: Metadata = { title: 'Buscar profissional' };
 export const dynamic = 'force-dynamic';
 
 type SP = { q?: string; servico?: string; categoria?: string; cidade?: string; bairro?: string; online?: string; hoje?: string; pagina?: string; chamar?: string };
@@ -79,7 +79,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold sm:text-3xl">Buscar serviços</h1>
+      <h1 className="text-2xl font-extrabold sm:text-3xl">Buscar profissional</h1>
       <form action="/buscar" method="get" role="search" className="mt-4 flex flex-col gap-2 sm:flex-row">
         <label htmlFor="q" className="sr-only">Nome, serviço ou problema</label>
         <input id="q" name="q" defaultValue={q} className="input" placeholder="Nome, serviço ou problema (ex.: vazamento)" />

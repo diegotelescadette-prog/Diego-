@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { safeNext } from '@/lib/validation';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ProfileDetails } from '@/components/ProfileDetails';
+import { ProfileDetails, type ProfileTab } from '@/components/ProfileDetails';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { GeneralContactButton, ReportForm, UrgentContactButton } from '@/components/ProfileActions';
 import { toggleFavorite } from '@/app/p/actions';
 import { loadProfile } from '@/lib/profile';
@@ -15,7 +16,7 @@ import { STATUS_LABEL } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-type SP = { servico?: string; bairro?: string; cidade?: string; online?: string; hoje?: string; voltar?: string };
+type SP = { servico?: string; bairro?: string; cidade?: string; online?: string; hoje?: string; voltar?: string; aba?: string };
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const p = await loadProfile({ slug: (await params).slug });
@@ -50,6 +51,19 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
   }
   const isOwner = user?.id === p.id;
   const posts = p.status === 'published' ? await getPosts({ author: p.id, limit: 20 }) : [];
+  // Número de pessoas que salvaram: só a contagem, lida pelo servidor (a lista de favoritos é privada).
+  const saved = p.status === 'published'
+    ? (await createAdminClient().from('favorites').select('provider_id', { count: 'exact', head: true }).eq('provider_id', p.id)).count ?? 0
+    : 0;
+  const stats = { posts: posts.length, useful: posts.reduce((n, po) => n + po.reactions, 0), saved };
+  const tabs: ProfileTab[] = ['trabalhos', 'sobre', 'publicacoes'];
+  const tab: ProfileTab = tabs.includes(sp.aba as ProfileTab) ? sp.aba as ProfileTab
+    : p.work_photos.length ? 'trabalhos' : posts.length ? 'publicacoes' : 'sobre';
+  const tabHref = (t: ProfileTab) => {
+    const q = new URLSearchParams(Object.entries(sp).filter(([k, v]) => k !== 'aba' && typeof v === 'string') as [string, string][]);
+    q.set('aba', t);
+    return `/p/${slug}?${q}`;
+  };
 
   const actions = p.status === 'published' && !isOwner ? (
     <>
@@ -67,7 +81,7 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
         <input type="hidden" name="provider_id" value={p.id} />
         <input type="hidden" name="back" value={here} />
         <input type="hidden" name="fav" value={isFav ? '1' : '0'} />
-        <button type="submit" className="btn-outline w-full" aria-pressed={isFav}>{isFav ? '★ Salvo nos favoritos' : '☆ Salvar nos favoritos'}</button>
+        <button type="submit" className="btn-outline w-full" aria-pressed={isFav}>{isFav ? '♥ Salvo' : '♡ Salvar'}</button>
       </form>
     </>
   ) : null;
@@ -90,13 +104,13 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
       {isOwner && p.status === 'published' && (
         <p className="rounded-xl bg-brand-50 p-3 text-brand-900">É assim que os clientes veem seu perfil. <Link className="underline" href="/painel">Voltar ao painel</Link></p>
       )}
-      <ProfileDetails p={p} actions={actions} />
-      {posts.length > 0 && (
-        <section aria-labelledby="pub-titulo" className="space-y-4">
-          <h2 id="pub-titulo" className="text-xl font-bold">Publicações</h2>
-          {posts.map((po) => <PostCard key={po.id} post={po} viewerId={user?.id ?? null} message={defaultMessage} />)}
-        </section>
-      )}
+      <ProfileDetails p={p} actions={actions} stats={p.status === 'published' ? stats : undefined} tab={tab} tabHref={tabHref}
+        publications={posts.length > 0 ? (
+          <div className="space-y-4">
+            <h2 className="sr-only">Publicações</h2>
+            {posts.map((po) => <PostCard key={po.id} post={po} viewerId={user?.id ?? null} message={defaultMessage} />)}
+          </div>
+        ) : null} />
       {p.channel && (
         <p className="rounded-xl bg-stone-50 p-3 text-sm text-stone-700" data-testid="credit-notice">
           Proposta, análise de crédito, CPF, renda e documentos do imóvel são tratados somente no canal oficial da instituição. O Resolve Aqui não recebe esses dados. Desconfie de promessa de aprovação garantida ou de pedido de pagamento antecipado, e denuncie.

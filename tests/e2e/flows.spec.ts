@@ -55,26 +55,27 @@ test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
 });
 
-test('início: comunidade com vitrine dos prestadores; WhatsApp pede login uma vez e volta ao contexto', async ({ page }) => {
+test('início: profissionais perto de você; WhatsApp do perfil pede login uma vez e volta ao contexto', async ({ page }) => {
   const wa = await captureWhatsApp(page);
   await page.goto('/');
   await expect(page.getByTestId('cta-hoje')).toBeVisible();
-  await expect(page.getByTestId('composer')).toContainText('O que você quer compartilhar?');
-  const posts = page.getByTestId('feed-post');
-  await expect(posts.first()).toBeVisible();
-  // vitrine: quem atende hoje vem primeiro; perfis pausados e suspensos não aparecem
-  await expect(posts.first()).toContainText('Atende hoje');
+  await expect(page.getByTestId('quick-services').getByRole('link', { name: 'Encanador' })).toHaveAttribute('href', /\/buscar\?servico=encanador/);
+  const near = page.getByTestId('near-item');
+  await expect(near.first()).toBeVisible();
+  // quem atende hoje vem primeiro; perfis pausados e suspensos não aparecem
+  await expect(near.first()).toContainText('Atende hoje');
   await expect(page.getByText('Paulo Pausado')).toHaveCount(0);
   await expect(page.getByText('Sérgio Suspenso')).toHaveCount(0);
-  const hidro = posts.filter({ hasText: 'Hidro Cidade (demo)' });
+  await near.filter({ hasText: 'Hidro Cidade (demo)' }).click();
+  await expect(page).toHaveURL(/\/p\/hidro-demo$/);
   // sem conta: o WhatsApp leva ao login e volta para o perfil
-  await hidro.getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  await page.getByRole('link', { name: 'Chamar no WhatsApp' }).click();
   await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fp%2Fhidro-demo/);
   await login(page, demoEmail('cliente'));
   await expect(page).toHaveURL(/\/p\/hidro-demo$/);
-  // com conta: direto do feed para o WhatsApp
-  await page.goto('/');
-  await page.getByTestId('feed-post').filter({ hasText: 'Hidro Cidade (demo)' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
+  // com conta: direto do perfil para o WhatsApp
+  await page.getByRole('button', { name: 'Chamar no WhatsApp' }).click();
+  await page.getByRole('button', { name: 'Abrir WhatsApp' }).click();
   await expect.poll(() => wa.length).toBe(1);
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
   // publicação profissional: sem conta, o WhatsApp volta para a publicação
@@ -148,13 +149,13 @@ test('busca geral: sinônimo, login antes do contato, retorno ao mesmo perfil, f
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Preciso limpar a piscina no sábado. Pode?');
 
   await page.goto(profileUrl);
-  await page.getByRole('button', { name: '☆ Salvar nos favoritos' }).click();
-  await expect(page.getByRole('button', { name: '★ Salvo nos favoritos' })).toBeVisible();
+  await page.getByRole('button', { name: '♡ Salvar' }).click();
+  await expect(page.getByRole('button', { name: '♥ Salvo' })).toBeVisible();
   await page.goto('/favoritos');
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Rafa Piscinas' })).toBeVisible();
   await page.goto(profileUrl);
-  await page.getByRole('button', { name: '★ Salvo nos favoritos' }).click();
-  await expect(page.getByRole('button', { name: '☆ Salvar nos favoritos' })).toBeVisible();
+  await page.getByRole('button', { name: '♥ Salvo' }).click();
+  await expect(page.getByRole('button', { name: '♡ Salvar' })).toBeVisible();
 });
 
 test('busca geral: tocar no card pede login uma vez e depois abre o WhatsApp direto', async ({ page }) => {
@@ -194,7 +195,7 @@ test('perfil antigo só com endereço pede confirmação da área', async ({ pag
 
 test('favorito como visitante pede login e volta ao perfil', async ({ page }) => {
   await page.goto('/p/leo-demo');
-  await page.getByRole('button', { name: '☆ Salvar nos favoritos' }).click();
+  await page.getByRole('button', { name: '♡ Salvar' }).click();
   await expect(page).toHaveURL(/\/entrar\?motivo=favorito&next=%2Fp%2Fleo-demo/);
   await login(page, demoEmail('cliente'));
   await expect(page).toHaveURL(/\/p\/leo-demo$/);

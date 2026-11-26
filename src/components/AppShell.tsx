@@ -7,14 +7,14 @@ import { BottomNav } from './BottomNav';
 import { Glyph } from './CategoryIcon';
 import { activeHref, areaFor, NAV_ICONS, navItems, screenTitle, showBottomNav, type NavArea, type NavItem, type NavViewer } from '@/lib/nav';
 
-const AREA_LABEL: Record<NavArea, string> = { busca: 'Comunidade', prestador: 'Painel do prestador', admin: 'Administração' };
+const AREA_LABEL: Record<NavArea, string> = { busca: 'Menu principal', prestador: 'Painel do prestador', admin: 'Administração' };
 
 function NavLink({ it, on, onNavigate }: { it: NavItem; on: boolean; onNavigate?: () => void }) {
   return (
     <li>
       <Link href={it.href} onClick={onNavigate} aria-current={on ? 'page' : undefined}
         className={`side-link${it.urgent ? ' side-urgent' : ''}`}>
-        <Glyph d={NAV_ICONS[it.icon]} size={20} />
+        {it.tone ? <span className={`side-ic tone-${it.tone}`}><Glyph d={NAV_ICONS[it.icon]} size={18} /></span> : <Glyph d={NAV_ICONS[it.icon]} size={20} />}
         <span className="min-w-0 flex-1">
           <span className="block">{it.label}</span>
           {it.hint && <span className="side-hint">{it.hint}</span>}
@@ -64,14 +64,16 @@ function Navigation({ viewer, onNavigate, section }: { viewer: NavViewer; onNavi
   const path = usePathname();
   const area = areaFor(path);
   const items = navItems(area, viewer);
+  const publish = (
+    <Link href="/publicar" onClick={onNavigate} className="btn-primary mt-4 w-full gap-2" data-testid="side-publicar">
+      <Glyph d="M12 5v14M5 12h14" size={20} /> Criar publicação
+    </Link>
+  );
   return (
     <nav aria-label={AREA_LABEL[area]}>
-      {area === 'busca' ? (
-        <Link href="/publicar" onClick={onNavigate} className="btn-hoje mb-3 w-full gap-2" data-testid="side-publicar">
-          <Glyph d="M12 5v14M5 12h14" size={20} /> Criar publicação
-        </Link>
-      ) : !items.some((it) => it.group) && <p className="side-heading">{AREA_LABEL[area]}</p>}
+      {area !== 'busca' && !items.some((it) => it.group) && <p className="side-heading">{AREA_LABEL[area]}</p>}
       <NavList items={items} active={activeHref(items, path, section)} onNavigate={onNavigate} />
+      {area === 'busca' && publish}
       <OtherAreas area={area} viewer={viewer} onNavigate={onNavigate} />
     </nav>
   );
@@ -200,7 +202,7 @@ export function AppShell({ viewer, children, footer }: {
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:p-2">
         Pular para o conteúdo
       </a>
-      <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:px-4">
           <button ref={menuBtn} type="button" className="btn-ghost min-h-11 px-2.5 md:hidden" aria-expanded={open} aria-controls="menu-gaveta"
             onClick={() => setOpen(true)}>
@@ -209,9 +211,9 @@ export function AppShell({ viewer, children, footer }: {
           <Link href="/" aria-label="Página inicial" className="md:w-[236px] md:flex-none"><Logo /></Link>
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <Suspense fallback={null}><Title /></Suspense>
-            {!path.startsWith('/buscar') && <form action="/buscar" method="get" role="search" className="hidden min-w-0 flex-1 md:block md:max-w-md" data-testid="header-search">
+            {!path.startsWith('/buscar') && path !== '/' && <form action="/buscar" method="get" role="search" className="hidden min-w-0 flex-1 md:block md:max-w-md" data-testid="header-search">
               <label htmlFor="hq" className="sr-only">Que serviço você procura?</label>
-              <input id="hq" name="q" className="input min-h-10 rounded-full py-1.5" placeholder="Que serviço você procura?" enterKeyHint="search" />
+              <input id="hq" name="q" className="input min-h-10 rounded-full border-line py-1.5" placeholder="Que serviço você procura?" enterKeyHint="search" />
             </form>}
           </div>
           <nav aria-label="Conta" className="flex items-center gap-1 text-sm sm:text-base">
