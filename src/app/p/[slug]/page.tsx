@@ -99,7 +99,7 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
         </Link>
       )}
       {p.status !== 'published' && (
-        <p role="status" className="rounded-xl bg-amber-50 p-3 text-amber-900">
+        <p role="status" className="rounded-xl bg-hoje-100 p-3 text-stone-900">
           Prévia — este perfil está <strong>{STATUS_LABEL[p.status]}</strong> e não aparece para visitantes.
         </p>
       )}

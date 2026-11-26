@@ -79,3 +79,17 @@ export function slugify(s: string): string {
     .replace(/^-+|-+$/g, '')
     .slice(0, 50);
 }
+
+/** CNPJ com dígitos verificadores corretos (14 dígitos, não repetidos). */
+export function isValidCnpj(input: string): boolean {
+  const c = onlyDigits(input);
+  if (c.length !== 14 || /^(\d)\1{13}$/.test(c)) return false;
+  const dv = (len: number) => {
+    const w = len === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const sum = w.reduce((n, x, i) => n + x * Number(c[i]), 0);
+    const r = sum % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return dv(12) === Number(c[12]) && dv(13) === Number(c[13]);
+}
+export const formatCnpj = (d: string) => onlyDigits(d).replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');

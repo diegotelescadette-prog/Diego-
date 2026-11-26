@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { Glyph } from '@/components/CategoryIcon';
 import { Guarantee, PackageCard } from '@/components/PackageCard';
-import { getPackages, getUpcoming } from '@/lib/booking';
-import { dayBox, SLOT_LABEL, STATUS_LABEL } from '@/lib/booking-shared';
+import { getPackages } from '@/lib/booking';
+import { getAgenda } from '@/lib/agenda';
+import { AgendaCard } from '@/components/AgendaCard';
 import { getPilotCity, getUser } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 
@@ -56,10 +57,9 @@ async function firstName(userId: string | undefined) {
 export default async function Home() {
   const city = await getPilotCity();
   const user = await getUser();
-  const [pkgs, name, upcoming] = await Promise.all([getPackages(), firstName(user?.id), user ? getUpcoming(user.id, 1) : Promise.resolve([])]);
+  const [pkgs, name, upcoming] = await Promise.all([getPackages(), firstName(user?.id), user ? getAgenda(user.id, 1) : Promise.resolve([])]);
   const featured = [...pkgs.filter((p) => p.featured), ...pkgs.filter((p) => !p.featured)].slice(0, 4);
   const next = upcoming[0];
-  const nextBox = next ? dayBox(next.scheduled_date) : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -99,18 +99,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {next && nextBox && (
+      {next && (
         <section aria-labelledby="enc-t" data-testid="next-meeting">
           <h2 id="enc-t" className="mb-3 text-xl text-stone-900">Seu próximo encontro</h2>
-          <Link href={next.client_id === user?.id ? `/pedidos/${next.id}` : '/painel/pedidos'} className="card flex items-center gap-4 p-4 hover:border-brand-300">
-            <span className="date-box" aria-hidden="true"><small>{nextBox.weekday}</small><strong>{nextBox.day}</strong><small>{nextBox.month}</small></span>
-            <span className="min-w-0 flex-1">
-              <span className="soft-tag mod-servicos text-xs">Serviço</span>
-              <span className="mt-1 block font-bold text-stone-900">{next.items[0]?.name ?? next.service}</span>
-              <span className="block text-sm text-stone-600">{nextBox.weekday}, {nextBox.day} de {nextBox.month} · {SLOT_LABEL[next.time_slot].toLowerCase()} · {next.neighborhood}</span>
-              <span className="block text-sm font-semibold text-stone-700">{STATUS_LABEL[next.status]}</span>
-            </span>
-          </Link>
+          <AgendaCard item={next} />
         </section>
       )}
 

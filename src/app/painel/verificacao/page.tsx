@@ -61,7 +61,7 @@ export default async function Verificacao() {
             <li key={s} className={`rounded-full px-3 py-1 ${s === status ? 'bg-brand-600 font-bold text-white' : 'bg-stone-100 text-stone-700'}`} aria-current={s === status ? 'step' : undefined}>{VERIFICATION_LABEL[s]}</li>
           ))}
         </ol>
-        <p className={`mt-3 ${status === 'pendencia' ? 'rounded-xl bg-amber-50 p-3 text-amber-950' : 'text-stone-800'}`} data-testid="verif-next">
+        <p className={`mt-3 ${status === 'pendencia' ? 'rounded-xl bg-hoje-100 p-3 text-stone-900' : 'text-stone-800'}`} data-testid="verif-next">
           <strong>Próximo passo:</strong> {verificationNext(status, v?.pending_reason)}
         </p>
         <ul className="mt-3 space-y-1 text-sm">

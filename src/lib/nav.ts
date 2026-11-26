@@ -75,7 +75,8 @@ export function searchItems(v: NavViewer): NavItem[] {
     { href: '/hoje', label: 'Preciso para hoje', icon: 'bolt', urgent: true, match: ['/hoje'], hint: 'Quem atende agora', group: 'Serviços', tone: 'sand' },
     { href: '/buscar', label: 'Buscar profissional', icon: 'search', match: ['/buscar', '/p/'], hint: 'Por serviço e bairro', group: 'Serviços', tone: 'sand' },
     { href: '/vagas', label: 'Vagas de emprego', icon: 'briefcase', match: ['/vagas', '/minhas-candidaturas'], hint: 'Vagas e meu currículo', group: 'Trabalho', tone: 'sage' },
-    { href: '/vagas/nova', label: 'Quero contratar', icon: 'megaphone', match: ['/vagas/nova', '/minhas-vagas'], hint: 'Publique uma vaga', group: 'Trabalho', tone: 'sage' },
+    { href: '/curriculo', label: 'Meu currículo', icon: 'file', match: ['/curriculo'], hint: 'Monte, complete e baixe em PDF', group: 'Trabalho', tone: 'sage' },
+    { href: '/vagas/nova', label: 'Quero contratar', icon: 'megaphone', match: ['/vagas/nova', '/minhas-vagas', '/vagas/verificacao'], hint: 'Publique uma vaga', group: 'Trabalho', tone: 'sage' },
     { href: '/agenda', label: 'Minha agenda', icon: 'calendar', match: ['/agenda', '/pedidos'], hint: 'Pedidos e próximos compromissos', group: 'Agenda', tone: 'sky' },
     { href: '/favoritos', label: 'Salvos', icon: 'heart', match: ['/favoritos'], hint: 'Profissionais e publicações', group: 'Agenda', tone: 'rose' },
     { href: '/comunidade', label: 'Comunidade', icon: 'users', match: ['/comunidade', '/publicar', '/minhas-publicacoes'], hint: 'Trabalhos, dicas e indicações', group: 'Mais', tone: 'lavender' },
@@ -92,6 +93,7 @@ export const PROVIDER_ITEMS: NavItem[] = [
   { href: '/publicar', label: 'Criar publicação', icon: 'megaphone' },
   { href: '/minhas-publicacoes', label: 'Minhas publicações', icon: 'photo' },
   { href: '/painel/servicos', label: 'Serviços e fotos', icon: 'photo' },
+  { href: '/painel/pacotes', label: 'Pacotes que eu faço', icon: 'clipboard' },
   { href: '/painel/atendimento', label: 'Onde atendo', icon: 'pin' },
   { href: '/painel/disponibilidade', label: 'Disponibilidade', icon: 'clock' },
   { href: '/painel/verificacao', label: 'Verificação do perfil', icon: 'shield' },
@@ -123,6 +125,7 @@ export const ADMIN_ITEMS: NavItem[] = [
   ...ADMIN_SECTIONS.slice(0, 2).map((s) => ({ href: `/admin?aba=${s.key}`, label: s.label, icon: s.icon })),
   { href: '/admin/pedidos', label: 'Pedidos', icon: 'clipboard', match: ['/admin/pedidos/'] },
   { href: '/admin/pacotes', label: 'Pacotes e preços', icon: 'tag' },
+  { href: '/admin/contratantes', label: 'Contratantes', icon: 'shield' },
   ...ADMIN_SECTIONS.slice(2).map((s) => ({ href: `/admin?aba=${s.key}`, label: s.label, icon: s.icon })),
   { href: '/', label: 'Voltar ao início', icon: 'back' },
 ];
@@ -155,6 +158,7 @@ export function screenTitle(pathname: string, section?: string | null): string {
   if (pathname.startsWith('/admin/verificacao')) return 'Administração · Verificação do perfil';
   if (pathname.startsWith('/admin/pedidos')) return 'Administração · Pedidos';
   if (pathname.startsWith('/admin/pacotes')) return 'Administração · Pacotes e preços';
+  if (pathname.startsWith('/admin/contratantes')) return 'Administração · Contratantes';
   if (pathname.startsWith('/admin')) {
     return `Administração · ${ADMIN_SECTIONS.find((s) => s.key === adminSection(section))!.label}`;
   }
@@ -165,7 +169,7 @@ export function screenTitle(pathname: string, section?: string | null): string {
     '/painel/verificacao': 'Verificação do perfil',
     '/conta': 'Perfil', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
-    '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Meu currículo', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
+    '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Banco de currículos', '/curriculo': 'Meu currículo', '/vagas/verificacao': 'Verificação de quem contrata', '/painel/pacotes': 'Pacotes que eu faço', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };
   if (pathname in exact) return exact[pathname];
   if (pathname.startsWith('/servicos/')) return 'Serviços com preço fechado';

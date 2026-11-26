@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { jobState, looksLikePdf, parseJob, postedAgo, safeResumeName } from '../../src/lib/jobs.ts';
+import { applicationStep, jobState, looksLikePdf, parseJob, postedAgo, safeResumeName, salaryLabel } from '../../src/lib/jobs.ts';
 
 const ok = {
   title: '  Auxiliar   de cozinha ', company_name: 'Restaurante X', description: 'Preparo de alimentos e organização da cozinha.',
-  employment_type: 'clt', work_mode: 'presencial', neighborhood_id: '', salary_text: '', openings: '',
+  employment_type: 'clt', work_mode: 'presencial', neighborhood_id: '', salary_text: '', openings: '', area: 'cozinha-alimentacao',
 };
 
 test('vaga: valida e normaliza o formulário', () => {
@@ -14,8 +14,8 @@ test('vaga: valida e normaliza o formulário', () => {
   assert.equal(r.data!.openings, 1);
   assert.equal(r.data!.neighborhood_id, null);
   assert.equal(r.data!.salary_text, null);
-  const bad = parseJob({ ...ok, title: 'a', description: 'curta', employment_type: 'escravo', work_mode: 'x', openings: '0', neighborhood_id: '1;drop' });
-  assert.deepEqual(Object.keys(bad.errors).sort(), ['description', 'employment_type', 'neighborhood_id', 'openings', 'title', 'work_mode']);
+  const bad = parseJob({ ...ok, title: 'a', description: 'curta', employment_type: 'escravo', work_mode: 'x', openings: '0', neighborhood_id: '1;drop', area: 'x' });
+  assert.deepEqual(Object.keys(bad.errors).sort(), ['area', 'description', 'employment_type', 'neighborhood_id', 'openings', 'title', 'work_mode']);
   assert.equal(bad.data, undefined);
 });
 
@@ -37,4 +37,25 @@ test('vaga: situação e tempo de publicação', () => {
   assert.equal(postedAgo('2026-11-24T08:00:00Z', now), 'ontem');
   assert.equal(postedAgo('2026-11-20T08:00:00Z', now), 'há 5 dias');
   assert.equal(postedAgo('2026-09-20T08:00:00Z', now), 'há 2 meses');
+});
+
+test('vaga: faixa salarial e horário', () => {
+  const r = parseJob({ ...ok, salary_min: 'R$ 1.800', salary_max: '2500', schedule_text: ' Seg a sex, 8h às 17h ' });
+  assert.deepEqual(r.errors, {});
+  assert.equal(r.data!.salary_min, 1800);
+  assert.equal(r.data!.salary_max, 2500);
+  assert.equal(r.data!.schedule_text, 'Seg a sex, 8h às 17h');
+  assert.equal(parseJob({ ...ok, salary_min: '3000', salary_max: '2000' }).errors.salary_max, 'O máximo precisa ser maior ou igual ao mínimo');
+  assert.equal(salaryLabel({ salary_min: 1800, salary_max: 2500 }), 'R$ 1.800 a R$ 2.500');
+  assert.equal(salaryLabel({ salary_min: 2000, salary_max: null }), 'A partir de R$ 2.000');
+  assert.equal(salaryLabel({ salary_min: null, salary_max: null, salary_text: 'A combinar' }), 'A combinar');
+  assert.equal(salaryLabel({}), null);
+});
+
+test('candidatura: passos do andamento', () => {
+  assert.equal(applicationStep('recebida'), 0);
+  assert.equal(applicationStep('vista'), 1);
+  assert.equal(applicationStep('entrevista'), 2);
+  assert.equal(applicationStep('aprovada'), 3);
+  assert.equal(applicationStep('nao_selecionada'), 3);
 });

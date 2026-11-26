@@ -7,8 +7,8 @@ export const VERIFICATION_LABEL: Record<VerificationStatus, string> = {
   rascunho: 'Rascunho', em_analise: 'Em análise', pendencia: 'Pendência', aprovado: 'Aprovado',
 };
 export const VERIFICATION_STYLE: Record<VerificationStatus, string> = {
-  rascunho: 'bg-stone-200 text-stone-900', em_analise: 'bg-sky-100 text-sky-900',
-  pendencia: 'bg-amber-100 text-amber-900', aprovado: 'bg-green-100 text-green-900',
+  rascunho: 'bg-stone-200 text-stone-900', em_analise: 'bg-sky text-mod-encontros',
+  pendencia: 'bg-hoje-100 text-stone-900', aprovado: 'bg-oliva-50 text-oliva-800',
 };
 export const REF_LABEL: Record<RefResult, string> = {
   a_conferir: 'A conferir', confirmada: 'Confirmada', nao_confirmada: 'Não confirmada',

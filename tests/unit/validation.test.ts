@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isValidCpf, normalizePhone, normalizeWhatsapp, safeNext, slugify, nextFromEmailLink } from '../../src/lib/validation.ts';
+import { formatCnpj, isValidCnpj, isValidCpf, normalizePhone, normalizeWhatsapp, safeNext, slugify, nextFromEmailLink } from '../../src/lib/validation.ts';
 
 test('CPF: dígitos verificadores (só formato)', () => {
   assert.equal(isValidCpf('529.982.247-25'), true);
@@ -40,4 +40,13 @@ test('next do link de e-mail: aceita só o próprio site e desembrulha /auth/con
   assert.equal(nextFromEmailLink('https://www.resolveaqui.com.br/auth/confirm?next=//golpe.com', o), '/');
   assert.equal(nextFromEmailLink('nada', o), '/');
   assert.equal(nextFromEmailLink(null, o), '/');
+});
+
+test('CNPJ: dígitos verificadores e máscara', () => {
+  assert.equal(isValidCnpj('11.222.333/0001-81'), true);
+  assert.equal(isValidCnpj('11222333000181'), true);
+  assert.equal(isValidCnpj('11222333000182'), false);
+  assert.equal(isValidCnpj('11111111111111'), false);
+  assert.equal(isValidCnpj('123'), false);
+  assert.equal(formatCnpj('11222333000181'), '11.222.333/0001-81');
 });

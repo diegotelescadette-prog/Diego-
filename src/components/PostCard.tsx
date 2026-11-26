@@ -123,7 +123,7 @@ export function PostCard({ post, viewerId, message, detail = false }: {
         </div>
       </header>
       {pro && badgeTexts(post.author.badges).filter((b) => b.key !== 'exp').length > 0 && (
-        <p className="mt-2 flex flex-wrap gap-x-3 px-4 text-xs font-semibold text-emerald-800" data-testid="post-badges">
+        <p className="mt-2 flex flex-wrap gap-x-3 px-4 text-xs font-semibold text-oliva-800" data-testid="post-badges">
           {badgeTexts(post.author.badges).filter((b) => b.key !== 'exp').map((b) => <span key={b.key} title={b.hint}>✓ {b.text}</span>)}
         </p>
       )}
@@ -147,7 +147,7 @@ export function PostCard({ post, viewerId, message, detail = false }: {
 
       {mine && post.kind === 'pedido' && (
         <div className="px-4 pt-3">
-          <button type="button" className={`btn-outline min-h-10 w-full px-3 text-sm${found ? ' border-green-700 text-green-800' : ''}`} aria-pressed={found} onClick={markFound} disabled={pending}>
+          <button type="button" className={`btn-outline min-h-10 w-full px-3 text-sm${found ? ' border-hoje-500 text-hoje-700' : ''}`} aria-pressed={found} onClick={markFound} disabled={pending}>
             {found ? '✓ Indicação encontrada (desmarcar)' : 'Marcar: indicação encontrada'}
           </button>
         </div>

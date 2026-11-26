@@ -44,7 +44,7 @@ export default async function Publicacao({ params, searchParams }: { params: Pro
     <div className="mx-auto max-w-2xl space-y-4">
       <BackToFeed />
       {sp.nova && user?.id === post.author.id && (
-        <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900">Publicado! Sua publicação já aparece na comunidade. Use “Copiar ou compartilhar link” no menu ⋯ para divulgar.</p>
+        <p role="status" className="rounded-xl bg-sage p-3 text-stone-900">Publicado! Sua publicação já aparece na comunidade. Use “Copiar ou compartilhar link” no menu ⋯ para divulgar.</p>
       )}
       <PostCard post={post} viewerId={user?.id ?? null} message={generalMessage(subject, city.name, false)} detail />
       <PostComments postId={id} comments={comments} viewerId={user?.id ?? null} isPostAuthor={user?.id === post.author.id}

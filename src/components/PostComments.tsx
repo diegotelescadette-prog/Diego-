@@ -129,7 +129,7 @@ function CommentItem({ c, replies, ctx }: { c: CommentView; replies: CommentView
 
 export function ReportBox({ postId, commentId }: { postId: string; commentId?: number }) {
   const [state, action] = useActionState<Result | undefined, FormData>(reportPost, undefined);
-  if (state?.ok) return <p role="status" className="rounded-xl bg-green-50 p-3 text-sm text-green-900">{state.message}</p>;
+  if (state?.ok) return <p role="status" className="rounded-xl bg-sage p-3 text-sm text-stone-900">{state.message}</p>;
   return (
     <form action={action} className="space-y-2 rounded-xl border border-stone-200 bg-white p-3">
       <input type="hidden" name="post_id" value={postId} />

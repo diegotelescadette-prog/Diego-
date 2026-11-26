@@ -33,7 +33,7 @@ export default async function Pedido({ params, searchParams }: { params: Promise
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <Link href="/pedidos" className="inline-flex min-h-11 items-center gap-1 font-semibold text-brand-700"><span aria-hidden="true">←</span> Meus pedidos</Link>
-      {sp.novo && !sp.msg && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900" data-testid="booking-created">Pedido feito! Acompanhe aqui cada etapa.</p>}
+      {sp.novo && !sp.msg && <p role="status" className="rounded-xl bg-sage p-3 text-stone-900" data-testid="booking-created">Pedido feito! Acompanhe aqui cada etapa.</p>}
       {sp.msg && <p role="status" className="rounded-xl bg-brand-50 p-3 text-brand-900" data-testid="booking-msg">{sp.msg}</p>}
 
       <section className="card p-4 sm:p-5" aria-labelledby="ped-t">

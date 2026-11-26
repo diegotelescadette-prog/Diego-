@@ -2,7 +2,7 @@ import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hitLimit } from '@/lib/rate-limit';
 
-export const JOB_LIST_FIELDS = 'id, title, company_name, employment_type, work_mode, salary_text, created_at, neighborhoods(name), cities(name, uf)';
+export const JOB_LIST_FIELDS = 'id, title, company_name, employment_type, work_mode, salary_text, salary_min, salary_max, schedule_text, area, created_at, poster_verified, neighborhoods(name), cities(name, uf)';
 
 type Place = { neighborhoods?: unknown; cities?: unknown };
 /** "Centro, Campo Grande–MS" ou "Campo Grande–MS". */
@@ -25,7 +25,7 @@ export async function purgeOldResumes() {
     if (!(await hitLimit('limpeza-curriculos', 'global', 1, 3600))) return;
     const admin = createAdminClient();
     const [{ data }, { data: talent }] = await Promise.all([admin.rpc('purge_old_applications'), admin.rpc('purge_old_talent')]);
-    const paths = [...((data ?? []) as { resume_path: string }[]), ...((talent ?? []) as { resume_path: string }[])].map((r) => r.resume_path);
+    const paths = [...((data ?? []) as { resume_path: string }[]), ...((talent ?? []) as { resume_path: string }[])].map((r) => r.resume_path).filter(Boolean);
     for (let i = 0; i < paths.length; i += 100) await admin.storage.from('curriculos').remove(paths.slice(i, i + 100));
   } catch {
     // tenta de novo na próxima janela

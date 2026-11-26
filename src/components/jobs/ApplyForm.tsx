@@ -30,7 +30,7 @@ export function ApplyForm({ jobId, defaults, posterLabel }: {
 
   if (done) {
     return (
-      <div role="status" className="rounded-xl bg-green-50 p-4 text-green-900" data-testid="candidatura-ok">
+      <div role="status" className="rounded-xl bg-sage p-4 text-stone-900" data-testid="candidatura-ok">
         <p className="font-bold">Candidatura enviada!</p>
         <p className="mt-1">{posterLabel} recebeu seu currículo. Acompanhe a situação em <Link className="underline" href="/minhas-candidaturas">Minhas candidaturas</Link>.</p>
       </div>

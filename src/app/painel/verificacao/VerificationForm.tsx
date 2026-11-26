@@ -82,7 +82,7 @@ export function VerificationForm({ initial, needsChannel, status }: { initial: V
         <section className="card space-y-3 p-5" aria-labelledby="v-ch">
           <h2 id="v-ch" className="text-lg font-bold">Crédito imobiliário: canal oficial</h2>
           <p className="text-sm text-stone-600">Quem oferece financiamento ou empréstimo informa a instituição responsável e o canal oficial. A equipe confere nas fontes oficiais antes de mostrar o serviço. Proposta, análise de crédito, CPF, renda e documentos do imóvel ficam no canal oficial, nunca no {APP_NAME}.</p>
-          {initial.channel?.checked && <p className="text-sm font-semibold text-green-800">✓ Canal oficial conferido pela equipe. Alterar os dados pede nova conferência.</p>}
+          {initial.channel?.checked && <p className="text-sm font-semibold text-oliva-800">✓ Canal oficial conferido pela equipe. Alterar os dados pede nova conferência.</p>}
           <div className="grid gap-2 sm:grid-cols-2">
             <div><label htmlFor="ch_institution" className="label">Quem oferece o atendimento</label>
               <input id="ch_institution" name="ch_institution" className="input" defaultValue={val('ch_institution', initial.channel?.institution ?? '')} maxLength={120} /></div>
@@ -113,7 +113,7 @@ export function VerificationForm({ initial, needsChannel, status }: { initial: V
       </section>
 
       {state?.error && <p role="alert" className="field-error rounded-xl bg-red-50 p-3" data-testid="verif-error">{state.error}</p>}
-      {state?.ok && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900" data-testid="verif-ok">{state.message}</p>}
+      {state?.ok && <p role="status" className="rounded-xl bg-sage p-3 text-stone-900" data-testid="verif-ok">{state.message}</p>}
       <div className="flex flex-col gap-2 sm:flex-row">
         <button type="submit" name="intent" value="enviar" className="btn-primary" disabled={pending}>
           {pending ? 'Enviando…' : status === 'aprovado' ? 'Salvar alterações' : status === 'rascunho' ? 'Enviar para análise' : 'Reenviar para análise'}

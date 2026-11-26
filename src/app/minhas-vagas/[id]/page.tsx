@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: 'Candidatos da vaga' };
 export const dynamic = 'force-dynamic';
 
 const APP_STYLE: Record<string, string> = {
-  recebida: 'bg-amber-100 text-amber-900', vista: 'bg-brand-50 text-brand-800', em_contato: 'bg-green-100 text-green-900', nao_selecionada: 'bg-stone-200 text-stone-800',
+  recebida: 'mod-servicos', vista: 'mod-trabalho', em_contato: 'mod-trabalho', entrevista: 'mod-encontros', aprovada: 'bg-sage text-stone-900', nao_selecionada: 'bg-stone-100 text-stone-700',
 };
 
 export default async function CandidatosDaVaga({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ msg?: string }> }) {
@@ -26,7 +26,7 @@ export default async function CandidatosDaVaga({ params, searchParams }: { param
     .eq('id', id).eq('poster_id', user.id).maybeSingle();
   if (!job) notFound();
   const { data: apps } = await supabase.from('job_applications')
-    .select('id, full_name, email, phone, message, resume_filename, resume_size, status, created_at').eq('job_id', id).order('created_at', { ascending: false });
+    .select('id, full_name, email, phone, message, resume_filename, resume_size, resume_path, resume_snapshot, status, created_at').eq('job_id', id).order('created_at', { ascending: false });
   const st = jobState(job);
 
   return (
@@ -56,14 +56,24 @@ export default async function CandidatosDaVaga({ params, searchParams }: { param
         <h2 id="cand-titulo" className="text-xl font-bold">Candidatos ({apps?.length ?? 0})</h2>
         <p className="text-sm text-stone-600">Use os currículos só para esta seleção. Eles são apagados automaticamente 90 dias depois que a vaga encerra, ou antes, se o candidato desistir ou se você excluir a vaga.</p>
         {(apps ?? []).length === 0 && <p className="card p-4">Ninguém se candidatou ainda.</p>}
+        {(apps ?? []).length > 1 && (
+          <form id="comparar" action={`/minhas-vagas/${job.id}/comparar`} method="get" className="flex flex-wrap items-center gap-2 rounded-2xl bg-sand p-3 text-sm">
+            <span>Marque até 3 candidatos e</span>
+            <button type="submit" className="btn-outline min-h-11 px-4" data-testid="compare-btn">Comparar currículos</button>
+          </form>
+        )}
         {(apps ?? []).map((a) => (
           <article key={a.id} id={`c-${a.id}`} className="card p-4" data-testid="candidato">
             <div className="flex flex-wrap items-start gap-2">
               <div className="min-w-0 flex-1">
-                <h3 className="text-lg font-bold">{a.full_name}</h3>
+                <h3 className="text-lg">{a.full_name}</h3>
+                {a.resume_snapshot?.headline && <p className="text-stone-700">{a.resume_snapshot.headline}</p>}
                 <p className="text-sm text-stone-600">Candidatou-se {postedAgo(a.created_at)}</p>
+                {(apps ?? []).length > 1 && (
+                  <label className="mt-1 inline-flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" name="c" value={a.id} form="comparar" className="h-5 w-5" /> Comparar</label>
+                )}
               </div>
-              <span className={`tag ${APP_STYLE[a.status]}`}>{APPLICATION_STATUS_LABEL[a.status as ApplicationStatus]}</span>
+              <span className={`soft-tag ${APP_STYLE[a.status]}`}>{APPLICATION_STATUS_LABEL[a.status as ApplicationStatus]}</span>
             </div>
             <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
               <a className="underline" href={`mailto:${a.email}`}>{a.email}</a>
@@ -71,7 +81,8 @@ export default async function CandidatosDaVaga({ params, searchParams }: { param
             </p>
             {a.message && <p className="mt-2 whitespace-pre-line rounded-xl bg-stone-50 p-3 text-stone-800">{a.message}</p>}
             <div className="mt-3 flex flex-wrap items-end gap-2">
-              <a className="btn-primary" href={`/api/vagas/curriculo/${a.id}`} data-testid="baixar-curriculo">Baixar currículo (PDF, {Math.max(1, Math.round(a.resume_size / 1024))} KB)</a>
+              <Link className="btn-primary" href={`/minhas-vagas/${job.id}/c/${a.id}`} data-testid="ver-curriculo">Ver currículo</Link>
+              {a.resume_path && <a className="btn-outline" href={`/api/vagas/curriculo/${a.id}`} data-testid="baixar-curriculo">Baixar PDF enviado ({Math.max(1, Math.round((a.resume_size ?? 0) / 1024))} KB)</a>}
               <form action={setApplicationStatus} className="flex flex-wrap items-end gap-2">
                 <input type="hidden" name="id" value={a.id} /><input type="hidden" name="job_id" value={job.id} />
                 <div>

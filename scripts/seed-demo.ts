@@ -147,11 +147,19 @@ async function main() {
 
   // Vagas de demonstração (publicadas por uma conta "empresa" fictícia).
   const empresa = await create('empresa');
+  // A empresa de demonstração já foi conferida pela equipe (CNPJ fictício com dígitos válidos).
+  await must(sb.from('employer_verifications').insert({
+    user_id: empresa.id, kind: 'cnpj', cnpj: '11222333000181', legal_name: 'Empresa Exemplo Ltda (demo)',
+    address_line: 'Rua 14 de Julho, 2000, sala 5', neighborhood_id: nb('centro'), status: 'verificado', checked_at: new Date().toISOString(),
+  }), 'verificação da empresa');
+  // Pessoa que ainda vai contratar pela primeira vez (sem verificação).
+  await create('contratante');
   for (const j of demo.jobs ?? []) {
     await must(sb.from('jobs').insert({
       poster_id: empresa.id, city_id: city.id, title: j.title, company_name: j.company, description: j.description,
       requirements: j.requirements ?? null, employment_type: j.type, work_mode: j.mode,
       neighborhood_id: j.neighborhood ? nb(j.neighborhood) : null, salary_text: j.salary ?? null, openings: j.openings ?? 1,
+      area: j.area ?? null, salary_min: j.salary_min ?? null, salary_max: j.salary_max ?? null, schedule_text: j.schedule ?? null,
     }), `vaga ${j.title}`);
     console.log(`✓ vaga ${j.title}`);
   }
@@ -166,6 +174,14 @@ async function main() {
     neighborhood_id: nb('centro'), resume_path: cvPath, resume_filename: 'curriculo-joana.pdf', resume_size: 40, consent_at: new Date().toISOString(),
   }), 'banco de currículos');
   console.log('✓ currículo Joana Exemplo (demo)');
+  await must(sb.from('resumes').insert({
+    user_id: candidata.id, full_name: 'Joana Exemplo (demo)', headline: 'Auxiliar administrativo', email: email('candidata'), phone: '67988887777',
+    summary: 'Organizada e pontual. Gosto de atender bem as pessoas.', neighborhood_id: nb('centro'),
+    experiences: [{ role: 'Recepcionista', company: 'Clínica Exemplo (demo)', start: '2023-02', end: '', current: true, description: 'Agenda, atendimento e caixa.' }],
+    education: [{ course: 'Ensino médio', school: 'Escola Estadual Exemplo (demo)', end: '2021', status: 'completo' }],
+    skills: ['Pacote Office', 'Atendimento ao público', 'Organização'],
+    references_list: [],
+  }), 'currículo no app');
   console.log(`\nAdmin: ${email(demo.admin.email)} / ${demo.password}`);
   console.log(`Cliente: ${email(demo.clients[0].email)} / ${demo.password}`);
   console.log(`Prestadores: prestador-<chave>@${demo.emailDomain} / ${demo.password}`);

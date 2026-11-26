@@ -29,7 +29,7 @@ export function ProfileForm({ initial, catalog, cpf, section = 'tudo' }: {
     <form action={action} className="space-y-5" noValidate>
       <input type="hidden" name="section" value={section} />
       {state?.message && (
-        <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'}`}>{state.message}</p>
+        <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-sage text-stone-900' : 'bg-red-50 text-red-900'}`}>{state.message}</p>
       )}
       {showContact && (
         <>

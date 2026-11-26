@@ -56,7 +56,7 @@ export function UrgentResults({ items, serviceId, serviceSlug, categorySlug, nei
     <div className="space-y-4">
       <div aria-live="polite">
         {notice && (
-          <p role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-3 font-medium text-amber-900">{notice}</p>
+          <p role="status" className="rounded-xl border border-gold bg-hoje-100 p-3 font-medium text-stone-900">{notice}</p>
         )}
       </div>
       {items.length === 0 ? (
