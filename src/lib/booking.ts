@@ -65,13 +65,15 @@ export interface BookingView {
   items: { name: string; qty: number; unit_cents: number; addons: { name: string; price_cents: number }[]; subtotal_cents: number }[];
   events: { status: string; actor_role: string; note: string | null; created_at: string }[];
   payment: { method: string; status: string; amount_cents: number; paid_at: string | null } | null;
+  review: { rating: number; comment: string | null; created_at: string } | null;
 }
 
 const BOOKING_FIELDS = 'id, code, status, scheduled_date, time_slot, notes, total_cents, price_from, payment_method, created_at, client_id, provider_id, ' +
   'cancel_kind, cancel_reason, commission_cents, neighborhoods(name), cities(name), services(name, service_categories(slug)), ' +
-  'booking_items(name, qty, unit_cents, addons, subtotal_cents), booking_events(status, actor_role, note, created_at), payments(method, status, amount_cents, paid_at)';
+  'booking_items(name, qty, unit_cents, addons, subtotal_cents), booking_events(status, actor_role, note, created_at), payments(method, status, amount_cents, paid_at), booking_reviews(rating, comment, created_at)';
 
-type RawBooking = Omit<BookingView, 'neighborhood' | 'city' | 'service' | 'category_slug' | 'items' | 'events' | 'payment'> & {
+type RawBooking = Omit<BookingView, 'neighborhood' | 'city' | 'service' | 'category_slug' | 'items' | 'events' | 'payment' | 'review'> & {
+  booking_reviews: BookingView['review'] | BookingView['review'][];
   neighborhoods: { name: string } | null; cities: { name: string } | null;
   services: { name: string; service_categories: { slug: string } | null } | null;
   booking_items: BookingView['items']; booking_events: BookingView['events'];
@@ -79,7 +81,7 @@ type RawBooking = Omit<BookingView, 'neighborhood' | 'city' | 'service' | 'categ
 };
 
 function toBooking(r: RawBooking): BookingView {
-  const { neighborhoods, cities, services, booking_items, booking_events, payments, ...rest } = r;
+  const { neighborhoods, cities, services, booking_items, booking_events, payments, booking_reviews, ...rest } = r;
   return {
     ...rest,
     neighborhood: neighborhoods?.name ?? '', city: cities?.name ?? '', service: services?.name ?? '',
@@ -87,6 +89,7 @@ function toBooking(r: RawBooking): BookingView {
     items: booking_items ?? [],
     events: [...(booking_events ?? [])].sort((a, b) => a.created_at.localeCompare(b.created_at)),
     payment: Array.isArray(payments) ? payments[0] ?? null : payments,
+    review: Array.isArray(booking_reviews) ? booking_reviews[0] ?? null : booking_reviews ?? null,
   };
 }
 
@@ -115,17 +118,32 @@ export async function listBookings(filter: { client?: string; provider?: string;
 export interface Candidate {
   provider_id: string; slug: string; display_name: string; photo: string | null; available_today: boolean;
   completed: number; show_rate: number | null; identity_checked: boolean; refs_confirmed: number; near: boolean;
+  rating: number | null; reviews: number;
 }
 
 export async function getCandidates(bookingId: string): Promise<Candidate[]> {
   const supabase = await createClient();
   const { data } = await supabase.rpc('booking_candidates', { p_booking: bookingId });
   return ((data ?? []) as (Omit<Candidate, 'photo'> & { photo_path: string | null })[])
-    .map(({ photo_path, ...c }) => ({ ...c, photo: photoUrl(photo_path) }));
+    .map(({ photo_path, rating, ...c }) => ({ ...c, rating: rating === null ? null : Number(rating), photo: photoUrl(photo_path) }));
 }
 
 export async function getContacts(bookingId: string) {
   const supabase = await createClient();
   const { data } = await supabase.rpc('booking_contacts', { p_booking: bookingId });
   return ((data ?? []) as { provider_whatsapp: string | null; provider_name: string | null; provider_slug: string | null; client_phone: string | null; address_line: string | null }[])[0] ?? null;
+}
+
+/** Próximos compromissos (pedidos em aberto de hoje em diante), como cliente e como profissional. */
+export async function getUpcoming(userId: string, limit = 20) {
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Campo_Grande' }).format(new Date());
+  const supabase = await createClient();
+  const { data } = await supabase.from('bookings').select(BOOKING_FIELDS)
+    .or(`client_id.eq.${userId},provider_id.eq.${userId}`)
+    .in('status', ['solicitado', 'confirmado', 'a_caminho', 'em_andamento'])
+    .gte('scheduled_date', today)
+    .order('scheduled_date', { ascending: true }).order('created_at', { ascending: true }).limit(limit);
+  const order = { manha: 0, tarde: 1, noite: 2 } as const;
+  return ((data ?? []) as unknown as RawBooking[]).map(toBooking)
+    .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date) || order[a.time_slot] - order[b.time_slot]);
 }

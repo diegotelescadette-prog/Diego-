@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
+import { APP_NAME } from '@/config/brand';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { Avatar } from '@/components/Avatar';
 import { BookingItems, BookingTimeline } from '@/components/BookingTimeline';
 import { Guarantee } from '@/components/PackageCard';
-import { bookingAction, chooseProvider } from '@/app/pedidos/actions';
+import { bookingAction, chooseProvider, reviewBooking } from '@/app/pedidos/actions';
+import { Glyph } from '@/components/CategoryIcon';
 import { getBooking, getCandidates, getContacts } from '@/lib/booking';
-import { dateLabel, SLOT_LABEL } from '@/lib/booking-shared';
+import { dateLabel, RATING_LABEL, ratingText, SLOT_LABEL, STAR } from '@/lib/booking-shared';
 import { getIsAdmin, getUser } from '@/lib/data';
 import { waLink } from '@/lib/whatsapp';
 
@@ -38,7 +40,7 @@ export default async function Pedido({ params, searchParams }: { params: Promise
         <p className="text-sm font-semibold text-stone-500">Pedido #{b.code}</p>
         <h1 id="ped-t" className="text-xl font-bold text-stone-900">{b.items[0]?.name ?? b.service}</h1>
         <p className="text-stone-700" data-testid="booking-when">{dateLabel(b.scheduled_date)}, {SLOT_LABEL[b.time_slot].toLowerCase()} · {b.neighborhood}</p>
-        <div className="mt-4"><BookingTimeline status={b.status} events={b.events} /></div>
+        <div className="mt-4"><BookingTimeline status={b.status} events={b.events} reviewed={!!b.review} /></div>
       </section>
 
       {open && !b.provider_id && (
@@ -46,7 +48,7 @@ export default async function Pedido({ params, searchParams }: { params: Promise
           <h2 id="esc-t" className="font-bold text-stone-800">{candidates.length ? 'Escolha quem vai atender' : 'Procurando um profissional'}</h2>
           {candidates.length ? (
             <>
-              <p className="text-sm text-stone-600">Os melhores para o seu pedido: quem atende no dia, comparece e tem as checagens feitas. O preço é o mesmo com qualquer um.</p>
+              <p className="text-sm text-stone-600">Até 3 profissionais verificados, pela nota, pelo comparecimento, pela distância e pelas referências. O preço é o mesmo com qualquer um.</p>
               <ul className="space-y-2">
                 {candidates.map((c) => (
                   <li key={c.provider_id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-line p-3" data-testid="candidate">
@@ -55,7 +57,9 @@ export default async function Pedido({ params, searchParams }: { params: Promise
                       <Link href={`/p/${c.slug}`} className="font-bold text-stone-900 hover:underline">{c.display_name}</Link>
                       <p className="flex flex-wrap gap-x-3 text-sm text-stone-600">
                         {c.available_today && <span className="text-hoje-700">● Atende hoje</span>}
-                        {c.identity_checked && <span>✓ Identidade conferida</span>}
+                        {c.identity_checked && <span className="verified">Verificado</span>}
+                        {c.rating !== null && <span className="inline-flex items-center gap-1"><span className="text-hoje-700"><Glyph d={STAR} size={14} /></span>{ratingText(c.rating)} ({c.reviews})</span>}
+                        {c.near && <span>Atende o seu bairro</span>}
                         {c.refs_confirmed > 0 && <span>✓ {c.refs_confirmed} {c.refs_confirmed === 1 ? 'referência' : 'referências'}</span>}
                         <span>{c.completed} {c.completed === 1 ? 'serviço feito' : 'serviços feitos'}</span>
                         {c.show_rate !== null && <span>{c.show_rate}% de comparecimento</span>}
@@ -80,7 +84,7 @@ export default async function Pedido({ params, searchParams }: { params: Promise
           <h2 id="prof-t" className="font-bold text-stone-800">Profissional</h2>
           <p className="mt-1"><Link href={`/p/${contacts.provider_slug}`} className="font-semibold text-stone-900 hover:underline">{contacts.provider_name}</Link></p>
           {confirmed && contacts.provider_whatsapp ? (
-            <a className="btn-zap mt-3 w-full" href={waLink(contacts.provider_whatsapp, `Olá! Sobre o pedido #${b.code} pelo Resolve Aqui.`)} target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
+            <a className="btn-zap mt-3 w-full" href={waLink(contacts.provider_whatsapp, `Olá! Sobre o pedido #${b.code} pelo ${APP_NAME}.`)} target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
           ) : open ? (
             <p className="mt-1 text-sm text-stone-600">Aguardando a confirmação. O contato aparece aqui assim que o profissional confirmar.</p>
           ) : null}
@@ -92,8 +96,36 @@ export default async function Pedido({ params, searchParams }: { params: Promise
         <BookingItems b={b} />
         {contacts?.address_line && <p className="mt-2 text-sm text-stone-600">Endereço: {contacts.address_line}</p>}
         {b.notes && <p className="mt-1 text-sm text-stone-600">Observações: {b.notes}</p>}
-        {b.status === 'concluido' && <p className="mt-3 rounded-xl bg-sand p-3 text-sm text-stone-800">Na próxima versão você vai avaliar o serviço aqui (nota, comentário e se o profissional chegou no horário).</p>}
       </section>
+
+      {b.status === 'concluido' && b.provider_id && (
+        <section className="card p-4 sm:p-5" aria-labelledby="av-t" data-testid="review">
+          <h2 id="av-t" className="font-bold text-stone-800">Avaliação</h2>
+          {b.review ? (
+            <p className="mt-1 text-stone-700" data-testid="review-done">Você deu {b.review.rating} de 5 ({RATING_LABEL[b.review.rating]}).{b.review.comment ? ` “${b.review.comment}”` : ''}</p>
+          ) : (
+            <form action={reviewBooking} className="mt-2 space-y-3">
+              <input type="hidden" name="id" value={b.id} /><input type="hidden" name="back" value={here} />
+              <fieldset>
+                <legend className="label">Como foi o serviço?</legend>
+                <div className="stars">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <label key={n} className="star-opt relative" title={RATING_LABEL[n]}>
+                      <input type="radio" name="rating" value={n} required aria-label={`${n} de 5: ${RATING_LABEL[n]}`} />
+                      <Glyph d={STAR} size={24} />
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div>
+                <label htmlFor="comment" className="label">Comentário (opcional)</label>
+                <textarea id="comment" name="comment" className="input min-h-20" maxLength={500} placeholder="Chegou no horário? Deixou tudo limpo?" />
+              </div>
+              <button type="submit" className="btn-primary min-h-11 px-4">Enviar avaliação</button>
+            </form>
+          )}
+        </section>
+      )}
 
       {['solicitado', 'confirmado'].includes(b.status) && (
         <details className="card p-4">

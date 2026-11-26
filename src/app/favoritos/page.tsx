@@ -30,7 +30,7 @@ export default async function Favoritos({ searchParams }: { searchParams: Promis
         {tabs}
         {posts.length === 0 ? (
           <div className="card p-6 text-center">
-            <p>Você ainda não salvou nenhuma publicação. Toque em “☆ Salvar” numa publicação da comunidade.</p>
+            <p>Você ainda não salvou nenhuma publicação. Toque em “Salvar” numa publicação da comunidade.</p>
             <Link href="/comunidade" className="btn-primary mt-3">Ver a comunidade</Link>
           </div>
         ) : posts.map((p) => <PostCard key={p.id} post={p} viewerId={user.id} message={generalMessage(p.service ?? 'um serviço', city.name, false)} />)}

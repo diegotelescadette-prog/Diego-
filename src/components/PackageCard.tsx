@@ -25,7 +25,7 @@ export function PackageCard({ p, compact = false }: { p: ServicePackage; compact
         <CategoryIcon slug={p.category.slug} size="sm" />
         <div className="min-w-0 flex-1">
           <h3 className="font-bold leading-snug text-stone-900">{p.name}</h3>
-          <p className="text-sm text-stone-500">{p.service.name} · <Glyph d={CLOCK} size={13} /> {durationLabel(p.duration_min)}</p>
+          <p className="flex flex-wrap items-center gap-x-1 text-sm text-stone-500">{p.service.name} ·<span className="inline-flex items-center gap-1"><Glyph d={CLOCK} size={13} />{durationLabel(p.duration_min)}</span></p>
         </div>
         <Price cents={p.price_cents} from={p.price_from} />
       </div>

@@ -37,6 +37,14 @@ export async function bookingAction(form: FormData) {
   back(form, error ? bookingError(error.message) : DONE[String(data)] ?? 'Pedido atualizado.');
 }
 
+export async function reviewBooking(form: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('review_booking', {
+    p_booking: String(form.get('id')), p_rating: Number(form.get('rating') ?? 0), p_comment: String(form.get('comment') ?? ''),
+  });
+  back(form, error ? bookingError(error.message) : 'Obrigado pela avaliação! Ela ajuda outras pessoas a escolher bem.');
+}
+
 export async function assignProvider(form: FormData) {
   const supabase = await createClient();
   const provider = String(form.get('provider') ?? '');

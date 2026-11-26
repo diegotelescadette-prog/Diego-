@@ -4,10 +4,10 @@ import { areaText, generalMessage, urgentMessage, waLink } from '../../src/lib/w
 
 test('mensagem do fluxo urgente', () => {
   assert.equal(urgentMessage('Encanador', 'Centro', 'Campo Grande'),
-    'Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
+    'Olá! Encontrei seu perfil no Próximo. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
   // sem bairro escolhido: só a cidade
   assert.equal(urgentMessage('Encanador', null, 'Campo Grande'),
-    'Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
+    'Olá! Encontrei seu perfil no Próximo. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
 });
 test('texto da área nos cards', () => {
   assert.equal(areaText('Toda Campo Grande'), 'Atende toda Campo Grande');
@@ -17,9 +17,9 @@ test('texto da área nos cards', () => {
 });
 test('mensagem da busca geral (local e online)', () => {
   assert.equal(generalMessage('Piscineiro', 'Carandá Bosque, Campo Grande', false),
-    'Olá! Encontrei seu perfil no Resolve Aqui. Preciso de piscineiro em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
+    'Olá! Encontrei seu perfil no Próximo. Preciso de piscineiro em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
   assert.equal(generalMessage('Técnico de TI', null, true),
-    'Olá! Encontrei seu perfil no Resolve Aqui. Preciso de técnico de TI com atendimento online. Você tem disponibilidade?');
+    'Olá! Encontrei seu perfil no Próximo. Preciso de técnico de TI com atendimento online. Você tem disponibilidade?');
   assert.equal(generalMessage('DJ', 'Campo Grande', false).includes('Preciso de DJ em'), true);
 });
 test('link wa.me com DDI 55 e texto codificado', () => {

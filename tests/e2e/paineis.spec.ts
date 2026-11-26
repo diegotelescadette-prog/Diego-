@@ -24,7 +24,6 @@ test('menu: destaca a opção em uso, navega com teclado e abre o destino certo'
     await expect(nav.getByRole('link', { name: /Buscar profissional/ })).toHaveAttribute('aria-current', 'page');
     await nav.getByRole('link', { name: /Buscar profissional/ }).focus();
     await page.keyboard.press('Shift+Tab');
-    await page.keyboard.press('Shift+Tab');
     await expect(nav.getByRole('link', { name: 'Preciso para hoje' })).toBeFocused();
     await page.keyboard.press('Enter');
   }

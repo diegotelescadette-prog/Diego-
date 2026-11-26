@@ -71,7 +71,7 @@ export function BookingForm({ pkg, neighborhoods, todayAvailable, initial }: Pro
             {days.map((d) => (
               <label key={d.date} className={`day${d.today ? ' day-today' : ''}`}>
                 <input type="radio" name="date" value={d.date} checked={date === d.date} onChange={() => pickDay(d.date)} />
-                <span>{d.today ? '⚡ Hoje' : d.label.split(' · ')[0]}</span>
+                <span>{d.today ? 'Hoje' : d.label.split(' · ')[0]}</span>
                 {!d.today && <span className="text-xs font-medium text-stone-500">{d.label.split(' · ')[1]}</span>}
                 {d.today && <span className="text-xs font-medium">{todayAvailable ? 'tem gente livre' : 'sujeito a vaga'}</span>}
               </label>

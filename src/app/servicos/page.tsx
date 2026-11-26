@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CategoryIcon } from '@/components/CategoryIcon';
-import { Guarantee, PackageCard } from '@/components/PackageCard';
+import { Guarantee, HowItWorks, PackageCard } from '@/components/PackageCard';
 import { getPackageCategories, getPackages } from '@/lib/booking';
 import { formatPrice } from '@/lib/booking-shared';
 
@@ -35,6 +35,7 @@ export default async function Servicos() {
         </section>
       ))}
       {!cats.length && <p className="card p-5 text-stone-700">Os serviços com preço fixo estão sendo preparados. Enquanto isso, <Link className="font-semibold text-brand-700 underline" href="/buscar">busque um profissional</Link>.</p>}
+      <HowItWorks />
       <Guarantee />
       <p className="text-stone-700">Não achou o que precisa? <Link href="/publicar?tipo=pedido" className="font-semibold text-brand-700 underline">Peça um orçamento</Link> com a descrição e fotos.</p>
     </div>

@@ -16,14 +16,14 @@ export interface ServicePackage {
 /** Ordem do acompanhamento, sem o cancelado. */
 export const STATUS_STEPS: { key: Exclude<BookingStatus, 'cancelado'>; label: string; hint: string }[] = [
   { key: 'solicitado', label: 'Solicitado', hint: 'Recebemos o seu pedido.' },
-  { key: 'confirmado', label: 'Profissional confirmado', hint: 'O profissional aceitou e vai no dia combinado.' },
+  { key: 'confirmado', label: 'Confirmado', hint: 'O profissional aceitou e vai no dia combinado.' },
   { key: 'a_caminho', label: 'A caminho', hint: 'O profissional saiu para o seu endereço.' },
   { key: 'em_andamento', label: 'Em andamento', hint: 'O serviço está sendo feito.' },
   { key: 'concluido', label: 'Concluído', hint: 'Serviço terminado. Pague só agora, na entrega.' },
 ];
 
 export const STATUS_LABEL: Record<BookingStatus, string> = {
-  solicitado: 'Solicitado', confirmado: 'Profissional confirmado', a_caminho: 'A caminho',
+  solicitado: 'Solicitado', confirmado: 'Confirmado', a_caminho: 'A caminho',
   em_andamento: 'Em andamento', concluido: 'Concluído', cancelado: 'Cancelado',
 };
 
@@ -40,7 +40,19 @@ export const EVENT_LABEL: Record<string, string> = {
   profissional_trocado: 'Profissional trocado pela equipe',
   recusado: 'Profissional não pôde atender',
   pago: 'Pagamento registrado',
+  avaliado: 'Avaliação enviada',
 };
+
+export const STAR = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z';
+export const RATING_LABEL = ['', 'Ruim', 'Regular', 'Bom', 'Muito bom', 'Excelente'];
+/** "4,8" */
+export const ratingText = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** Data em destaque na agenda: dia, mês curto e dia da semana (horário de Campo Grande). */
+export function dayBox(date: string): { day: string; month: string; weekday: string } {
+  const d = new Date(`${date}T12:00:00-04:00`);
+  const f = (o: Intl.DateTimeFormatOptions) => d.toLocaleDateString('pt-BR', { ...o, timeZone: TZ }).replace('.', '');
+  return { day: f({ day: 'numeric' }), month: f({ month: 'short' }), weekday: f({ weekday: 'short' }) };
+}
 
 export const TZ = 'America/Campo_Grande';
 
@@ -122,6 +134,9 @@ export function bookingError(code: string | undefined): string {
     invalid_payment: 'Escolha como vai pagar.',
     invalid_addons: 'Um dos adicionais não está mais disponível.',
     invalid_status: 'Este pedido mudou. Atualize a página.',
+    invalid_rating: 'Escolha de 1 a 5 estrelas.',
+    invalid_comment: 'O comentário pode ter até 500 caracteres.',
+    already_reviewed: 'Você já avaliou este serviço.',
     invalid_provider: 'Este profissional não está mais disponível para o pedido.',
     not_allowed: 'Você não tem acesso a este pedido.',
     no_provider: 'Escolha um profissional primeiro.',

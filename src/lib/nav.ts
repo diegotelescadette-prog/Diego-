@@ -53,6 +53,7 @@ export const NAV_ICONS = {
   shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5',
   tag: 'M3 12V4h8l10 10-8 8zM7.5 7.5a1 1 0 1 0 .01 0',
   clipboard: 'M8 4h8v3H8zM6 5H5v16h14V5h-1M8 12h8M8 16h5',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h3',
   rocket: 'M14 4c3 0 6 1 6 1s1 3 1 6c-2 4-6 7-9 8l-4-4c1-3 4-7 6-11zM9 15l-4 1 1-4M15 9a1 1 0 1 0 .01 0M6 18c-1 1-2 3-2 3s2-1 3-2',
 } as const;
 
@@ -70,14 +71,14 @@ export function areaFor(pathname: string): NavArea {
 export function searchItems(v: NavViewer): NavItem[] {
   return [
     { href: '/', label: 'Início', icon: 'home', tone: 'sage' },
-    { href: '/hoje', label: 'Preciso para hoje', icon: 'bolt', urgent: true, match: ['/hoje'], hint: 'Quem atende agora', group: 'Encontrar', tone: 'sand' },
-    { href: '/servicos', label: 'Serviços com preço', icon: 'tag', match: ['/servicos', '/agendar/'], hint: 'Preço fixo e agendamento', group: 'Encontrar', tone: 'sage' },
-    { href: '/buscar', label: 'Buscar profissional', icon: 'search', match: ['/buscar', '/p/'], hint: 'Por serviço e bairro', group: 'Encontrar', tone: 'sky' },
-    { href: '/pedidos', label: 'Meus pedidos', icon: 'clipboard', match: ['/pedidos'], hint: 'Acompanhe seus agendamentos', group: 'Meu espaço', tone: 'sand' },
-    { href: '/favoritos', label: 'Salvos', icon: 'heart', match: ['/favoritos'], hint: 'Profissionais e publicações', group: 'Meu espaço', tone: 'rose' },
-    ...(v.loggedIn ? [{ href: '/minhas-publicacoes', label: 'Minhas publicações', icon: 'photo', match: ['/minhas-publicacoes'], hint: 'Editar, apagar e copiar o link', group: 'Meu espaço', tone: 'sage' }] as NavItem[] : []),
-    { href: '/comunidade', label: 'Comunidade', icon: 'users', match: ['/comunidade', '/publicar'], hint: 'Trabalhos, dicas e indicações', group: 'Mais', tone: 'lavender' },
-    { href: '/vagas', label: 'Vagas de emprego', icon: 'briefcase', match: ['/vagas', '/minhas-candidaturas', '/minhas-vagas'], hint: 'Vagas e currículos', group: 'Mais', tone: 'sky' },
+    { href: '/servicos', label: 'Catálogo de serviços', icon: 'tag', match: ['/servicos', '/agendar/'], hint: 'Escolha, agende e pague depois', group: 'Serviços', tone: 'sand' },
+    { href: '/hoje', label: 'Preciso para hoje', icon: 'bolt', urgent: true, match: ['/hoje'], hint: 'Quem atende agora', group: 'Serviços', tone: 'sand' },
+    { href: '/buscar', label: 'Buscar profissional', icon: 'search', match: ['/buscar', '/p/'], hint: 'Por serviço e bairro', group: 'Serviços', tone: 'sand' },
+    { href: '/vagas', label: 'Vagas de emprego', icon: 'briefcase', match: ['/vagas', '/minhas-candidaturas'], hint: 'Vagas e meu currículo', group: 'Trabalho', tone: 'sage' },
+    { href: '/vagas/nova', label: 'Quero contratar', icon: 'megaphone', match: ['/vagas/nova', '/minhas-vagas'], hint: 'Publique uma vaga', group: 'Trabalho', tone: 'sage' },
+    { href: '/agenda', label: 'Minha agenda', icon: 'calendar', match: ['/agenda', '/pedidos'], hint: 'Pedidos e próximos compromissos', group: 'Agenda', tone: 'sky' },
+    { href: '/favoritos', label: 'Salvos', icon: 'heart', match: ['/favoritos'], hint: 'Profissionais e publicações', group: 'Agenda', tone: 'rose' },
+    { href: '/comunidade', label: 'Comunidade', icon: 'users', match: ['/comunidade', '/publicar', '/minhas-publicacoes'], hint: 'Trabalhos, dicas e indicações', group: 'Mais', tone: 'lavender' },
     v.hasProfile
       ? { href: '/painel', label: 'Painel do profissional', icon: 'tool', match: [], hint: 'Pedidos, perfil e “Atendo hoje”', group: 'Mais', tone: 'sand' }
       : { href: '/sou-prestador', label: 'Trabalhe com a gente', icon: 'tool', match: ['/sou-prestador'], hint: 'Receba pedidos sem pagar para ver', group: 'Mais', tone: 'sand' },
@@ -158,16 +159,16 @@ export function screenTitle(pathname: string, section?: string | null): string {
     return `Administração · ${ADMIN_SECTIONS.find((s) => s.key === adminSection(section))!.label}`;
   }
   const exact: Record<string, string> = {
-    '/': '', '/servicos': 'Serviços com preço fixo', '/pedidos': 'Meus pedidos', '/painel/pedidos': 'Pedidos para mim', '/comunidade': 'Comunidade', '/buscar': 'Buscar profissional', '/hoje': 'Preciso para hoje', '/favoritos': 'Salvos', '/minhas-publicacoes': 'Minhas publicações',
+    '/': '', '/agenda': 'Minha agenda', '/servicos': 'Serviços com preço fechado', '/pedidos': 'Meus pedidos', '/painel/pedidos': 'Pedidos para mim', '/comunidade': 'Comunidade', '/buscar': 'Buscar profissional', '/hoje': 'Preciso para hoje', '/favoritos': 'Salvos', '/minhas-publicacoes': 'Minhas publicações',
     '/painel': 'Painel do prestador', '/painel/perfil': 'Meu perfil', '/painel/servicos': 'Serviços e fotos',
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
     '/painel/verificacao': 'Verificação do perfil',
-    '/conta': 'Minha conta', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
+    '/conta': 'Perfil', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
     '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Meu currículo', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };
   if (pathname in exact) return exact[pathname];
-  if (pathname.startsWith('/servicos/')) return 'Serviços com preço fixo';
+  if (pathname.startsWith('/servicos/')) return 'Serviços com preço fechado';
   if (pathname.startsWith('/agendar/')) return 'Agendar';
   if (pathname.startsWith('/pedidos/')) return 'Pedido';
   if (pathname.startsWith('/p/')) return 'Perfil';

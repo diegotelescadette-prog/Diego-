@@ -3,7 +3,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { Avatar } from './Avatar';
-import { WhatsAppIcon } from './CategoryIcon';
+import { Glyph, WhatsAppIcon } from './CategoryIcon';
+
+const THUMB = 'M7 11v9H4v-9zM7 11l4-8c1.5 0 2.5 1 2.5 2.5V9h5a2 2 0 0 1 2 2.3l-1.2 6.5A2 2 0 0 1 17.3 20H7';
+const BUBBLE = 'M4 5h16v11H9l-5 4z';
+const BOOKMARK = 'M6 3h12v18l-6-4-6 4z';
+const SHARE = 'M7 17L17 7M9 7h8v8';
 import { PostGallery } from './PostGallery';
 import { useWhatsApp } from './useWhatsApp';
 import { deletePost, toggleFound, toggleSave, toggleUseful } from '@/app/comunidade/actions';
@@ -149,14 +154,14 @@ export function PostCard({ post, viewerId, message, detail = false }: {
       )}
 
       <div className="flex items-center justify-between px-4 pt-3 text-sm text-stone-600">
-        <span data-testid="useful-count">{useful.n > 0 ? `👍 ${useful.n} ${useful.n === 1 ? 'achou útil' : 'acharam útil'}` : ''}</span>
+        <span data-testid="useful-count">{useful.n > 0 ? `${useful.n} ${useful.n === 1 ? 'achou útil' : 'acharam útil'}` : ''}</span>
         {post.comments > 0 && <Link href={`${page}#comentarios`} className="hover:underline">{post.comments === 1 ? '1 comentário' : `${post.comments} comentários`}</Link>}
       </div>
       <div className="post-row">
-        <button type="button" className={`post-act${useful.on ? ' on' : ''}`} aria-pressed={useful.on} onClick={toggle}>👍 Útil</button>
-        <Link href={`${page}#comentar`} className="post-act">💬 {post.kind === 'pedido' ? 'Indicar' : 'Comentar'}</Link>
-        <button type="button" className={`post-act${saved ? ' on' : ''}`} aria-pressed={saved} onClick={save}>{saved ? '★ Salvo' : '☆ Salvar'}</button>
-        <button type="button" className="post-act" onClick={share} aria-label="Compartilhar publicação">↗ <span className="hidden sm:inline">Compartilhar</span></button>
+        <button type="button" className={`post-act${useful.on ? ' on' : ''}`} aria-pressed={useful.on} onClick={toggle}><Glyph d={THUMB} size={18} /> Útil</button>
+        <Link href={`${page}#comentar`} className="post-act"><Glyph d={BUBBLE} size={18} /> {post.kind === 'pedido' ? 'Indicar' : 'Comentar'}</Link>
+        <button type="button" className={`post-act${saved ? ' on' : ''}`} aria-pressed={saved} onClick={save}><Glyph d={BOOKMARK} size={18} /> {saved ? 'Salvo' : 'Salvar'}</button>
+        <button type="button" className="post-act" onClick={share} aria-label="Compartilhar publicação"><Glyph d={SHARE} size={18} /> <span className="hidden sm:inline">Compartilhar</span></button>
       </div>
       {pro && !mine && (
         <div className="grid grid-cols-2 gap-2 px-4 pb-3">

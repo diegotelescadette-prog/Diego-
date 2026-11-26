@@ -11,16 +11,13 @@ const FIX = path.join(process.cwd(), 'tests/e2e/fixtures');
 const png = (color: string) => sharp({ create: { width: 300, height: 200, channels: 3, background: color } }).png().toBuffer();
 
 test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volta ao post', async ({ page }) => {
-  // a tela inicial mostra só as 3 mais recentes; a comunidade inteira fica em /comunidade
-  await page.goto('/');
-  await expect(page.getByTestId('home-community').getByTestId('post')).toHaveCount(3);
-  await page.getByRole('link', { name: 'Ver comunidade' }).click();
-  await expect(page).toHaveURL(/\/comunidade$/);
+  // a comunidade fica em /comunidade (pelo menu e pelo Perfil), fora da tela inicial
+  await page.goto('/comunidade');
   await expect(page.getByRole('heading', { name: 'Comunidade de Campo Grande' })).toBeVisible();
   const posts = page.getByTestId('post');
   await expect(posts).toHaveCount(4);
   const pant = posts.filter({ hasText: 'Elétrica Pantanal (demo)' });
-  await expect(pant.getByTestId('useful-count')).toHaveText('👍 1 achou útil');
+  await expect(pant.getByTestId('useful-count')).toHaveText('1 achou útil');
   await expect(pant.getByTestId('last-comment')).toContainText('Ana Cliente (demo)');
   await expect(pant).toContainText('Trabalho');
   await expect(posts.filter({ hasText: 'Bia Faxina' })).toContainText('Diária a partir de R$ 180');

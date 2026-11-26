@@ -1,4 +1,4 @@
--- Atualização do banco que JÁ está em produção: serviços com preço fechado e agendamento (fase 1).
+-- Atualização do banco que JÁ está em produção: serviços com preço fechado, agendamento e avaliação (fase 1 do Próximo).
 -- Cole no SQL Editor do Supabase e clique em Run (uma vez só). Não apaga dados: só cria as tabelas de pacotes e pedidos, as regras de acesso e o catálogo inicial.
 begin;
 -- Fase 1 do modelo "serviço com preço fixo": pacotes padronizados, agendamento, escolha do profissional,
@@ -154,6 +154,19 @@ create policy "cliente, profissional confirmado ou equipe" on public.booking_pri
 create policy "quem ve o pedido" on public.booking_items for select to authenticated using (public.booking_visible(booking_id));
 create policy "quem ve o pedido" on public.booking_events for select to authenticated using (public.booking_visible(booking_id));
 create policy "quem ve o pedido" on public.payments for select to authenticated using (public.booking_visible(booking_id));
+
+-- Avaliação do cliente depois do serviço concluído (uma por pedido). Entra na nota usada para sugerir profissionais.
+create table public.booking_reviews (
+  booking_id uuid primary key references public.bookings (id) on delete cascade,
+  provider_id uuid not null references public.provider_profiles (id) on delete cascade,
+  client_id uuid not null references auth.users (id) on delete cascade,
+  rating smallint not null check (rating between 1 and 5),
+  comment text check (comment is null or char_length(comment) <= 500),
+  created_at timestamptz not null default now()
+);
+create index booking_reviews_provider_idx on public.booking_reviews (provider_id);
+alter table public.booking_reviews enable row level security;
+create policy "quem ve o pedido" on public.booking_reviews for select to authenticated using (public.booking_visible(booking_id));
 -- Nenhuma política de escrita: tudo passa pelas funções abaixo.
 
 insert into public.app_settings (key, value) values
@@ -191,7 +204,8 @@ $$;
 -- pela lista de bairros (mais perto) em vez da cidade toda.
 create or replace function public.booking_candidates(p_booking uuid)
 returns table (provider_id uuid, slug text, display_name text, photo_path text, available_today boolean,
-               completed integer, show_rate integer, identity_checked boolean, refs_confirmed integer, near boolean)
+               completed integer, show_rate integer, identity_checked boolean, refs_confirmed integer, near boolean,
+               rating numeric, reviews integer)
 language sql stable security definer set search_path = '' as $$
   with b as (select * from public.bookings where id = p_booking
                and (client_id = auth.uid() or public.is_admin() or auth.role() = 'service_role')),
@@ -205,6 +219,8 @@ language sql stable security definer set search_path = '' as $$
            (select count(*)::int from public.bookings x where x.provider_id = p.id and x.cancel_kind = 'nao_compareceu') as noshow,
            coalesce((select v.identity_checked_at is not null from public.provider_verification v where v.provider_id = p.id), false) as idok,
            (select count(*)::int from public.provider_references r where r.provider_id = p.id and r.result = 'confirmada') as refs,
+           (select round(avg(rv.rating), 1) from public.booking_reviews rv where rv.provider_id = p.id) as stars,
+           (select count(*)::int from public.booking_reviews rv where rv.provider_id = p.id) as nrev,
            b.scheduled_date = public.cg_now()::date as for_today
       from b
       join public.provider_profiles p on p.city_id = b.city_id and p.status = 'published'
@@ -220,10 +236,10 @@ language sql stable security definer set search_path = '' as $$
   )
   select id, slug, display_name, photo_path, today and for_today, done,
          case when done + noshow = 0 then null else round(100.0 * done / (done + noshow))::int end,
-         idok, refs, near
+         idok, refs, near, stars, nrev
     from base
    where not for_today or today
-   order by (today and for_today) desc, coalesce(case when done + noshow = 0 then null else 100.0 * done / (done + noshow) end, 90) desc,
+   order by (today and for_today) desc, coalesce(stars, 4.5) desc, coalesce(case when done + noshow = 0 then null else 100.0 * done / (done + noshow) end, 90) desc,
             done desc, idok desc, refs desc, near desc, display_name
    limit 3
 $$;
@@ -406,7 +422,26 @@ language sql stable security definer set search_path = '' as $$
    where b.id = p_booking and (b.client_id = auth.uid() or b.provider_id = auth.uid() or public.is_admin())
 $$;
 
+-- Cliente avalia o serviço concluído (1 a 5 estrelas e comentário opcional).
+create or replace function public.review_booking(p_booking uuid, p_rating integer, p_comment text default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare b public.bookings; c text := nullif(trim(coalesce(p_comment, '')), '');
+begin
+  select * into b from public.bookings where id = p_booking for update;
+  if b.id is null or b.client_id is distinct from auth.uid() then raise exception 'not_allowed'; end if;
+  if b.status <> 'concluido' or b.provider_id is null then raise exception 'invalid_status'; end if;
+  if p_rating is null or p_rating not between 1 and 5 then raise exception 'invalid_rating'; end if;
+  if c is not null and char_length(c) > 500 then raise exception 'invalid_comment'; end if;
+  if exists (select 1 from public.booking_reviews where booking_id = p_booking) then raise exception 'already_reviewed'; end if;
+  insert into public.booking_reviews (booking_id, provider_id, client_id, rating, comment) values (p_booking, b.provider_id, b.client_id, p_rating, c);
+  perform public.booking_log(p_booking, 'avaliado', 'cliente', p_rating || ' de 5');
+end $$;
+
 revoke all on public.bookings, public.booking_private, public.booking_items, public.booking_events, public.payments from anon;
+revoke all on public.booking_reviews from anon;
+revoke insert, update, delete on public.booking_reviews from authenticated;
+revoke execute on function public.review_booking(uuid, integer, text) from public, anon;
+grant execute on function public.review_booking(uuid, integer, text) to authenticated;
 revoke insert, update, delete on public.bookings, public.booking_private, public.booking_items, public.booking_events, public.payments from authenticated;
 revoke execute on function public.booking_log(uuid, text, text, text) from public, anon, authenticated;
 revoke execute on function public.create_booking(integer, integer, integer[], date, text, integer, text, text, text, text) from public, anon;

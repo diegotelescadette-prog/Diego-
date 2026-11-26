@@ -1,19 +1,36 @@
 import Link from 'next/link';
-import { PostCard } from '@/components/PostCard';
-import { Avatar } from '@/components/Avatar';
-import { CategoryIcon, Glyph } from '@/components/CategoryIcon';
-import { Guarantee, HowItWorks, PackageCard } from '@/components/PackageCard';
-import { getPackageCategories, getPackages } from '@/lib/booking';
-import { formatPrice } from '@/lib/booking-shared';
+import { Glyph } from '@/components/CategoryIcon';
+import { Guarantee, PackageCard } from '@/components/PackageCard';
+import { getPackages, getUpcoming } from '@/lib/booking';
+import { dayBox, SLOT_LABEL, STATUS_LABEL } from '@/lib/booking-shared';
 import { getPilotCity, getUser } from '@/lib/data';
-import { getFeed, getLatestJobs } from '@/lib/feed';
-import { getPosts } from '@/lib/posts';
 import { createClient } from '@/lib/supabase/server';
-import { generalMessage } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
 
 const SEARCH = 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4';
+const TOOL = 'M14.7 6.3a4 4 0 0 0-5.4 5.1L3 17.7V21h3.3l6.3-6.3a4 4 0 0 0 5.1-5.4l-2.6 2.6-2.4-.6-.6-2.4z';
+const BAG = 'M4 8h16v11H4zM9 8V5h6v3M4 13h16';
+const MEGA = 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10';
+const SHIELD = 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5';
+const BOLT = 'M13 2 4 14h7l-1 8 9-12h-7z';
+
+/** Amanhecer em ilustração plana: faixas de céu, sol âmbar com brilho e montanhas em silhueta (sem gradiente). */
+function Dawn() {
+  return (
+    <>
+      <span className="dawn-band" aria-hidden="true" />
+      <svg className="dawn-sun" viewBox="0 0 140 140" aria-hidden="true">
+        <circle cx="70" cy="70" r="70" fill="#ffe9a8" />
+        <circle cx="70" cy="70" r="50" fill="#ef9614" />
+      </svg>
+      <svg className="dawn-hills" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 52 L70 18 L120 40 L190 4 L262 44 L320 26 L400 50 V90 H0z" fill="#2b1809" />
+        <path d="M0 76 L90 50 L160 68 L240 44 L330 72 L400 58 V90 H0z" fill="#14100c" />
+      </svg>
+    </>
+  );
+}
 
 function greeting(timeZone: string) {
   const h = Number(new Intl.DateTimeFormat('pt-BR', { hour: 'numeric', hourCycle: 'h23', timeZone }).format(new Date()));
@@ -32,107 +49,100 @@ async function firstName(userId: string | undefined) {
 }
 
 /**
- * Tela inicial: busca e "Preciso para hoje", categorias, serviços com preço fixo mais pedidos, como funciona e garantia.
- * Comunidade, profissionais e vagas ficam no fim, e cada seção só aparece quando tem conteúdo.
+ * Tela inicial: saudação, "Preciso de um serviço", "Procuro trabalho" e "Quero contratar", o próximo compromisso,
+ * os serviços mais pedidos e a garantia. Cada seção só aparece quando tem conteúdo.
+ * "Indicados pela sua rede" e "Palestras esta semana" entram quando esses módulos existirem (fases 4 e 5).
  */
 export default async function Home() {
   const city = await getPilotCity();
   const user = await getUser();
-  const [cats, pkgs, feed, jobs, posts, name] = await Promise.all([
-    getPackageCategories(), getPackages(), getFeed(city.slug), getLatestJobs(), getPosts({ citySlug: city.slug, limit: 3 }), firstName(user?.id),
-  ]);
-  const featured = [...pkgs.filter((p) => p.featured), ...pkgs.filter((p) => !p.featured)].slice(0, 6);
-  const near = feed.slice(0, 12);
+  const [pkgs, name, upcoming] = await Promise.all([getPackages(), firstName(user?.id), user ? getUpcoming(user.id, 1) : Promise.resolve([])]);
+  const featured = [...pkgs.filter((p) => p.featured), ...pkgs.filter((p) => !p.featured)].slice(0, 4);
+  const next = upcoming[0];
+  const nextBox = next ? dayBox(next.scheduled_date) : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <header className="space-y-4">
-        <div>
-          <p className="font-semibold text-stone-500">{greeting(city.timezone || 'America/Campo_Grande')}{name ? `, ${name}` : ''}</p>
-          <h1 className="text-[28px] font-bold leading-tight text-stone-900 sm:text-4xl">O que você precisa resolver hoje?</h1>
+      <header className="dawn" data-testid="home-dawn">
+        <Dawn />
+        <div className="dawn-text">
+          <h1 className="text-[32px] leading-tight text-white sm:text-[42px]">{greeting(city.timezone || 'America/Campo_Grande')}{name ? `, ${name}` : ''}.</h1>
+          <p className="mt-1 inline-block rounded-lg bg-ember-dark px-2 py-0.5 text-[17px] font-semibold text-white">Gente de confiança, perto de você.</p>
         </div>
-        <form action="/buscar" method="get" role="search" data-testid="home-search">
-          <div className="home-search">
-            <Glyph d={SEARCH} size={20} />
-            <input name="q" aria-label="Buscar serviço ou profissional" placeholder="Ex.: trocar chuveiro, diarista, chaveiro" enterKeyHint="search" />
-            <input type="hidden" name="cidade" value={city.slug} />
-            <button className="btn-primary min-h-10 rounded-xl px-4" type="submit">Buscar</button>
-          </div>
-        </form>
-        <Link href="/hoje" className="hero-today sm:max-w-xs" data-testid="cta-hoje">Preciso para hoje <span aria-hidden="true">⚡</span></Link>
       </header>
 
-      {cats.length > 0 && (
-        <section aria-labelledby="cat-t" data-testid="home-categories">
-          <h2 id="cat-t" className="mb-3 text-lg font-bold text-stone-800">Categorias</h2>
-          <nav aria-label="Categorias de serviço" className="cat-grid">
-            {cats.map((c) => (
-              <Link key={c.slug} href={`/servicos/${c.slug}`} className="cat-tile">
-                <CategoryIcon slug={c.slug} />{c.name}<small>a partir de {formatPrice(c.min)}</small>
-              </Link>
-            ))}
-          </nav>
+      <section aria-label="O que você procura" className="space-y-3">
+        <div className="home-main" data-testid="home-servico">
+          <div className="flex items-start gap-3">
+            <span className="home-main-ic"><Glyph d={TOOL} size={24} /></span>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-2xl text-white"><Link href="/servicos" className="hover:underline">Preciso de um serviço</Link></h2>
+              <p className="mt-0.5 text-[15px] text-brand-100">Preço fechado e profissional verificado. Você paga depois de pronto.</p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link href="/servicos" className="btn-hoje min-h-11 flex-1 px-4 sm:flex-none">Ver serviços</Link>
+            <Link href="/hoje" className="btn min-h-11 flex-1 border border-white/40 px-4 text-white hover:bg-white/10 sm:flex-none" data-testid="cta-hoje"><Glyph d={BOLT} size={18} />Preciso para hoje</Link>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/vagas" className="home-side" data-testid="home-trabalho">
+            <span className="ic ic-md mod-trabalho"><Glyph d={BAG} size={22} /></span>
+            <span className="serif text-lg leading-snug text-stone-900">Procuro trabalho</span>
+            <span className="text-sm text-stone-600">Vagas e meu currículo</span>
+          </Link>
+          <Link href="/vagas/nova" className="home-side" data-testid="home-contratar">
+            <span className="ic ic-md mod-trabalho"><Glyph d={MEGA} size={22} /></span>
+            <span className="serif text-lg leading-snug text-stone-900">Quero contratar</span>
+            <span className="text-sm text-stone-600">Publicar uma vaga</span>
+          </Link>
+        </div>
+      </section>
+
+      {next && nextBox && (
+        <section aria-labelledby="enc-t" data-testid="next-meeting">
+          <h2 id="enc-t" className="mb-3 text-xl text-stone-900">Seu próximo encontro</h2>
+          <Link href={next.client_id === user?.id ? `/pedidos/${next.id}` : '/painel/pedidos'} className="card flex items-center gap-4 p-4 hover:border-brand-300">
+            <span className="date-box" aria-hidden="true"><small>{nextBox.weekday}</small><strong>{nextBox.day}</strong><small>{nextBox.month}</small></span>
+            <span className="min-w-0 flex-1">
+              <span className="soft-tag mod-servicos text-xs">Serviço</span>
+              <span className="mt-1 block font-bold text-stone-900">{next.items[0]?.name ?? next.service}</span>
+              <span className="block text-sm text-stone-600">{nextBox.weekday}, {nextBox.day} de {nextBox.month} · {SLOT_LABEL[next.time_slot].toLowerCase()} · {next.neighborhood}</span>
+              <span className="block text-sm font-semibold text-stone-700">{STATUS_LABEL[next.status]}</span>
+            </span>
+          </Link>
         </section>
       )}
 
       {featured.length > 0 && (
         <section aria-labelledby="mais-t" data-testid="most-requested">
           <div className="mb-3 flex items-baseline justify-between gap-2">
-            <h2 id="mais-t" className="text-lg font-bold text-stone-800">Mais pedidos em {city.name}</h2>
-            <Link href="/servicos" className="text-sm font-semibold text-brand-700 hover:underline">Ver todos</Link>
+            <h2 id="mais-t" className="text-xl text-stone-900">Mais pedidos em {city.name}</h2>
+            <Link href="/servicos" className="text-sm font-semibold text-brand-700 underline-offset-2 hover:underline">Ver todos</Link>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {featured.map((p) => <PackageCard key={p.id} p={p} compact />)}
           </div>
         </section>
       )}
 
-      <HowItWorks />
+      <form action="/buscar" method="get" role="search" data-testid="home-search">
+        <div className="home-search">
+          <Glyph d={SEARCH} size={20} />
+          <input name="q" aria-label="Buscar serviço ou profissional" placeholder="Buscar: chuveiro, diarista, chaveiro" enterKeyHint="search" />
+          <input type="hidden" name="cidade" value={city.slug} />
+          <button className="btn-primary min-h-10 px-4" type="submit">Buscar</button>
+        </div>
+      </form>
+
       <Guarantee />
 
-      {near.length > 0 && (
-        <section aria-labelledby="perto-t" data-testid="near-you">
-          <div className="mb-2 flex items-baseline justify-between">
-            <h2 id="perto-t" className="text-lg font-bold text-stone-800">Profissionais perto de você</h2>
-            <Link href={`/buscar?cidade=${city.slug}`} className="text-sm font-semibold text-brand-700 hover:underline">Ver todos</Link>
-          </div>
-          <ul className="near-row">
-            {near.map((p) => (
-              <li key={p.id}>
-                <Link href={`/p/${p.slug}`} className="near-item" data-testid="near-item">
-                  <span className={`near-ring${p.availableToday ? ' near-today' : ''}`}><Avatar src={p.avatar} name={p.name} size={68} round /></span>
-                  <span className="near-name">{p.name}</span>
-                  <span className="near-svc">{p.availableToday ? <span className="text-hoje-700">● Atende hoje</span> : p.service}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <p className="safety flex items-start gap-2 text-sm" data-testid="home-safety">
+        <span className="mt-0.5 text-oliva-600"><Glyph d={SHIELD} size={18} /></span>
+        <span>Aqui ninguém paga para conseguir emprego, e seu telefone só aparece para quem você aceitar.</span>
+      </p>
 
-      {posts.length > 0 && (
-        <section aria-labelledby="feed-titulo" className="space-y-4" data-testid="home-community">
-          <div className="flex items-baseline justify-between">
-            <h2 id="feed-titulo" className="text-lg font-bold text-stone-800">Da comunidade</h2>
-            <Link href="/comunidade" className="text-sm font-semibold text-brand-700 hover:underline">Ver comunidade</Link>
-          </div>
-          {posts.map((p) => (
-            <PostCard key={p.id} post={p} viewerId={user?.id ?? null} message={generalMessage(p.service ?? p.category ?? 'um serviço', city.name, false)} />
-          ))}
-        </section>
-      )}
-
-      {jobs.length > 0 && (
-        <section aria-labelledby="vagas-t" className="post p-4" data-testid="home-jobs">
-          <div className="flex items-baseline justify-between">
-            <h2 id="vagas-t" className="font-bold text-stone-800">Vagas de emprego</h2>
-            <Link href="/vagas" className="text-sm font-semibold text-brand-700 hover:underline">Ver vagas</Link>
-          </div>
-          <ul className="mt-2 grid gap-2 text-sm sm:grid-cols-3">
-            {jobs.map((j) => <li key={j.id}><Link href={`/vagas/${j.id}`} className="block rounded-xl p-1.5 hover:bg-paper"><span className="font-semibold">{j.title}</span><span className="block text-stone-600">{j.company}{j.place ? ` · ${j.place}` : ''}</span></Link></li>)}
-          </ul>
-        </section>
-      )}
+      <p className="home-quote pb-2 text-[17px]" data-testid="home-quote">Servir bem é a nossa forma de cuidar do próximo.</p>
     </div>
   );
 }

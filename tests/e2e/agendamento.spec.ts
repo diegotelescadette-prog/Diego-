@@ -11,19 +11,28 @@ async function fillWhere(page: Page) {
   await page.getByLabel('Seu WhatsApp (com DDD)').fill('(67) 99999-0000');
 }
 
-test('tela inicial: sem seções vazias e sem links repetidos no menu', async ({ page, isMobile }) => {
+test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem links repetidos no menu', async ({ page, isMobile }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'O que você precisa resolver hoje?' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^(Bom dia|Boa tarde|Boa noite)\.$/);
+  await expect(page.getByText('Gente de confiança, perto de você.')).toBeVisible();
+  await expect(page.getByTestId('home-servico').getByRole('heading', { name: 'Preciso de um serviço' })).toBeVisible();
   await expect(page.getByTestId('cta-hoje')).toHaveText(/Preciso para hoje/);
-  await expect(page.getByTestId('home-categories').getByRole('link', { name: /Elétrica e climatização/ })).toBeVisible();
+  await expect(page.getByTestId('home-trabalho')).toContainText('Procuro trabalho');
+  await expect(page.getByTestId('home-contratar')).toHaveAttribute('href', '/vagas/nova');
   const most = page.getByTestId('most-requested');
   await expect(most.getByTestId('package-card').filter({ hasText: 'Trocar chuveiro' })).toContainText('R$ 90');
-  await expect(page.getByTestId('how-it-works')).toContainText('Pague só depois de pronto');
   await expect(page.getByTestId('guarantee')).toContainText('Preço combinado é preço pago');
-  for (const empty of ['Ninguém confirmou ainda hoje', 'Nenhuma vaga aberta agora', 'A comunidade está começando']) {
+  await expect(page.getByTestId('home-quote')).toHaveText('Servir bem é a nossa forma de cuidar do próximo.');
+  // sem login não há agenda; seções sem dados não aparecem
+  await expect(page.getByTestId('next-meeting')).toHaveCount(0);
+  for (const empty of ['Indicados pela sua rede', 'Palestras esta semana', 'Ninguém confirmou ainda hoje', 'Nenhuma vaga aberta agora']) {
     await expect(page.getByText(empty)).toHaveCount(0);
   }
-  if (isMobile) await page.getByRole('button', { name: /^Menu/ }).click();
+  if (isMobile) {
+    const bottom = page.getByRole('navigation', { name: 'Navegação rápida' });
+    await expect(bottom.getByRole('link')).toHaveText(['Início', 'Serviços', 'Trabalho', 'Agenda', 'Perfil']);
+    await page.getByRole('button', { name: /^Menu/ }).click();
+  }
   const hrefs = await page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
   expect(new Set(hrefs).size).toBe(hrefs.length);
   expect(hrefs.filter((h) => h === '/')).toHaveLength(1);
@@ -60,6 +69,11 @@ test('cliente agenda "Trocar chuveiro" pelo preço fixo e acompanha até conclui
   // só um eletricista atende: já vem escolhido; o contato aparece só depois da confirmação
   await expect(page.getByTestId('booking-provider')).toContainText('Elétrica Pantanal (demo)');
   await expect(page.getByRole('link', { name: 'Falar no WhatsApp' })).toHaveCount(0);
+  await page.goto('/agenda');
+  await expect(page.getByTestId('agenda-item').first()).toContainText('Trocar chuveiro');
+  await page.goto('/');
+  await expect(page.getByTestId('next-meeting')).toContainText('Trocar chuveiro');
+  await page.goto(bookingUrl);
   const { data: priv } = await admin.from('booking_private').select('contact_phone').eq('booking_id', bookingUrl.split('/').pop()!).single();
   expect(priv!.contact_phone).toBe('67999990000');
 
@@ -91,6 +105,13 @@ test('cliente agenda "Trocar chuveiro" pelo preço fixo e acompanha até conclui
   await page.reload();
   await expect(page.getByTestId('status-now')).toContainText('Concluído');
   await expect(page.getByTestId('booking-items')).toContainText('Pix na entrega · pago');
+  // avaliação: última etapa
+  await page.getByLabel('5 de 5: Excelente').check({ force: true });
+  await page.getByLabel('Comentário (opcional)').fill('Chegou no horário e deixou tudo limpo.');
+  await page.getByRole('button', { name: 'Enviar avaliação' }).click();
+  await expect(page.getByTestId('booking-msg')).toContainText('Obrigado pela avaliação');
+  await expect(page.getByTestId('status-now')).toContainText('Avaliação');
+  await expect(page.getByTestId('review-done')).toContainText('5 de 5');
   await page.goto('/pedidos');
   await expect(page.getByTestId('my-booking').first()).toContainText('Concluído');
 });

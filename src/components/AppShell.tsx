@@ -104,10 +104,11 @@ function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | nul
   }
   return (
     <details className="relative">
-      <summary className="btn-ghost cursor-pointer list-none" aria-label="Abrir menu da conta">Conta ▾</summary>
+      <summary className="btn-ghost cursor-pointer list-none" aria-label="Abrir menu do perfil">Perfil ▾</summary>
       <ul className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-stone-200 bg-white p-2 shadow-lg">
         {viewer.email && <li className="truncate px-3 py-1 text-sm text-stone-600">{viewer.email}</li>}
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/conta">Minha conta</Link></li>
+        <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/agenda">Minha agenda</Link></li>
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/pedidos">Meus pedidos</Link></li>
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/minhas-candidaturas">Minhas candidaturas</Link></li>
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/minhas-vagas">Vagas que publiquei</Link></li>

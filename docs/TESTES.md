@@ -133,3 +133,12 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Unidade 16/16, integração 46/46, e2e 82/82 (computador e Pixel 7).
 - Início sem abas e sem caixa de filtros; links antigos com ?tipo= e ?bairro= continuam filtrando e mostram "Ver tudo".
 - Perfil com capa, números (publicações, acharam útil, salvaram) e abas Trabalhos, Sobre e Publicações.
+
+## Rodada 11: Próximo, fase 1 (identidade "Amanhecer", navegação, nova tela inicial e serviços com preço fechado)
+
+- Unidade 16/16, integração 49/49, e2e 90/90 (computador e Pixel 7).
+- Tela inicial: saudação sobre o amanhecer, "Preciso de um serviço", "Procuro trabalho", "Quero contratar", próximo encontro só com pedido marcado, nenhuma seção vazia, menu sem links repetidos.
+- Barra inferior: Início · Serviços · Trabalho · Agenda · Perfil.
+- "Trocar chuveiro" por R$ 90: agendar para hoje, acompanhar Solicitado → Confirmado → A caminho → Em andamento → Concluído → Avaliação, pagamento na entrega e avaliação de 1 a 5.
+- Mais de um profissional: o cliente escolhe entre até 3 (nota, comparecimento, bairro, referências); outro cliente não abre o pedido; a equipe troca o profissional; o cliente cancela.
+- Equipe muda o preço do pacote e o cliente vê o novo valor. O contato só aparece depois da confirmação.

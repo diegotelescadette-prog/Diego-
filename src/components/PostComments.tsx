@@ -1,4 +1,6 @@
 'use client';
+import { Glyph } from './CategoryIcon';
+import { APP_NAME } from '@/config/brand';
 import Link from 'next/link';
 import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
 import { addComment, deleteComment, editComment, findProviders, hideComment, reportPost, type Result } from '@/app/comunidade/actions';
@@ -27,7 +29,7 @@ function ProviderPicker({ value, onChange }: { value: Picked | null; onChange: (
   }
   return (
     <div>
-      <label className="label" htmlFor="c-prov">Indicar um prestador do Resolve Aqui (opcional)</label>
+      <label className="label" htmlFor="c-prov">Indicar um prestador do {APP_NAME} (opcional)</label>
       <input id="c-prov" className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nome ou serviço, ex.: eletricista" autoComplete="off" />
       {list.length > 0 && (
         <ul className="mt-1 max-h-56 overflow-y-auto rounded-xl border border-stone-200 bg-white" aria-label="Prestadores encontrados">
@@ -100,7 +102,7 @@ function CommentItem({ c, replies, ctx }: { c: CommentView; replies: CommentView
           ) : <p className="whitespace-pre-line text-[15px] [overflow-wrap:anywhere]">{c.body}</p>}
           {c.provider && (
             <Link href={`/p/${c.provider.slug}`} className="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm hover:border-brand-500" data-testid="recommended">
-              <span aria-hidden="true">👉</span><span className="min-w-0"><span className="block font-semibold">Indicou {c.provider.name}</span>{c.provider.service && <span className="block text-stone-600">{c.provider.service} · ver perfil</span>}</span>
+              <span className="text-hoje-700"><Glyph d="M5 12h14M13 6l6 6-6 6" size={18} /></span><span className="min-w-0"><span className="block font-semibold">Indicou {c.provider.name}</span>{c.provider.service && <span className="block text-stone-600">{c.provider.service} · ver perfil</span>}</span>
             </Link>
           )}
         </div>

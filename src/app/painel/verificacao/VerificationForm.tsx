@@ -1,4 +1,5 @@
 'use client';
+import { APP_NAME } from '@/config/brand';
 import { useActionState, useState } from 'react';
 import { saveVerification, type VerifState } from './actions';
 import { REF_LABEL, type RefResult, type VerificationStatus } from '@/lib/verification';
@@ -73,14 +74,14 @@ export function VerificationForm({ initial, needsChannel, status }: { initial: V
         })}
         <label className="flex items-start gap-2">
           <input type="checkbox" name="refs_consent" value="1" defaultChecked={v ? v.refs_consent === '1' : initial.refs_consent} className="mt-1 h-5 w-5" />
-          Avisei essas pessoas e elas concordaram em ser contatadas pela equipe do Resolve Aqui.
+          Avisei essas pessoas e elas concordaram em ser contatadas pela equipe do {APP_NAME}.
         </label>
       </section>
 
       {needsChannel && (
         <section className="card space-y-3 p-5" aria-labelledby="v-ch">
           <h2 id="v-ch" className="text-lg font-bold">Crédito imobiliário: canal oficial</h2>
-          <p className="text-sm text-stone-600">Quem oferece financiamento ou empréstimo informa a instituição responsável e o canal oficial. A equipe confere nas fontes oficiais antes de mostrar o serviço. Proposta, análise de crédito, CPF, renda e documentos do imóvel ficam no canal oficial, nunca no Resolve Aqui.</p>
+          <p className="text-sm text-stone-600">Quem oferece financiamento ou empréstimo informa a instituição responsável e o canal oficial. A equipe confere nas fontes oficiais antes de mostrar o serviço. Proposta, análise de crédito, CPF, renda e documentos do imóvel ficam no canal oficial, nunca no {APP_NAME}.</p>
           {initial.channel?.checked && <p className="text-sm font-semibold text-green-800">✓ Canal oficial conferido pela equipe. Alterar os dados pede nova conferência.</p>}
           <div className="grid gap-2 sm:grid-cols-2">
             <div><label htmlFor="ch_institution" className="label">Quem oferece o atendimento</label>

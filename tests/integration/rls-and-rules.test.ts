@@ -162,12 +162,12 @@ test('contato urgente (API): válido, desativado, vencido, fora do bairro, fora 
   assert.equal(ok.status, 200);
   const u = new URL(ok.body.url);
   assert.equal(u.hostname, 'wa.me');
-  assert.equal(u.searchParams.get('text'), 'Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
+  assert.equal(u.searchParams.get('text'), 'Olá! Encontrei seu perfil no Próximo. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
   assert.equal((await urgentContact({ providerId: carlos, serviceId: svc('encanador'), neighborhoodId: nb('aero-rancho') })).status, 409, 'fora do bairro');
   // sem bairro: mensagem diz só a cidade
   const noNb = await urgentContact({ providerId: await profileId('marcos'), serviceId: svc('encanador'), neighborhoodId: null });
   assert.equal(noNb.status, 200, 'Todos os bairros');
-  assert.equal(new URL(noNb.body.url).searchParams.get('text'), 'Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
+  assert.equal(new URL(noNb.body.url).searchParams.get('text'), 'Olá! Encontrei seu perfil no Próximo. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
   assert.equal((await urgentContact({ providerId: await profileId('marcos'), serviceId: svc('encanador'), neighborhoodId: nb('centro') })).status, 409, 'Marcos não atende o Centro');
   const bia = await profileId('bia');
   await admin.from('services').update({ urgent_pilot: false }).eq('slug', 'diarista');
