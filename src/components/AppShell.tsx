@@ -94,7 +94,17 @@ function Title() {
   return t ? <p className="hidden truncate text-lg font-bold text-stone-800 md:block" data-testid="screen-title">{t}</p> : null;
 }
 
-function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | null } }) {
+function Bell({ unread }: { unread: number }) {
+  const label = unread ? `Notificações, ${unread} ${unread === 1 ? 'nova' : 'novas'}` : 'Notificações';
+  return (
+    <Link href="/notificacoes" className="btn-ghost relative min-h-11 px-2.5" aria-label={label} data-testid="bell">
+      <Glyph d={NAV_ICONS.bell} size={22} />
+      {unread > 0 && <span className="bell-count" data-testid="bell-count">{unread > 9 ? '9+' : unread}</span>}
+    </Link>
+  );
+}
+
+function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | null; unread?: number } }) {
   if (!viewer.loggedIn) {
     return (
       <>
@@ -103,9 +113,11 @@ function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | nul
     );
   }
   return (
+    <>
+    <Bell unread={viewer.unread ?? 0} />
     <details className="relative">
       <summary className="btn-ghost cursor-pointer list-none" aria-label="Abrir menu do perfil">Perfil ▾</summary>
-      <ul className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-stone-200 bg-white p-2 shadow-lg">
+      <ul className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-stone-200 bg-surface p-2 shadow-lg">
         {viewer.email && <li className="truncate px-3 py-1 text-sm text-stone-600">{viewer.email}</li>}
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/conta">Minha conta</Link></li>
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/agenda">Minha agenda</Link></li>
@@ -125,6 +137,7 @@ function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | nul
         </li>
       </ul>
     </details>
+    </>
   );
 }
 
@@ -163,7 +176,7 @@ function Drawer({ open, onClose, viewer, returnFocusTo }: {
     <div className="fixed inset-0 z-50 md:hidden" onKeyDown={onKeyDown}>
       <div className="absolute inset-0 bg-stone-900/50" aria-hidden="true" onClick={onClose} />
       <div ref={panel} role="dialog" aria-modal="true" aria-label="Menu" id="menu-gaveta"
-        className="absolute inset-y-0 left-0 flex w-[min(85vw,320px)] flex-col overflow-y-auto bg-white p-4 shadow-xl">
+        className="absolute inset-y-0 left-0 flex w-[min(85vw,320px)] flex-col overflow-y-auto bg-surface p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between">
           <Logo />
           <button type="button" className="btn-ghost min-h-11 px-3" onClick={onClose}>Fechar <span aria-hidden="true">✕</span></button>
@@ -182,7 +195,7 @@ function Drawer({ open, onClose, viewer, returnFocusTo }: {
 }
 
 export function AppShell({ viewer, children, footer }: {
-  viewer: NavViewer & { email?: string | null }; children: React.ReactNode; footer: React.ReactNode;
+  viewer: NavViewer & { email?: string | null; unread?: number }; children: React.ReactNode; footer: React.ReactNode;
 }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
@@ -193,7 +206,7 @@ export function AppShell({ viewer, children, footer }: {
 
   return (
     <>
-      <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:p-2">
+      <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-surface focus:p-2">
         Pular para o conteúdo
       </a>
       <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">

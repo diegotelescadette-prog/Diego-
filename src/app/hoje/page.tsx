@@ -24,7 +24,7 @@ export default async function HojePage({ searchParams }: { searchParams: Promise
 
   const header = (title: string) => (
     <div className="mb-4">
-      <p className="chip mb-2 border-hoje-500 bg-white text-hoje-700"><Glyph d={PIN_PATH} size={14} /> {neighborhood ? `${neighborhood.name} · ` : ''}{city.name}–{city.uf}</p>
+      <p className="chip mb-2 border-hoje-500 bg-surface text-hoje-700"><Glyph d={PIN_PATH} size={14} /> {neighborhood ? `${neighborhood.name} · ` : ''}{city.name}–{city.uf}</p>
       <h1 className="text-2xl font-extrabold sm:text-3xl">{title}</h1>
     </div>
   );

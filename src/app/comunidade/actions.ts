@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { hitLimit } from '@/lib/rate-limit';
-import { POST_LIMITS, POST_REPORT_REASON, PROVIDER_KINDS } from '@/lib/posts-shared';
+import { isReaction, MEMBER_KINDS, POST_LIMITS, POST_REPORT_REASON, PROVIDER_KINDS, type ReactionKind } from '@/lib/posts-shared';
 import { forbiddenPromise } from '@/lib/verification';
 
 export type Result = { ok?: boolean; message?: string; id?: string; login?: boolean };
@@ -12,7 +12,7 @@ const Media = z.object({ kind: z.enum(['foto', 'video']), path: z.string().max(2
 const MediaList = z.array(Media).max(POST_LIMITS.photos);
 
 const PostInput = z.object({
-  kind: z.enum(['trabalho', 'divulgacao', 'pedido']),
+  kind: z.enum(['dia_a_dia', 'trabalho', 'divulgacao', 'pedido']),
   body: z.string().max(POST_LIMITS.body),
   serviceId: z.number().int().positive().nullable(),
   categoryId: z.number().int().positive().nullable(),
@@ -20,6 +20,7 @@ const PostInput = z.object({
   price: z.string().max(POST_LIMITS.price).nullable(),
   media: MediaList,
   publicName: z.string().max(60).optional(),
+  bookingId: z.string().uuid().optional(),
 });
 export type PostInputT = z.infer<typeof PostInput>;
 
@@ -50,6 +51,7 @@ async function saveName(supabase: Awaited<ReturnType<typeof createClient>>, user
   const n = name.trim();
   if (n.length < 2 || n.length > 60) return 'Informe seu nome público (2 a 60 letras).';
   const { error } = await supabase.from('member_names').upsert({ user_id: userId, name: n, updated_at: new Date().toISOString() });
+  if (error?.message.includes('carinho')) return error.message;
   return error ? 'Não foi possível salvar seu nome.' : null;
 }
 
@@ -74,16 +76,18 @@ export async function createPost(raw: PostInputT & { token: string }): Promise<R
   if (mErr) return { message: mErr };
   if (PROVIDER_KINDS.includes(p.kind) && !p.serviceId) return { message: 'Escolha o serviço.' };
   if (p.kind === 'pedido' && !p.serviceId && !p.categoryId) return { message: 'Escolha o serviço ou a categoria.' };
-  if (p.kind !== 'trabalho' && body.length < 10) return { message: p.kind === 'pedido' ? 'Descreva o que você precisa (pelo menos 10 letras).' : 'Escreva o texto da divulgação (pelo menos 10 letras).' };
+  if (p.kind === 'dia_a_dia' && !body && !p.media.length) return { message: 'Escreva algo ou adicione uma foto ou vídeo.' };
+  if (p.kind !== 'trabalho' && p.kind !== 'dia_a_dia' && body.length < 10) return { message: p.kind === 'pedido' ? 'Descreva o que você precisa (pelo menos 10 letras).' : 'Escreva o texto da divulgação (pelo menos 10 letras).' };
   const promise = forbiddenPromise(`${body} ${p.price ?? ''}`);
   if (promise) return { message: promise };
-  const nameErr = p.kind === 'pedido' ? await saveName(supabase, user.id, p.publicName) : null;
+  const nameErr = MEMBER_KINDS.includes(p.kind) ? await saveName(supabase, user.id, p.publicName) : null;
   if (nameErr) return { message: nameErr };
   if (!(await hitLimit('post', user.id, 20, 86400))) return { message: 'Muitas publicações hoje. Tente amanhã.' };
 
   const { data: post, error } = await supabase.from('posts').insert({
     author_id: user.id, kind: p.kind, body, service_id: p.serviceId, category_id: p.serviceId ? null : p.categoryId,
     neighborhood_id: p.neighborhoodId, price_label: p.kind === 'divulgacao' ? (p.price?.trim() || null) : null, client_token: token.data,
+    ...(p.kind === 'trabalho' && p.bookingId ? { booking_id: p.bookingId } : {}),
   }).select('id').single();
   if (error || !post) {
     if (error?.code === '23505') {
@@ -118,7 +122,8 @@ export async function updatePost(postId: string, raw: PostInputT): Promise<Resul
   const mErr = checkMedia(cur.kind, p.media, user.id);
   if (mErr) return { message: mErr };
   const body = p.body.trim();
-  if (cur.kind !== 'trabalho' && body.length < 10) return { message: 'Escreva pelo menos 10 letras.' };
+  if (cur.kind === 'dia_a_dia' && !body && !p.media.length) return { message: 'Escreva algo ou deixe uma foto ou vídeo.' };
+  if (cur.kind !== 'trabalho' && cur.kind !== 'dia_a_dia' && body.length < 10) return { message: 'Escreva pelo menos 10 letras.' };
   const promise = forbiddenPromise(`${body} ${p.price ?? ''}`);
   if (promise) return { message: promise };
 
@@ -186,20 +191,28 @@ export async function toggleFound(postId: string, found: boolean): Promise<Resul
   return { ok: true };
 }
 
-/** Marca ou desmarca "Útil". */
-export async function toggleUseful(postId: string, on: boolean): Promise<Result> {
+/** Reage à publicação (Valeu, Inspirou, Tô junto ou Indico) ou tira a reação (`null`). */
+export async function setReaction(postId: string, reaction: ReactionKind | null): Promise<Result> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { login: true };
   const id = z.string().uuid().safeParse(postId);
-  if (!id.success) return { message: 'Publicação inválida.' };
-  if (on) {
-    const { error } = await supabase.from('post_reactions').insert({ post_id: id.data, user_id: user.id });
-    if (error && error.code !== '23505') return { message: 'Não foi possível marcar.' };
-  } else {
+  if (!id.success || (reaction !== null && !isReaction(reaction))) return { message: 'Reação inválida.' };
+  if (reaction === null) {
     await supabase.from('post_reactions').delete().eq('post_id', id.data).eq('user_id', user.id);
+    return { ok: true };
   }
+  const { error } = await supabase.from('post_reactions').insert({ post_id: id.data, user_id: user.id, reaction });
+  if (error?.code === '23505') {
+    const { error: e2 } = await supabase.from('post_reactions').update({ reaction }).eq('post_id', id.data).eq('user_id', user.id);
+    if (e2) return { message: 'Não foi possível reagir.' };
+  } else if (error) return { message: 'Não foi possível reagir.' };
   return { ok: true };
+}
+
+/** Compatibilidade: "Útil" de antes vira "Valeu". */
+export async function toggleUseful(postId: string, on: boolean): Promise<Result> {
+  return setReaction(postId, on ? 'valeu' : null);
 }
 
 /** Salva ou tira dos salvos. */
@@ -243,7 +256,7 @@ export async function addComment(_: Result | undefined, form: FormData): Promise
   });
   if (error) {
     if (error.code === '54000') return { message: 'Muitos comentários em pouco tempo. Aguarde um pouco.' };
-    if (error.code === '23514') return { message: error.message.includes('nome') ? 'Informe seu nome para comentar.' : 'O perfil indicado não está disponível.' };
+    if (error.code === '23514') return { message: error.message.includes('carinho') ? error.message : error.message.includes('nome') ? 'Informe seu nome para comentar.' : 'O perfil indicado não está disponível.' };
     return { message: 'Não foi possível comentar.' };
   }
   refresh(postId.data);

@@ -14,6 +14,25 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 11 (26/11/2026): fase 3, parte 2 (dia a dia, Momentos e modo escuro) — passando
+
+Unitários (24), banco/API (59) e E2E (56 cenários × computador e celular = 112; 111 passaram, 1 falhou, a mesma instabilidade da busca registrada na rodada 10).
+
+- Dia a dia: qualquer conta com nome público conta do dia (texto, fotos ou vídeo); serviço e preço são ignorados; aparece na aba Dia a dia; se o autor é prestador na comunidade, o post leva ao perfil dele; conta sem nome público não posta.
+- Momentos: foto ou vídeo de até 30 s na pasta da própria conta; fica no ar 24 horas e não se edita; anel coral até a pessoa ver; o autor vê quantas pessoas viram e ninguém mais vê a lista; uma denúncia por pessoa; só a administração tira do ar (aparece em Publicações › Denúncias de momentos); vencido some para todos e o arquivo é apagado na próxima vez que o autor publica.
+- Modo escuro: Automático (segue o aparelho), Claro ou Escuro no rodapé, guardado num cookie; textos em índigo, vermelho e verde ganham tons claros no escuro; ícones de categoria clareados.
+
+## Rodada 10 (26/11/2026): fase 3, parte 1 (rede social) — passando
+
+Unitários (24), banco/API (57) e E2E (51 cenários × computador e celular = 102; 100 passaram, 2 falharam, ver abaixo).
+
+- Reações: Valeu, Inspirou, Tô junto e Indico, uma por pessoa; o "Útil" de antes vira Valeu; trocar o tipo não soma outra reação; tipo fora da lista é recusado; ninguém troca a reação de outra pessoa; o botão principal marca Valeu e tocar de novo tira.
+- Feito pelo Próximo: só pedido concluído do próprio prestador, só em Trabalho e um post por pedido; mostra a nota do cliente (sem nome nem comentário); editar o post não muda o pedido ligado; "Mostrar este trabalho no feed" em Pedidos para mim abre o formulário já ligado ao pedido.
+- Seguir: só conta logada segue prestador publicado, ninguém segue a si mesmo; a contagem de seguidores é pública e a lista é privada; a aba "Quem eu sigo" mostra só esses perfis e explica o que fazer quando está vazia.
+- Fim do feed: "Você está em dia. Vai lá viver o seu dia." quando não há mais publicações.
+- Corrigido antes de subir: o feed falhava para visitantes porque faltava a permissão de leitura na tabela de quem segue.
+- Instável, fora desta mudança: "busca sem resultados sugere retirar filtro" às vezes falha no computador (a página de busca não foi alterada; passa ao repetir).
+
 ## Rodada 9 (26/11/2026): preparação do lançamento — todos passando
 
 Unitários (16), banco/API (46) e E2E (41 cenários × computador e celular = 82).
@@ -154,3 +173,11 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Quem contrata: primeira vaga fica guardada até a equipe conferir CNPJ/CPF e endereço (/admin/contratantes); depois entra na hora com o selo.
 - Painel da vaga: comparar 2 ou 3 currículos, abrir o candidato (vira "Visualizado"), convidar para entrevista (aparece na Agenda e em "Seu próximo encontro").
 - Prestador: "Pacotes que eu faço" (/painel/pacotes); pedidos de pacotes desmarcados não chegam a ele; comissão só em serviço concluído.
+
+## Rodada 13 (26/11/2026): fase 3, complemento (filtro de ofensas e notificações)
+
+- Pacote "Fase 3 partes 1 e 2" aplicado como veio, sobre a fase 2 publicada: e2e 116/116, integração 59/59, unidade 24/24 num banco refeito do zero.
+- Filtro de ofensas: post, comentário, legenda de Momento e nome público com palavra da lista não são salvos ("Quer reescrever com mais carinho?"). Acento, maiúscula e espaço duplo não enganam; palavra inteira, sem falso positivo ("mexerica" passa). O texto continua no campo.
+- Administração → Palavras bloqueadas: a equipe adiciona e remove; ninguém mais vê a lista.
+- Notificações (sino no topo e /notificacoes): reação, comentário, resposta e novo seguidor. Só a própria pessoa vê; ninguém cria aviso na mão; reagir de novo no mesmo post não repete o aviso; ao abrir a lista, tudo fica como lido.
+- As três atualizações do banco (`2026-11-26-rede-social.sql`, `2026-11-26-dia-a-dia-momentos.sql`, `2026-11-26-moderacao-notificacoes.sql`) aplicam sem erro, nessa ordem, num banco igual ao de produção.

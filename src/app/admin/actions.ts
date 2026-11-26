@@ -173,3 +173,15 @@ export async function verificationAction(form: FormData) {
   if (/^\/admin\?aba=[a-z]+/.test(back)) qs.set('voltar', back);
   redirect(`/admin/verificacao/${encodeURIComponent(provider)}?${qs}`);
 }
+/** Palavras bloqueadas: a lista que o banco usa para barrar posts, comentários e frases de perfil. */
+export async function blockedWordAction(form: FormData) {
+  const sb = await admin();
+  const word = String(form.get('word') ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, ' ');
+  if (form.get('op') === 'remover') {
+    await sb.from('blocked_words').delete().eq('word', word);
+    done('palavras', 'Palavra removida da lista.');
+  }
+  if (!/^[a-z0-9 ]{2,40}$/.test(word)) done('palavras', 'Use de 2 a 40 letras, sem símbolos.');
+  const { error } = await sb.from('blocked_words').insert({ word });
+  done('palavras', error?.code === '23505' ? 'Essa palavra já está na lista.' : error ? 'Não foi possível salvar agora.' : 'Palavra adicionada.');
+}

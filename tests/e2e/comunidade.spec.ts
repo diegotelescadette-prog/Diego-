@@ -17,7 +17,7 @@ test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volt
   const posts = page.getByTestId('post');
   await expect(posts).toHaveCount(4);
   const pant = posts.filter({ hasText: 'Elétrica Pantanal (demo)' });
-  await expect(pant.getByTestId('useful-count')).toHaveText('1 achou útil');
+  await expect(pant.getByTestId('useful-count')).toHaveText('1 reação · Valeu');
   await expect(pant.getByTestId('last-comment')).toContainText('Ana Cliente (demo)');
   await expect(pant).toContainText('Trabalho');
   await expect(posts.filter({ hasText: 'Bia Faxina' })).toContainText('Diária a partir de R$ 180');

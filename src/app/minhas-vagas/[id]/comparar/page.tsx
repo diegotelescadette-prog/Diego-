@@ -39,7 +39,7 @@ export default async function Comparar({ params, searchParams }: { params: Promi
       <Link href={`/minhas-vagas/${id}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-brand-700">← Candidatos de {job.title}</Link>
       <h1 className="text-3xl text-stone-900">Comparar currículos</h1>
       {list.length < 2 ? <p className="card p-4">Marque de 2 a 3 candidatos na lista para comparar.</p> : (
-        <div className="overflow-x-auto rounded-[20px] border border-line bg-white">
+        <div className="overflow-x-auto rounded-[20px] border border-line bg-surface">
           <table className="w-full min-w-[560px] text-left text-sm" data-testid="compare-table">
             <thead><tr><th className="p-3" scope="col"><span className="sr-only">Item</span></th>
               {list.map((a) => <th key={a.id} scope="col" className="p-3 align-bottom"><Link href={`/minhas-vagas/${id}/c/${a.id}`} className="serif text-base text-stone-900 underline">{a.full_name}</Link></th>)}</tr></thead>

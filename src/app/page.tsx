@@ -83,7 +83,7 @@ export default async function Home() {
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href="/servicos" className="btn-hoje min-h-11 flex-1 px-4 sm:flex-none">Ver serviços</Link>
-            <Link href="/hoje" className="btn min-h-11 flex-1 border border-white/40 px-4 text-white hover:bg-white/10 sm:flex-none" data-testid="cta-hoje"><Glyph d={BOLT} size={18} />Preciso para hoje</Link>
+            <Link href="/hoje" className="btn min-h-11 flex-1 border border-white/40 px-4 text-white hover:bg-surface/10 sm:flex-none" data-testid="cta-hoje"><Glyph d={BOLT} size={18} />Preciso para hoje</Link>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PostCard } from '@/components/PostCard';
+import { StoriesBar } from '@/components/StoriesBar';
+import { getStories } from '@/lib/stories';
 import { Glyph } from '@/components/CategoryIcon';
 import { getCatalog, getNeighborhoods, getPilotCity, getUser } from '@/lib/data';
 import { getPosts } from '@/lib/posts';
@@ -29,7 +31,7 @@ export default async function Comunidade({ searchParams }: { searchParams: Promi
     let cursor: PostView | null = null;
     for (let i = 0; i < pages; i++) {
       const page: PostView[] = await getPosts({
-        citySlug: city.slug, kind: f.kind, category: f.category, neighborhood: f.neighborhood, limit: PAGE + (i === pages - 1 ? 1 : 0),
+        citySlug: city.slug, kind: f.kind, category: f.category, neighborhood: f.neighborhood, following: f.following && !!user, limit: PAGE + (i === pages - 1 ? 1 : 0),
         ...(cursor ? { before: cursor.createdAt, beforeId: cursor.id } : {}),
       });
       const more = i === pages - 1 && page.length > PAGE;
@@ -40,7 +42,7 @@ export default async function Comunidade({ searchParams }: { searchParams: Promi
     return { posts: out, more: false };
   }
 
-  const [catalog, hoods, { posts, more }] = await Promise.all([getCatalog(), getNeighborhoods(city.id), loadPosts()]);
+  const [catalog, hoods, { posts, more }, stories] = await Promise.all([getCatalog(), getNeighborhoods(city.id), loadPosts(), getStories()]);
   const catName = catalog.find((c) => c.slug === f.category)?.name;
   const hoodName = hoods.find((n) => n.id === f.neighborhood)?.name;
   const publishHref = (tipo: string) => `/publicar?tipo=${tipo}${f.category ? `&categoria=${f.category}` : ''}`;
@@ -51,13 +53,17 @@ export default async function Comunidade({ searchParams }: { searchParams: Promi
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-stone-800">Comunidade de {city.name}</h1>
-          <p className="text-stone-600">Trabalhos de profissionais da cidade, divulgações e pedidos de indicação.</p>
+          <p className="text-stone-600">O dia a dia da cidade, trabalhos de profissionais, divulgações e pedidos de indicação.</p>
         </div>
         <Link href={gated('/publicar')} className="btn-primary min-h-11 gap-2 px-4" data-testid="cta-publicar"><Glyph d={PLUS} size={18} /> Criar publicação</Link>
       </header>
 
+      {(stories.length > 0 || user) && <StoriesBar groups={stories} loggedIn={!!user} />}
+
       <nav aria-label="Tipo de publicação" className="chips-row" data-testid="feed-tabs">
         <Link href={feedHref(f, { kind: null })} className="qchip" aria-current={!f.kind ? 'page' : undefined} scroll={false}>Todos</Link>
+        <Link href={user ? feedHref(f, { following: !f.following }) : `/entrar?motivo=seguir&next=${encodeURIComponent('/comunidade?seguindo=1')}`}
+          className="qchip" aria-current={f.following ? 'page' : undefined} aria-pressed={f.following} scroll={false} data-testid="tab-following">Quem eu sigo</Link>
         {POST_KINDS.map((k) => (
           <Link key={k.key} href={feedHref(f, { kind: k.key })} className="qchip" aria-current={f.kind === k.key ? 'page' : undefined} scroll={false}>{k.plural}</Link>
         ))}
@@ -88,6 +94,7 @@ export default async function Comunidade({ searchParams }: { searchParams: Promi
           <span className="font-semibold text-stone-700">Filtros:</span>
           {f.kind && <Link href={feedHref(f, { kind: null })} className="filter-chip" aria-label={`Tirar filtro ${KIND_LABEL[f.kind]}`}>{KIND_LABEL[f.kind]} ✕</Link>}
           {catName && <Link href={feedHref(f, { category: null })} className="filter-chip" aria-label={`Tirar filtro ${catName}`}>{catName} ✕</Link>}
+          {f.following && <Link href={feedHref(f, { following: false })} className="filter-chip" aria-label="Tirar filtro Quem eu sigo">Quem eu sigo ✕</Link>}
           {hoodName && <Link href={feedHref(f, { neighborhood: null })} className="filter-chip" aria-label={`Tirar filtro ${hoodName}`}>{hoodName} ✕</Link>}
           <Link href="/comunidade" className="font-semibold text-brand-700 underline">Limpar filtros</Link>
         </div>
@@ -102,7 +109,17 @@ export default async function Comunidade({ searchParams }: { searchParams: Promi
           <Link href={feedHref(f, { pages: pages + 1 })} scroll={false} className="btn-outline w-full" data-testid="load-more"
             data-cursor={posts.length ? encodeCursor(posts[posts.length - 1]) : undefined}>Carregar mais</Link>
         )}
-        {!posts.length && filtered && (
+        {posts.length > 0 && !more && (
+          <p className="feed-end" data-testid="feed-end">Você está em dia. Vai lá viver o seu dia.</p>
+        )}
+        {!posts.length && f.following && (
+          <div className="post p-5 text-stone-700" data-testid="feed-empty-following">
+            <p className="font-bold text-stone-900">Você ainda não segue ninguém por aqui</p>
+            <p className="mt-1">Abra o perfil de um profissional e toque em Seguir. Os trabalhos dele aparecem nesta aba.</p>
+            <Link href={feedHref(f, { following: false })} className="btn-primary mt-3 min-h-11 px-4">Ver toda a comunidade</Link>
+          </div>
+        )}
+        {!posts.length && filtered && !f.following && (
           <div className="post p-5 text-stone-700" data-testid="feed-empty-filter">
             <p>Nenhuma publicação com esses filtros ainda.</p>
             <div className="mt-3 flex flex-wrap gap-2">

@@ -4,7 +4,7 @@ import type { ProfileView } from '@/lib/profile';
 import { BADGES_DISCLAIMER, badgeTexts } from '@/lib/verification';
 
 export type ProfileTab = 'trabalhos' | 'sobre' | 'publicacoes';
-export interface ProfileStats { posts: number; useful: number; saved: number }
+export interface ProfileStats { posts: number; useful: number; saved: number; followers?: number }
 
 const TABS: { key: ProfileTab; label: string }[] = [
   { key: 'trabalhos', label: 'Trabalhos' },
@@ -92,7 +92,8 @@ export function ProfileDetails({ p, actions, stats, tab, tabHref, publications }
         {stats && (
           <dl className="pf-stats" data-testid="profile-stats">
             <div><dt>{plural(stats.posts, 'publicação', 'publicações')}</dt><dd>{stats.posts}</dd></div>
-            <div><dt>{plural(stats.useful, 'achou útil', 'acharam útil')}</dt><dd>{stats.useful}</dd></div>
+            <div><dt>{plural(stats.useful, 'reação', 'reações')}</dt><dd>{stats.useful}</dd></div>
+            {stats.followers !== undefined && <div data-testid="followers"><dt>{plural(stats.followers, 'seguidor', 'seguidores')}</dt><dd>{stats.followers}</dd></div>}
             <div><dt>{plural(stats.saved, 'salvou', 'salvaram')}</dt><dd>{stats.saved}</dd></div>
           </dl>
         )}

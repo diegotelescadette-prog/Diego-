@@ -3,7 +3,7 @@ import type { Badges } from '@/lib/verification';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { photoUrl } from '@/lib/data';
-import type { CommentView, MediaLabel, PostKind, PostView } from '@/lib/posts-shared';
+import { isReaction, type CommentView, type MediaLabel, type PostKind, type PostView, type ReactionKind } from '@/lib/posts-shared';
 
 /** Validade dos links das fotos e vídeos. O bucket é privado: só publicações visíveis recebem link. */
 const SIGNED_SECONDS = 6 * 3600;
@@ -15,10 +15,12 @@ type Row = {
   area_label: string | null; price_label: string | null; found: boolean; available_today: boolean;
   media: { kind: 'foto' | 'video'; path: string; label: MediaLabel }[];
   reactions: number; comments: number; reacted: boolean; saved: boolean; last_comment: { name: string; body: string } | null;
+  my_reaction: string | null; reaction_counts: Record<string, number> | null;
+  proof: { done_at: string | null; rating: number | null } | null;
 };
 
 /** Links assinados para os arquivos de publicações que a consulta (com RLS) já liberou. */
-async function signPaths(paths: string[]): Promise<Map<string, string>> {
+export async function signPaths(paths: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   if (!paths.length) return out;
   try {
@@ -42,7 +44,7 @@ export async function getBadges(ids: string[]): Promise<Map<string, Badges>> {
 
 export interface PostQuery {
   citySlug?: string; author?: string; post?: string; limit?: number;
-  kind?: PostKind | null; category?: string | null; neighborhood?: number | null; saved?: boolean;
+  kind?: PostKind | null; category?: string | null; neighborhood?: number | null; saved?: boolean; following?: boolean;
   before?: string; beforeId?: string;
 }
 
@@ -53,6 +55,7 @@ export async function getPosts(q: PostQuery = {}): Promise<PostView[]> {
     p_city_slug: q.citySlug ?? null, p_author: q.author ?? null, p_post: q.post ?? null,
     p_before: q.before ?? null, p_before_id: q.beforeId ?? null, p_limit: q.limit ?? 20,
     p_kind: q.kind ?? null, p_category: q.category ?? null, p_neighborhood: q.neighborhood ?? null, p_saved: q.saved ?? false,
+    p_following: q.following ?? false,
   });
   if (error) return [];
   const rows = (data ?? []) as Row[];
@@ -69,6 +72,9 @@ export async function getPosts(q: PostQuery = {}): Promise<PostView[]> {
     neighborhood: r.neighborhood_name, price: r.price_label, found: r.found,
     media: (r.media ?? []).filter((m) => urls.has(m.path)).map((m) => ({ kind: m.kind, path: m.path, label: m.label ?? null, url: urls.get(m.path)! })),
     reactions: Number(r.reactions), comments: Number(r.comments), reacted: r.reacted, saved: r.saved, lastComment: r.last_comment,
+    myReaction: isReaction(r.my_reaction) ? r.my_reaction : null,
+    reactionCounts: Object.fromEntries(Object.entries(r.reaction_counts ?? {}).filter(([k]) => isReaction(k)).map(([k, n]) => [k, Number(n)])) as Partial<Record<ReactionKind, number>>,
+    proof: r.proof ? { doneAt: r.proof.done_at, rating: r.proof.rating === null ? null : Number(r.proof.rating) } : null,
   }));
 }
 

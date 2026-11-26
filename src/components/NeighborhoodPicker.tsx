@@ -22,7 +22,7 @@ export function NeighborhoodPicker({ name, options, selected, error, legend }: {
         <button type="button" className="underline" onClick={() => setChosen(options.map((o) => o.id))}>marcar todos</button> ·{' '}
         <button type="button" className="underline" onClick={() => setChosen([])}>limpar</button>
       </p>
-      <div className="mt-2 grid max-h-64 grid-cols-1 gap-x-3 overflow-y-auto rounded-xl border border-stone-200 bg-white p-2 sm:grid-cols-2">
+      <div className="mt-2 grid max-h-64 grid-cols-1 gap-x-3 overflow-y-auto rounded-xl border border-stone-200 bg-surface p-2 sm:grid-cols-2">
         {options.filter((o) => !f || norm(o.name).includes(f)).map((o) => (
           <label key={o.id} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-1 hover:bg-brand-50">
             <input type="checkbox" name={name} value={o.id} checked={chosen.includes(o.id)} onChange={() => toggle(o.id)} className="h-5 w-5" />

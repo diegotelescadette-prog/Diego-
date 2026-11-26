@@ -9,9 +9,11 @@ import { ADMIN_SECTIONS, adminSection } from '@/lib/nav';
 import { STATUS_LABEL, type City, type ProviderStatus } from '@/lib/types';
 import { JOB_REPORT_REASON, JOB_STATUS_LABEL, jobState } from '@/lib/jobs';
 import { adminPostAction } from '@/app/comunidade/actions';
+import { adminStoryAction } from '@/app/momentos/actions';
+import { signPaths } from '@/lib/posts';
 import { KIND_LABEL, POST_REPORT_REASON, type PostKind } from '@/lib/posts-shared';
 import { VERIFICATION_LABEL, VERIFICATION_STYLE, type VerificationStatus } from '@/lib/verification';
-import { saveVerificationRule } from './actions';
+import { blockedWordAction, saveVerificationRule } from './actions';
 
 export const metadata: Metadata = { title: 'Administração' };
 export const dynamic = 'force-dynamic';
@@ -65,6 +67,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<SP
       {aba === 'perfis' && <Perfis sb={sb} sp={sp} city={city} cities={cities} />}
       {aba === 'publicacoes' && <Publicacoes sb={sb} />}
       {aba === 'vagas' && <Vagas sb={sb} />}
+      {aba === 'palavras' && <Palavras sb={sb} />}
       {aba === 'historico' && <Historico sb={sb} />}
       {aba === 'config' && <Config />}
     </div>
@@ -629,8 +632,42 @@ async function Publicacoes({ sb }: { sb: SB }) {
   ]);
   type P = { body: string; status: string; kind: string; author_name: string | null };
   const cut = (t: string) => (t.length > 180 ? `${t.slice(0, 180)}…` : t);
+  const { data: storyReports } = await sb.from('story_reports')
+    .select('id, reason, created_at, story_id, stories!inner(kind, path, caption, status, author_name)')
+    .eq('status', 'aberta').order('created_at', { ascending: false }).limit(100);
+  type S = { kind: 'foto' | 'video'; path: string; caption: string; status: string; author_name: string | null };
+  const storyUrls = await signPaths((storyReports ?? []).map((r) => (r.stories as unknown as S).path));
   return (
     <div className="space-y-6">
+      {(storyReports ?? []).length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-bold">Denúncias de momentos</h2>
+          {(storyReports ?? []).map((r) => {
+            const st = r.stories as unknown as S;
+            const url = storyUrls.get(st.path);
+            return (
+              <div key={r.id} className="card p-4" data-testid="denuncia-momento">
+                <p className="font-bold">#{r.id} · {POST_REPORT_REASON[r.reason] ?? r.reason} · Momento de {st.author_name ?? 'conta sem nome'}{st.status === 'removido' ? ' (já fora do ar)' : ''}</p>
+                {url && (st.kind === 'foto'
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={url} alt="Momento denunciado" className="mt-2 max-h-64 rounded-xl" />
+                  // eslint-disable-next-line jsx-a11y/media-has-caption
+                  : <video src={url} controls className="mt-2 max-h-64 rounded-xl" />)}
+                {st.caption && <blockquote className="mt-2 rounded-xl bg-stone-50 p-3 text-stone-800">{st.caption}</blockquote>}
+                <form action={adminStoryAction} className="mt-3 space-y-2">
+                  <input type="hidden" name="report_id" value={r.id} /><input type="hidden" name="story_id" value={r.story_id} />
+                  <label className="label" htmlFor={`sn-${r.id}`}>Motivo (aparece no histórico)</label>
+                  <input id={`sn-${r.id}`} name="note" className="input" />
+                  <div className="flex flex-wrap gap-2">
+                    <SubmitButton name="op" value="remover" className="btn-danger">Tirar do ar</SubmitButton>
+                    <SubmitButton name="op" value="improcedente" className="btn-outline">Improcedente</SubmitButton>
+                  </div>
+                </form>
+              </div>
+            );
+          })}
+        </section>
+      )}
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Denúncias de publicações e comentários</h2>
         {error && <p role="alert" className="card p-4 text-red-800">Não foi possível carregar as denúncias.</p>}
@@ -689,6 +726,36 @@ async function Publicacoes({ sb }: { sb: SB }) {
         </div>
       </section>
     </div>
+  );
+}
+
+async function Palavras({ sb }: { sb: SB }) {
+  const { data } = await sb.from('blocked_words').select('word').order('word');
+  const words = (data ?? []).map((w) => w.word as string);
+  return (
+    <section className="card max-w-3xl space-y-4 p-5" data-testid="blocked-words">
+      <p className="text-stone-700">Posts, comentários e frases de perfil com estas palavras não são publicados. A pessoa vê: “Quer reescrever com mais carinho?”. Acentos não importam.</p>
+      <form action={blockedWordAction} className="flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="bw" className="label">Nova palavra ou expressão</label>
+          <input id="bw" name="word" required maxLength={40} className="input" />
+        </div>
+        <SubmitButton className="btn-primary">Adicionar</SubmitButton>
+      </form>
+      {words.length > 0 && (
+        <ul className="flex flex-wrap gap-2" aria-label="Palavras bloqueadas">
+          {words.map((w) => (
+            <li key={w} className="flex items-center gap-1 rounded-full border border-line bg-paper py-1 pl-3 pr-1 text-sm">
+              <span data-testid="blocked-word">{w}</span>
+              <form action={blockedWordAction}>
+                <input type="hidden" name="op" value="remover" /><input type="hidden" name="word" value={w} />
+                <button type="submit" className="rounded-full px-2 py-1 text-stone-600 hover:bg-stone-200" aria-label={`Remover ${w}`}>✕</button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
