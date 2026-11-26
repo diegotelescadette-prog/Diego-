@@ -1,14 +1,21 @@
 import { APP_NAME } from '@/config/brand';
 
+/** Sol nascendo: meio círculo dourado com três raios sobre uma linha. */
+export function SunMark({ className = 'h-7 w-7' }: { className?: string }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 32 32" className={className} fill="none" strokeLinecap="round">
+      <path d="M8.5 22a7.5 7.5 0 0 1 15 0z" fill="#ef9614" />
+      <path d="M16 6.5v3.5M7.2 11.2l2.4 2.4M24.8 11.2l-2.4 2.4" stroke="#ef9614" strokeWidth="2.4" />
+      <path d="M3.5 22.5h25" stroke="currentColor" strokeWidth="2.4" />
+    </svg>
+  );
+}
+
 export function Logo() {
   return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap text-lg font-extrabold tracking-tight text-brand-800">
-      <svg aria-hidden="true" viewBox="0 0 64 64" className="h-8 w-8">
-        <rect width="64" height="64" rx="14" fill="#5f8d80" />
-        <path d="M32 12c-8.3 0-15 6.5-15 14.6C17 37.5 32 52 32 52s15-14.5 15-25.4C47 18.5 40.3 12 32 12z" fill="#fff" />
-        <path d="m25 27 5 5 9-10" stroke="#d9925f" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      {APP_NAME}
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-brand-700">
+      <SunMark />
+      <span className="serif text-[22px] leading-none">{APP_NAME.toLocaleLowerCase('pt-BR')}</span>
     </span>
   );
 }

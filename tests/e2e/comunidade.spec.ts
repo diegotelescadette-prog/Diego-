@@ -11,31 +11,30 @@ const FIX = path.join(process.cwd(), 'tests/e2e/fixtures');
 const png = (color: string) => sharp({ create: { width: 300, height: 200, channels: 3, background: color } }).png().toBuffer();
 
 test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volta ao post', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: /^(Bom dia|Boa tarde|Boa noite)$/ })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Da comunidade' })).toBeVisible();
+  // a comunidade fica em /comunidade (pelo menu e pelo Perfil), fora da tela inicial
+  await page.goto('/comunidade');
+  await expect(page.getByRole('heading', { name: 'Comunidade de Campo Grande' })).toBeVisible();
   const posts = page.getByTestId('post');
   await expect(posts).toHaveCount(4);
   const pant = posts.filter({ hasText: 'Elétrica Pantanal (demo)' });
-  await expect(pant.getByTestId('useful-count')).toHaveText('👍 1 achou útil');
+  await expect(pant.getByTestId('useful-count')).toHaveText('1 achou útil');
   await expect(pant.getByTestId('last-comment')).toContainText('Ana Cliente (demo)');
   await expect(pant).toContainText('Trabalho');
   await expect(posts.filter({ hasText: 'Bia Faxina' })).toContainText('Diária a partir de R$ 180');
-  // tela inicial limpa: sem abas nem caixa de filtros; profissionais perto de você
-  await expect(page.getByTestId('near-you')).toBeVisible();
-  await expect(page.getByText('Filtrar por categoria e bairro')).toHaveCount(0);
-  // links antigos com filtro continuam funcionando e mostram como voltar a ver tudo
-  await page.goto('/?tipo=pedido');
+  // filtro por tipo e por bairro (cidade inteira entra)
+  await page.getByTestId('feed-tabs').getByRole('link', { name: 'Pedidos de indicação' }).click();
+  await expect(page).toHaveURL(/tipo=pedido/);
   await expect(posts).toHaveCount(1);
-  await expect(page.getByTestId('active-filters')).toContainText('Pedido de indicação');
-  const tiradentes = (await admin.from('neighborhoods').select('id').eq('slug', 'tiradentes').single()).data!.id;
-  await page.goto('/?bairro=' + tiradentes);
+  await page.goto('/comunidade');
+  await page.getByText('Filtrar por categoria e bairro').click();
+  await page.getByLabel('Bairro', { exact: true }).selectOption({ label: 'Tiradentes' });
+  await page.getByRole('button', { name: 'Filtrar' }).click();
   await expect(page.getByTestId('active-filters')).toContainText('Tiradentes');
   await expect(posts).toHaveCount(2);
   await expect(posts.filter({ hasText: 'Quadro de luz trocado' })).toHaveCount(1); // atende a cidade toda
   await expect(posts.filter({ hasText: 'Troca de toda a tubulação' })).toHaveCount(0); // não atende o bairro
   // filtro vazio: um toque tira o filtro
-  await page.goto('/?tipo=divulgacao&bairro=' + (await admin.from('neighborhoods').select('id').eq('slug', 'tiradentes').single()).data!.id);
+  await page.goto('/comunidade?tipo=divulgacao&bairro=' + (await admin.from('neighborhoods').select('id').eq('slug', 'tiradentes').single()).data!.id);
   await expect(page.getByTestId('feed-empty-filter')).toBeVisible();
   await page.getByRole('link', { name: 'Tirar os filtros' }).click();
   await expect(posts).toHaveCount(4);
@@ -57,7 +56,7 @@ test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volt
 });
 
 test('galeria: antes e depois na ordem escolhida, com setas e teclado', async ({ page }) => {
-  await page.goto('/?tipo=trabalho');
+  await page.goto('/comunidade?tipo=trabalho');
   const carlos = page.getByTestId('post').filter({ hasText: 'Carlos Hidráulica' });
   await expect(carlos.locator('.ba-tag')).toHaveText(['Antes', 'Depois']);
   await carlos.getByRole('button', { name: /Abrir foto 1 de 3/ }).click();
@@ -162,12 +161,12 @@ test('morador pede indicação, recebe indicação de perfil e marca "Indicaçã
   await expect(page.getByTestId('comment').filter({ hasText: 'Obrigada, vou chamar!' }).last()).toContainText('Joana do Centro'); // resposta dentro do comentário
   await page.getByRole('button', { name: 'Marcar: indicação encontrada' }).click();
   await expect(page.getByTestId('found')).toBeVisible();
-  await page.goto('/?tipo=pedido');
+  await page.goto('/comunidade?tipo=pedido');
   await expect(page.getByTestId('post').filter({ hasText: 'Joana do Centro' }).getByTestId('found')).toBeVisible();
 });
 
 test('denúncia vai para a moderação; ocultar tira o post e a mídia do ar', async ({ page, browser }) => {
-  await page.goto('/?tipo=divulgacao');
+  await page.goto('/comunidade?tipo=divulgacao');
   await page.getByTestId('post').filter({ hasText: 'Bia Faxina' }).getByRole('link', { name: /Comentar/ }).click();
   await expect(page).toHaveURL(/\/comunidade\/[0-9a-f-]+#comentar$/);
   const postUrl = page.url().split('#')[0];

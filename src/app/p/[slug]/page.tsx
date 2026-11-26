@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { Glyph } from '@/components/CategoryIcon';
+import { APP_NAME } from '@/config/brand';
 import { safeNext } from '@/lib/validation';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -81,7 +83,7 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
         <input type="hidden" name="provider_id" value={p.id} />
         <input type="hidden" name="back" value={here} />
         <input type="hidden" name="fav" value={isFav ? '1' : '0'} />
-        <button type="submit" className="btn-outline w-full" aria-pressed={isFav}>{isFav ? '♥ Salvo' : '♡ Salvar'}</button>
+        <button type="submit" className="btn-outline w-full" aria-pressed={isFav}><Glyph d={'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z'} size={18} /> {isFav ? 'Salvo' : 'Salvar'}</button>
       </form>
     </>
   ) : null;
@@ -113,7 +115,7 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
         ) : null} />
       {p.channel && (
         <p className="rounded-xl bg-stone-50 p-3 text-sm text-stone-700" data-testid="credit-notice">
-          Proposta, análise de crédito, CPF, renda e documentos do imóvel são tratados somente no canal oficial da instituição. O Resolve Aqui não recebe esses dados. Desconfie de promessa de aprovação garantida ou de pedido de pagamento antecipado, e denuncie.
+          Proposta, análise de crédito, CPF, renda e documentos do imóvel são tratados somente no canal oficial da instituição. O {APP_NAME} não recebe esses dados. Desconfie de promessa de aprovação garantida ou de pedido de pagamento antecipado, e denuncie.
         </p>
       )}
       {!user && p.status === 'published' && !urgentCtx && (

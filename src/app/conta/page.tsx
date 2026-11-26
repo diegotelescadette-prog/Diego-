@@ -15,13 +15,24 @@ export default async function Conta({ searchParams }: { searchParams: Promise<{ 
   const { data: p } = await supabase.from('provider_profiles').select('status').eq('id', user.id).maybeSingle();
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <h1 className="text-2xl font-extrabold">Minha conta</h1>
+      <h1 className="text-3xl text-stone-900">Perfil</h1>
       {sp.senha && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900">Senha alterada.</p>}
       <section className="card p-5">
         <p><span className="font-semibold">E-mail de acesso:</span> {user.email}</p>
         <p className="hint">Visível só para você.</p>
         <Link href="/recuperar-senha" className="mt-2 inline-block text-brand-700 underline">Trocar senha</Link>
       </section>
+      <nav aria-label="Meu espaço" className="card p-2" data-testid="perfil-links">
+        <ul className="divide-y divide-line">
+          {[
+            ['/agenda', 'Minha agenda'], ['/pedidos', 'Meus pedidos'], ['/vagas/meu-curriculo', 'Meu currículo'],
+            ['/minhas-candidaturas', 'Minhas candidaturas'], ['/minhas-vagas', 'Vagas que publiquei'], ['/favoritos', 'Salvos'],
+            ['/minhas-publicacoes', 'Minhas publicações na comunidade'], ['/comunidade', 'Comunidade'],
+          ].map(([href, label]) => (
+            <li key={href}><Link href={href} className="flex min-h-12 items-center justify-between rounded-xl px-3 font-semibold text-stone-800 hover:bg-paper">{label}<span aria-hidden="true" className="text-stone-400">›</span></Link></li>
+          ))}
+        </ul>
+      </nav>
       <section className="card p-5">
         <h2 className="text-lg font-bold">Perfil profissional</h2>
         {p ? (

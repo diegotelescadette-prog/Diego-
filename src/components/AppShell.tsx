@@ -64,16 +64,10 @@ function Navigation({ viewer, onNavigate, section }: { viewer: NavViewer; onNavi
   const path = usePathname();
   const area = areaFor(path);
   const items = navItems(area, viewer);
-  const publish = (
-    <Link href="/publicar" onClick={onNavigate} className="btn-primary mt-4 w-full gap-2" data-testid="side-publicar">
-      <Glyph d="M12 5v14M5 12h14" size={20} /> Criar publicação
-    </Link>
-  );
   return (
     <nav aria-label={AREA_LABEL[area]}>
       {area !== 'busca' && !items.some((it) => it.group) && <p className="side-heading">{AREA_LABEL[area]}</p>}
       <NavList items={items} active={activeHref(items, path, section)} onNavigate={onNavigate} />
-      {area === 'busca' && publish}
       <OtherAreas area={area} viewer={viewer} onNavigate={onNavigate} />
     </nav>
   );
@@ -104,23 +98,23 @@ function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | nul
   if (!viewer.loggedIn) {
     return (
       <>
-        <Link href="/sou-prestador" className="btn-ghost hidden whitespace-nowrap sm:inline-flex">Sou prestador</Link>
         <Link href="/entrar" className="btn-outline min-h-10 px-3 py-1.5 text-sm sm:text-base">Entrar</Link>
       </>
     );
   }
   return (
     <details className="relative">
-      <summary className="btn-ghost cursor-pointer list-none" aria-label="Abrir menu da conta">Conta ▾</summary>
+      <summary className="btn-ghost cursor-pointer list-none" aria-label="Abrir menu do perfil">Perfil ▾</summary>
       <ul className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-stone-200 bg-white p-2 shadow-lg">
         {viewer.email && <li className="truncate px-3 py-1 text-sm text-stone-600">{viewer.email}</li>}
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/conta">Minha conta</Link></li>
-        <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/favoritos">Meus favoritos</Link></li>
+        <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/agenda">Minha agenda</Link></li>
+        <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/pedidos">Meus pedidos</Link></li>
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/minhas-candidaturas">Minhas candidaturas</Link></li>
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/minhas-vagas">Vagas que publiquei</Link></li>
         <li>
           <Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href={viewer.hasProfile ? '/painel' : '/painel/perfil'}>
-            {viewer.hasProfile ? 'Painel do prestador' : 'Ativar perfil profissional'}
+            {viewer.hasProfile ? 'Painel do profissional' : 'Trabalhe com a gente'}
           </Link>
         </li>
         {viewer.isAdmin && <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/admin">Administração</Link></li>}

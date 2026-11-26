@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
+import '@fontsource-variable/fraunces';
+import '@fontsource-variable/plus-jakarta-sans';
 import './globals.css';
 import { AppShell } from '@/components/AppShell';
 import { getIsAdmin, getUser } from '@/lib/data';
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
   description: PILOT_TAGLINE,
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#f7f5f1' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#fff8ee' };
 
 async function hasOwnProfile(userId: string | undefined) {
   if (!userId) return false;
@@ -27,7 +29,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <div className="mx-auto flex max-w-7xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-stone-600">
         <span>© {new Date().getFullYear()} {APP_NAME} · Piloto em Campo Grande–MS</span>
         <Link href="/privacidade" className="underline">Privacidade</Link>
-        <Link href="/sou-prestador" className="underline">Sou prestador</Link>
       </div>
     </footer>
   );

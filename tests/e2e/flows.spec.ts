@@ -8,7 +8,7 @@ test.beforeAll(async () => { await reseed(); });
 test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => {
   const wa = await captureWhatsApp(page);
   await page.goto('/');
-  await page.getByTestId('cta-hoje').click(); // atalho no começo da comunidade
+  await page.getByTestId('cta-hoje').click(); // botão de destaque no topo da tela inicial
   await expect(page).toHaveURL(/\/hoje$/);
   await expect(page.getByRole('heading', { name: 'Preciso para hoje' })).toBeVisible();
   await expect(page.getByText('Campo Grande–MS').first()).toBeVisible();
@@ -36,7 +36,7 @@ test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => 
   await expect.poll(() => wa.length).toBe(1);
   const u = new URL(wa[0]);
   expect(u.pathname).toBe('/5567900000001');
-  expect(u.searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
+  expect(u.searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
 });
 
 test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só com a cidade', async ({ page }) => {
@@ -52,22 +52,17 @@ test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só
   await expect(results.filter({ hasText: 'Marcos Encanador (demo)' })).toContainText('Atende: Carandá Bosque');
   await results.filter({ hasText: 'Marcos Encanador (demo)' }).getByRole('button').click();
   await expect.poll(() => wa.length).toBe(1);
-  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
+  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
 });
 
-test('início: profissionais perto de você; WhatsApp do perfil pede login uma vez e volta ao contexto', async ({ page }) => {
+test('busca: perfis pausados e suspensos não aparecem; WhatsApp do perfil pede login uma vez e volta ao contexto', async ({ page }) => {
   const wa = await captureWhatsApp(page);
-  await page.goto('/');
-  await expect(page.getByTestId('cta-hoje')).toBeVisible();
-  await expect(page.getByTestId('quick-services').getByRole('link', { name: 'Encanador' })).toHaveAttribute('href', /\/buscar\?servico=encanador/);
-  const near = page.getByTestId('near-item');
-  await expect(near.first()).toBeVisible();
-  // quem atende hoje vem primeiro; perfis pausados e suspensos não aparecem
-  await expect(near.first()).toContainText('Atende hoje');
+  await page.goto('/buscar?q=encanador');
+  await expect(page.getByTestId('provider-card').first()).toBeVisible();
   await expect(page.getByText('Paulo Pausado')).toHaveCount(0);
   await expect(page.getByText('Sérgio Suspenso')).toHaveCount(0);
-  await near.filter({ hasText: 'Hidro Cidade (demo)' }).click();
-  await expect(page).toHaveURL(/\/p\/hidro-demo$/);
+  await expect(page.getByTestId('provider-card').filter({ hasText: 'Hidro Cidade' })).toBeVisible();
+  await page.goto('/p/hidro-demo');
   // sem conta: o WhatsApp leva ao login e volta para o perfil
   await page.getByRole('link', { name: 'Chamar no WhatsApp' }).click();
   await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fp%2Fhidro-demo/);
@@ -77,10 +72,10 @@ test('início: profissionais perto de você; WhatsApp do perfil pede login uma v
   await page.getByRole('button', { name: 'Chamar no WhatsApp' }).click();
   await page.getByRole('button', { name: 'Abrir WhatsApp' }).click();
   await expect.poll(() => wa.length).toBe(1);
-  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
+  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
   // publicação profissional: sem conta, o WhatsApp volta para a publicação
   await page.context().clearCookies();
-  await page.goto('/?tipo=trabalho');
+  await page.goto('/comunidade?tipo=trabalho');
   await page.getByTestId('post').filter({ hasText: 'Carlos Hidráulica' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
   await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fcomunidade%2F/);
 });
@@ -142,20 +137,20 @@ test('busca geral: sinônimo, login antes do contato, retorno ao mesmo perfil, f
   await expect(page).toHaveURL(profileUrl);
   await page.getByRole('button', { name: 'Chamar no WhatsApp' }).click();
   const box = page.getByLabel('Mensagem (você pode editar antes de enviar)');
-  await expect(box).toHaveValue('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de piscineiro em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
+  await expect(box).toHaveValue('Olá! Encontrei seu perfil no Próximo. Preciso de piscineiro em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
   await box.fill('Olá! Preciso limpar a piscina no sábado. Pode?');
   await page.getByRole('button', { name: 'Abrir WhatsApp' }).click();
   await expect.poll(() => wa.length).toBe(1);
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Preciso limpar a piscina no sábado. Pode?');
 
   await page.goto(profileUrl);
-  await page.getByRole('button', { name: '♡ Salvar' }).click();
-  await expect(page.getByRole('button', { name: '♥ Salvo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Salvo', exact: true })).toBeVisible();
   await page.goto('/favoritos');
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Rafa Piscinas' })).toBeVisible();
   await page.goto(profileUrl);
-  await page.getByRole('button', { name: '♥ Salvo' }).click();
-  await expect(page.getByRole('button', { name: '♡ Salvar' })).toBeVisible();
+  await page.getByRole('button', { name: 'Salvo', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Salvar', exact: true })).toBeVisible();
 });
 
 test('busca geral: tocar no card pede login uma vez e depois abre o WhatsApp direto', async ({ page }) => {
@@ -169,13 +164,13 @@ test('busca geral: tocar no card pede login uma vez e depois abre o WhatsApp dir
   await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=/);
   await login(page, demoEmail('cliente'));
   await expect.poll(() => wa.length).toBe(1);
-  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
+  expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
   // já logado: direto, sem pedir login de novo
   await page.goto('/buscar?servico=encanador');
   await expect(page.getByTestId('provider-card')).toHaveCount(3);
   await page.getByTestId('provider-card').filter({ hasText: 'Hidro Cidade' }).getByRole('button').click();
   await expect.poll(() => wa.length).toBe(2);
-  expect(new URL(wa[1]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
+  expect(new URL(wa[1]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
   await page.goto('/buscar?servico=encanador&bairro=centro');
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Marcos Encanador' })).toHaveCount(0);
 });
@@ -195,7 +190,7 @@ test('perfil antigo só com endereço pede confirmação da área', async ({ pag
 
 test('favorito como visitante pede login e volta ao perfil', async ({ page }) => {
   await page.goto('/p/leo-demo');
-  await page.getByRole('button', { name: '♡ Salvar' }).click();
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
   await expect(page).toHaveURL(/\/entrar\?motivo=favorito&next=%2Fp%2Fleo-demo/);
   await login(page, demoEmail('cliente'));
   await expect(page).toHaveURL(/\/p\/leo-demo$/);
@@ -218,8 +213,7 @@ test('prestador: cria conta, confirma e-mail, publica e ativa/desativa Atendo ho
     .jpeg().withExif({ IFD0: { Make: 'CameraTeste' }, IFD3: { GPSLatitudeRef: 'S', GPSLatitude: '20/1 27/1 0/1', GPSLongitudeRef: 'W', GPSLongitude: '54/1 37/1 0/1' } }).toBuffer();
   expect((await sharp(jpeg).metadata()).exif).toBeTruthy();
 
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Sou prestador' }).first().click();
+  await page.goto('/sou-prestador');
   await expect(page).toHaveURL(/\/cadastrar\?next=%2Fpainel%2Fperfil/);
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Senha').fill('senha-forte-123');
