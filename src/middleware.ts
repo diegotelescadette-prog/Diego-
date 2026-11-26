@@ -47,5 +47,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.svg|api/cep).*)'],
+  // Arquivos estáticos (fotos do céu, ícones) abrem sem conta: a página de entrada também usa.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon.svg|api/cep|.*\\.(?:webp|png|jpg|jpeg|svg|ico|txt|xml)$).*)'],
 };

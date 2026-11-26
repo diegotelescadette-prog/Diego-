@@ -397,11 +397,13 @@ h3 { font-family: var(--font-serif); font-weight: 600; }
 .star-opt:has(input:checked), .star-opt.on { color: var(--color-hoje-700); border-color: var(--color-hoje-500); background: var(--color-hoje-100); }
 .star-opt:has(input:focus-visible) { outline: 3px solid var(--color-brand-700); outline-offset: 2px; }
 .star-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.dawn { position: relative; overflow: hidden; border-radius: 24px; background: #f47b20; color: #1c1a17; min-height: 210px; padding: 22px 20px 100px; isolation: isolate; }
-.dawn > .dawn-sun { position: absolute; right: 8%; bottom: 8px; width: 130px; height: 130px; z-index: -2; }
-.dawn > .dawn-hills { position: absolute; left: 0; bottom: 0; width: 100%; height: 86px; z-index: -1; }
-.dawn > .dawn-text { position: relative; max-width: 30rem; }
-@media (min-width: 640px) { .dawn { min-height: 240px; padding: 32px 32px 110px; } .dawn > .dawn-sun { width: 170px; height: 170px; right: 12%; } .dawn > .dawn-hills { height: 104px; } }
+.dawn { position: relative; overflow: hidden; border-radius: 24px; background: #2f4858; color: #fff; min-height: 210px; padding: 22px 20px 72px; isolation: isolate; }
+/* Foto real do céu com uma camada escura em cima e à esquerda, para o texto branco ficar legível (contraste acima de 4,5:1). */
+.dawn > .dawn-photo { object-fit: cover; z-index: -2; }
+.dawn::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(100deg, rgb(20 18 14 / 0.64) 0%, rgb(20 18 14 / 0.36) 45%, rgb(20 18 14 / 0.06) 100%); }
+.dawn > .dawn-text { position: relative; max-width: 30rem; text-shadow: 0 1px 8px rgb(0 0 0 / 0.45); }
+.dawn > .dawn-credit { position: absolute; right: 12px; bottom: 8px; font-size: 11px; color: #fff; opacity: 0.85; text-decoration: underline; text-shadow: 0 1px 3px rgb(0 0 0 / 0.7); }
+@media (min-width: 640px) { .dawn { min-height: 240px; padding: 32px 32px 80px; } }
 
 /* ---------------------------------------------------------------------------
    Modo escuro: segue o aparelho (Automático) ou a escolha no rodapé (cookie "tema" → data-theme no <html>).

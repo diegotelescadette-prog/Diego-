@@ -201,3 +201,11 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Conta antiga sem esses dados completa o cadastro uma vez (/completar-cadastro) e segue para onde ia; Minha conta (excluir a conta) continua aberta.
 - Celular guardado só para a própria pessoa e a equipe; nunca aparece no app. Campo pronto para a confirmação por código no WhatsApp (fase 7).
 - Atualização do banco `2026-11-26-cadastro-obrigatorio.sql` aplica sem erro num banco igual ao de produção, depois das três da fase 3.
+
+## Rodada 16 (26/11/2026): fotos reais do céu no topo da Início
+
+- Pedido do Diego: trocar a ilustração por fotos reais do céu de Campo Grande. Manhã (5h às 12h): céu azul sobre os prédios; tarde (12h às 18h): pôr do sol no lago; noite: anoitecer na Praça Nazareth. O período segue o horário de Campo Grande.
+- Fotos do Wikimedia Commons, em WebP e sem metadados: Rodrigo Santos (CC BY 3.0), Camilo Carromeu (domínio público) e bigfield767 (CC BY-SA 3.0). O crédito com link para a página da foto fica no canto, como a licença pede.
+- Camada escura por cima da foto para o texto branco ficar legível; conferido no computador e no celular nos três períodos.
+- Arquivos estáticos (fotos e ícones) abrem sem conta, para a página de entrada poder usar.
+- e2e: a foto carrega e o crédito aponta para o Commons.

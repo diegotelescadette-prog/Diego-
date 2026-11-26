@@ -15,6 +15,11 @@ test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem lin
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^(Bom dia|Boa tarde|Boa noite)\.$/);
   await expect(page.getByText('Gente de confiança, perto de você.')).toBeVisible();
+  // foto real do céu conforme o horário, carregada e com o crédito da licença
+  const foto = page.getByTestId('home-dawn').locator('img');
+  await expect(foto).toHaveAttribute('alt', /Céu|Pôr do sol/);
+  await expect.poll(() => foto.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
+  await expect(page.getByTestId('foto-credito')).toHaveAttribute('href', /commons\.wikimedia\.org/);
   await expect(page.getByTestId('home-servico').getByRole('heading', { name: 'Preciso de um serviço' })).toBeVisible();
   await expect(page.getByTestId('cta-hoje')).toHaveText(/Preciso para hoje/);
   await expect(page.getByTestId('home-trabalho')).toContainText('Procuro trabalho');
