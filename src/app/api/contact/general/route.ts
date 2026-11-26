@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hitLimit } from '@/lib/rate-limit';
 import { waLink } from '@/lib/whatsapp';
+import { track } from '@/lib/usage';
 
 const Body = z.object({ providerId: z.string().uuid(), message: z.string().trim().min(5).max(600) });
 
@@ -21,5 +22,6 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: 'server_error' }, { status: 500 });
   const target = data?.[0];
   if (!target) return NextResponse.json({ error: 'not_available' }, { status: 404 });
+  await track('contato_geral', { providerId: parsed.data.providerId });
   return NextResponse.json({ url: waLink(target.whatsapp, parsed.data.message) }, { headers: { 'cache-control': 'no-store' } });
 }

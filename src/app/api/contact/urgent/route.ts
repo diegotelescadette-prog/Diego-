@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { clientKey, hitLimit } from '@/lib/rate-limit';
 import { urgentMessage, waLink } from '@/lib/whatsapp';
+import { track } from '@/lib/usage';
 
 const Body = z.object({
   providerId: z.string().uuid(),
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
   const target = data?.[0];
   if (!target) return NextResponse.json({ error: 'availability_changed' }, { status: 409 });
 
+  await track('contato_hoje', { serviceId, cityId: cityId ?? null });
   const message = urgentMessage(target.service_name, target.neighborhood_name, target.city_name);
   return NextResponse.json({ url: waLink(target.whatsapp, message) }, { headers: { 'cache-control': 'no-store' } });
 }

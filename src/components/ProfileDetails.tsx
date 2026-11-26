@@ -1,8 +1,10 @@
 import { Avatar } from './Avatar';
 import type { ProfileView } from '@/lib/profile';
+import { BADGES_DISCLAIMER, badgeTexts } from '@/lib/verification';
 
 export function ProfileDetails({ p, actions }: { p: ProfileView; actions?: React.ReactNode }) {
   const others = p.services.filter((s) => s.id !== p.main_service?.id);
+  const badges = badgeTexts(p.badges);
   return (
     <article className="card overflow-hidden">
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start">
@@ -12,6 +14,17 @@ export function ProfileDetails({ p, actions }: { p: ProfileView; actions?: React
           {p.main_service && <p className="text-lg text-stone-800">{p.main_service.name}</p>}
           {p.area_label && <p className="mt-1 text-stone-700"><span className="font-semibold">Atende:</span> {p.area_label}</p>}
           {p.available_today && <p className="mt-2"><span className="badge-hoje">● Atende hoje</span> <span className="text-sm text-stone-700">Horário a combinar pelo WhatsApp</span></p>}
+          {badges.length > 0 && (
+            <ul className="mt-2 flex flex-wrap gap-2" aria-label="Checagens do perfil" data-testid="profile-badges">
+              {badges.map((b) => <li key={b.key} className={b.key === 'exp' ? 'verif-badge verif-badge-exp' : 'verif-badge'}>{b.key === 'exp' ? '' : '✓ '}{b.text}</li>)}
+            </ul>
+          )}
+          {p.channel && (
+            <p className="mt-2 text-stone-800" data-testid="official-channel">
+              <span className="font-semibold">Atendimento por:</span> {p.channel.institution_name}
+              {p.channel.role === 'correspondente' && p.channel.linked_institution && <> · correspondente de {p.channel.linked_institution}</>}
+            </p>
+          )}
           {actions && <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">{actions}</div>}
         </div>
       </div>
@@ -20,6 +33,13 @@ export function ProfileDetails({ p, actions }: { p: ProfileView; actions?: React
           <h2 className="font-bold">Outros serviços</h2>
           <ul className="mt-2 flex flex-wrap gap-2">{others.map((s) => <li key={s.id} className="chip">{s.name}</li>)}</ul>
         </section>
+      )}
+      {badges.length > 0 && (
+        <details className="border-t border-stone-200 px-5 py-3 text-sm" data-testid="badges-explained">
+          <summary className="cursor-pointer font-semibold text-stone-700">O que os selos significam</summary>
+          <ul className="mt-2 space-y-1 text-stone-700">{badges.map((b) => <li key={b.key}><strong>{b.text}:</strong> {b.hint}</li>)}</ul>
+          <p className="mt-2 text-stone-600">{BADGES_DISCLAIMER}</p>
+        </details>
       )}
       {p.bio && (
         <section className="border-t border-stone-200 p-5">

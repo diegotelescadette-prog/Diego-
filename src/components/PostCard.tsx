@@ -8,6 +8,7 @@ import { PostGallery } from './PostGallery';
 import { useWhatsApp } from './useWhatsApp';
 import { deletePost, toggleFound, toggleSave, toggleUseful } from '@/app/comunidade/actions';
 import { KIND_LABEL, timeAgo, type PostView } from '@/lib/posts-shared';
+import { badgeTexts } from '@/lib/verification';
 
 const KIND_CLASS = { trabalho: 'kind-trabalho', divulgacao: 'kind-divulgacao', pedido: 'kind-pedido' } as const;
 
@@ -116,6 +117,11 @@ export function PostCard({ post, viewerId, message, detail = false }: {
           )}
         </div>
       </header>
+      {pro && badgeTexts(post.author.badges).filter((b) => b.key !== 'exp').length > 0 && (
+        <p className="mt-2 flex flex-wrap gap-x-3 px-4 text-xs font-semibold text-emerald-800" data-testid="post-badges">
+          {badgeTexts(post.author.badges).filter((b) => b.key !== 'exp').map((b) => <span key={b.key} title={b.hint}>✓ {b.text}</span>)}
+        </p>
+      )}
 
       <p className="flex flex-wrap items-center gap-2 px-4 pt-3 text-sm">
         <span className={`kind-tag ${KIND_CLASS[post.kind]}`}>{KIND_LABEL[post.kind]}</span>

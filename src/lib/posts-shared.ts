@@ -1,3 +1,4 @@
+import type { Badges } from './verification';
 // Tipos e regras das publicações da comunidade, usados no servidor e no navegador.
 export type PostKind = 'trabalho' | 'divulgacao' | 'pedido';
 export type MediaLabel = 'antes' | 'depois' | null;
@@ -5,7 +6,7 @@ export type MediaLabel = 'antes' | 'depois' | null;
 export interface PostMedia { kind: 'foto' | 'video'; url: string; path: string; label: MediaLabel }
 export interface PostView {
   id: string; kind: PostKind; body: string; createdAt: string; editedAt: string | null;
-  author: { id: string; isProvider: boolean; slug: string | null; name: string; avatar: string | null; area: string | null; availableToday: boolean };
+  author: { id: string; isProvider: boolean; slug: string | null; name: string; avatar: string | null; area: string | null; availableToday: boolean; badges?: Badges | null };
   service: string | null; serviceSlug: string | null; category: string | null; categorySlug: string | null;
   neighborhood: string | null; price: string | null; found: boolean;
   media: PostMedia[]; reactions: number; comments: number; reacted: boolean; saved: boolean;

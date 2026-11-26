@@ -26,7 +26,7 @@ export const getIsAdmin = cache(async () => {
 export const getCatalog = cache(async (includeInactive = false): Promise<Category[]> => {
   const supabase = await createClient();
   const [{ data: cats }, { data: svcs }] = await Promise.all([
-    supabase.from('service_categories').select('id,name,slug,active,sort').order('sort'),
+    supabase.from('service_categories').select('id,name,slug,active,sort,official_channel').order('sort'),
     supabase.from('services').select('id,name,slug,mode,urgent_pilot,active,category_id,sort').order('sort'),
   ]);
   return (cats ?? [])

@@ -46,6 +46,8 @@ export const NAV_ICONS = {
   briefcase: 'M4 8h16v11H4zM9 8V5h6v3M4 13h16',
   file: 'M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6',
   megaphone: 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10',
+  shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5',
+  rocket: 'M14 4c3 0 6 1 6 1s1 3 1 6c-2 4-6 7-9 8l-4-4c1-3 4-7 6-11zM9 15l-4 1 1-4M15 9a1 1 0 1 0 .01 0M6 18c-1 1-2 3-2 3s2-1 3-2',
 } as const;
 
 /** Área em uso a partir do caminho. */
@@ -78,6 +80,7 @@ export const PROVIDER_ITEMS: NavItem[] = [
   { href: '/painel/servicos', label: 'Serviços e fotos', icon: 'photo' },
   { href: '/painel/atendimento', label: 'Onde atendo', icon: 'pin' },
   { href: '/painel/disponibilidade', label: 'Disponibilidade', icon: 'clock' },
+  { href: '/painel/verificacao', label: 'Verificação do perfil', icon: 'shield' },
   { href: '/painel/previa', label: 'Prévia do perfil', icon: 'eye' },
   { href: '/conta', label: 'Minha conta', icon: 'account' },
   { href: '/buscar', label: 'Buscar serviços', icon: 'back' },
@@ -85,6 +88,7 @@ export const PROVIDER_ITEMS: NavItem[] = [
 
 export const ADMIN_SECTIONS = [
   { key: 'visao', label: 'Visão geral', icon: 'gauge' },
+  { key: 'lancamento', label: 'Preparar lançamento', icon: 'rocket' },
   { key: 'perfis', label: 'Prestadores', icon: 'users' },
   { key: 'catalogo', label: 'Catálogo', icon: 'book' },
   { key: 'sugestoes', label: 'Sugestões', icon: 'bulb' },
@@ -131,6 +135,7 @@ export function activeHref(items: NavItem[], pathname: string, section?: string 
 
 /** Nome da tela exibido no cabeçalho. */
 export function screenTitle(pathname: string, section?: string | null): string {
+  if (pathname.startsWith('/admin/verificacao')) return 'Administração · Verificação do perfil';
   if (pathname.startsWith('/admin')) {
     return `Administração · ${ADMIN_SECTIONS.find((s) => s.key === adminSection(section))!.label}`;
   }
@@ -138,6 +143,7 @@ export function screenTitle(pathname: string, section?: string | null): string {
     '/': 'Comunidade', '/buscar': 'Buscar serviços', '/hoje': 'Preciso para hoje', '/favoritos': 'Favoritos e salvos', '/minhas-publicacoes': 'Minhas publicações',
     '/painel': 'Painel do prestador', '/painel/perfil': 'Meu perfil', '/painel/servicos': 'Serviços e fotos',
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
+    '/painel/verificacao': 'Verificação do perfil',
     '/conta': 'Minha conta', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
     '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Meu currículo', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',

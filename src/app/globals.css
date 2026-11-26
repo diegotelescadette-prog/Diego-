@@ -185,3 +185,10 @@ body { @apply bg-stone-50 text-stone-900 antialiased; }
 .bn-ico { display: grid; place-items: center; height: 30px; }
 .bn-primary .bn-ico { width: 44px; height: 30px; border-radius: 12px; background: var(--color-hoje-600); color: #fff; }
 .bn-primary[aria-current="page"] svg { background: transparent; padding: 0; width: 22px; }
+
+/* ---------------- Verificação e lançamento ---------------- */
+.verif-badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 700; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.verif-badge-exp { background: #f5f5f4; color: #44403c; border-color: #e7e5e4; }
+.cov-none { background: #fef2f2; color: #991b1b; }
+.cov-min { background: #fffbeb; color: #92400e; }
+.cov-ok { background: #ecfdf5; color: #065f46; }

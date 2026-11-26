@@ -12,6 +12,11 @@ if (!url || !key) throw new Error('Configure NEXT_PUBLIC_SUPABASE_URL e SUPABASE
 const sb = createClient(url, key, { auth: { persistSession: false } });
 const demo = JSON.parse(fs.readFileSync('supabase/demo/providers.json', 'utf8'));
 const email = (local: string) => `${local}@${demo.emailDomain}`;
+const verif = JSON.parse(fs.readFileSync('supabase/demo/verificacao.json', 'utf8')).profiles as Record<string, {
+  status: string; legal: string; company?: boolean; responsible?: string; experience?: number; identity?: boolean; contact?: boolean;
+  refs?: string[]; pending?: string;
+  channel?: { institution_name: string; role: string; linked_institution?: string; official_url: string; checked?: boolean };
+}>;
 
 async function must<T>(p: PromiseLike<{ data: T; error: unknown }>, what: string): Promise<T> {
   const { data, error } = await p;
@@ -77,6 +82,29 @@ async function main() {
       await must(sb.from('provider_work_photos').insert({ provider_id: u.id, path, sort: k }), 'foto de trabalho');
     }
     await must(sb.from('provider_profiles').update({ status: p.status ?? 'published', published_at: new Date().toISOString() }).eq('id', u.id), 'status');
+    const v = verif[p.key];
+    if (v) {
+      const now = new Date().toISOString();
+      for (const [k, result] of (v.refs ?? []).entries()) {
+        await must(sb.from('provider_references').insert({
+          provider_id: u.id, position: k + 1, name: `Cliente ${k + 1} de ${p.name}`, contact: `679999${n}${k}`.slice(0, 11),
+          service: p.services[0], period: '2025', result, checked_at: result === 'a_conferir' ? null : now, checked_by: result === 'a_conferir' ? null : adminUser.id,
+        }), 'referência');
+      }
+      if (v.channel) {
+        await must(sb.from('provider_official_channel').insert({
+          provider_id: u.id, institution_name: v.channel.institution_name, role: v.channel.role, linked_institution: v.channel.linked_institution ?? null,
+          official_url: v.channel.official_url, checked_at: v.channel.checked ? now : null, checked_by: v.channel.checked ? adminUser.id : null,
+        }), 'canal oficial');
+      }
+      await must(sb.from('provider_verification').update({
+        status: v.status, legal_name: v.legal, is_company: !!v.company, company_name: v.company ? v.legal : null, responsible_name: v.responsible ?? null,
+        experience_years: v.experience ?? null, refs_consent: true, privacy_ack: true, submitted_at: now,
+        identity_checked_at: v.identity ? now : null, identity_checked_by: v.identity ? adminUser.id : null,
+        contact_checked_at: v.contact ? now : null, contact_checked_by: v.contact ? adminUser.id : null,
+        pending_reason: v.pending ?? null, decided_at: ['aprovado', 'pendencia'].includes(v.status) ? now : null,
+      }).eq('provider_id', u.id), 'verificação');
+    }
     if (p.today && (p.status ?? 'published') === 'published') {
       const inPerson = p.services.map(sv);
       await must(sb.from('availability_today').insert({

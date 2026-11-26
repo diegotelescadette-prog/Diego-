@@ -1,0 +1,12 @@
+{
+  "_aviso": "DADOS FICTÍCIOS DE DEMONSTRAÇÃO. Situação da verificação dos perfis de demonstração (chave = key em providers.json). Sem documentos: só o resultado da conferência.",
+  "profiles": {
+    "carlos": { "status": "aprovado", "legal": "Carlos Alberto Exemplo", "experience": 12, "identity": true, "contact": true, "refs": ["confirmada", "confirmada", "a_conferir"] },
+    "pantanal": { "status": "aprovado", "legal": "Elétrica Pantanal Exemplo Ltda", "company": true, "responsible": "Marta Exemplo", "experience": 8, "identity": true, "contact": true, "refs": ["confirmada", "a_conferir", "a_conferir"] },
+    "hidro": { "status": "aprovado", "legal": "Hidro Cidade Exemplo ME", "company": true, "responsible": "Rui Exemplo", "experience": 15, "identity": true, "contact": true, "refs": ["confirmada", "confirmada", "confirmada"] },
+    "bia": { "status": "em_analise", "legal": "Beatriz Exemplo", "experience": 5, "refs": ["a_conferir", "a_conferir", "a_conferir"] },
+    "joana": { "status": "pendencia", "legal": "Joana Exemplo", "experience": 3, "identity": true, "refs": ["nao_confirmada"], "pending": "A referência informada não confirmou o serviço. Informe outra referência de cliente." },
+    "ana": { "status": "aprovado", "legal": "Ana Exemplo", "experience": 6, "identity": true, "contact": true, "refs": ["confirmada"],
+      "channel": { "institution_name": "Correspondente Exemplo (demo)", "role": "correspondente", "linked_institution": "Banco Exemplo S.A. (demo)", "official_url": "https://www.bcb.gov.br/meubc/encontreinstituicao", "checked": true } }
+  }
+}

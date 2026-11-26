@@ -53,6 +53,9 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
 
   const actions = p.status === 'published' && !isOwner ? (
     <>
+      {p.channel && (
+        <a className="btn-primary" href={`/api/canal/${p.id}`} target="_blank" rel="noopener noreferrer" data-testid="canal-oficial">Acessar canal oficial</a>
+      )}
       {urgentCtx ? (
         <UrgentContactButton providerId={p.id} serviceId={ctxService.id} neighborhoodId={ctxNb?.id ?? null} cityId={p.city?.id ?? null} backHref={`/hoje?servico=${ctxService.slug}${ctxNb ? `&bairro=${ctxNb.slug}` : ''}`} />
       ) : user ? (
@@ -93,6 +96,11 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
           <h2 id="pub-titulo" className="text-xl font-bold">Publicações</h2>
           {posts.map((po) => <PostCard key={po.id} post={po} viewerId={user?.id ?? null} message={defaultMessage} />)}
         </section>
+      )}
+      {p.channel && (
+        <p className="rounded-xl bg-stone-50 p-3 text-sm text-stone-700" data-testid="credit-notice">
+          Proposta, análise de crédito, CPF, renda e documentos do imóvel são tratados somente no canal oficial da instituição. O Resolve Aqui não recebe esses dados. Desconfie de promessa de aprovação garantida ou de pedido de pagamento antecipado, e denuncie.
+        </p>
       )}
       {!user && p.status === 'published' && !urgentCtx && (
         <p className="text-sm text-stone-600">Para chamar pelo WhatsApp a partir da busca geral, entre com e-mail e senha. Você volta para este perfil logo depois.</p>

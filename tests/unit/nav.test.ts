@@ -21,7 +21,7 @@ test('menu por perfil: visitante, prestador e admin só veem a área permitida',
   const labels = (a: Parameters<typeof navItems>[0], v: typeof visitor) => navItems(a, v).map((i) => i.label);
   assert.deepEqual(labels('busca', visitor), ['Comunidade', 'Buscar serviços', 'Preciso para hoje', 'Vagas e currículos', 'Favoritos e salvos', 'Sou prestador']);
   assert.deepEqual(labels('busca', provider), ['Comunidade', 'Buscar serviços', 'Preciso para hoje', 'Vagas e currículos', 'Favoritos e salvos', 'Minhas publicações', 'Painel do prestador']);
-  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Meu perfil', 'Criar publicação', 'Minhas publicações', 'Serviços e fotos', 'Onde atendo', 'Disponibilidade', 'Prévia do perfil', 'Minha conta', 'Buscar serviços']);
+  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Meu perfil', 'Criar publicação', 'Minhas publicações', 'Serviços e fotos', 'Onde atendo', 'Disponibilidade', 'Verificação do perfil', 'Prévia do perfil', 'Minha conta', 'Buscar serviços']);
   // sem permissão, a área administrativa mostra o menu da comunidade
   assert.equal(labels('admin', provider)[0], 'Comunidade');
   assert.equal(labels('admin', adm)[0], 'Visão geral');

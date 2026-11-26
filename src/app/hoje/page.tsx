@@ -5,6 +5,7 @@ import { UrgentResults } from '@/components/UrgentResults';
 import { Glyph, PIN_PATH } from '@/components/CategoryIcon';
 import { getAllServices, getCatalog, getNeighborhoods, getPilotCity, getSynonymsByService, getUrgentCatalog, photoUrl } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
+import { track } from '@/lib/usage';
 
 export const metadata: Metadata = { title: 'Preciso para hoje' };
 export const dynamic = 'force-dynamic';
@@ -65,6 +66,7 @@ export default async function HojePage({ searchParams }: { searchParams: Promise
   const { data, error } = await supabase.rpc('urgent_search', {
     p_service_slug: service.slug, p_neighborhood_id: neighborhood?.id ?? null, p_city_slug: city.slug,
   });
+  if (!error) await track('busca_hoje', { serviceId: service.id, cityId: city.id, results: (data ?? []).length });
   const where = neighborhood ? neighborhood.name : `toda ${city.name}`;
 
   return (

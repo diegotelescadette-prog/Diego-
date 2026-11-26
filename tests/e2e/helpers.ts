@@ -7,12 +7,15 @@ export const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process
 export const PASSWORD = 'demo-senha-123';
 export const demoEmail = (l: string) => `${l}@demo.resolveaqui.test`;
 export const reseed = async () => {
+  await admin.from('app_settings').upsert({ key: 'verificacao_obrigatoria', value: { enabled: false } });
   execSync('npm run -s seed:demo', { stdio: 'ignore' });
   const { data } = await admin.auth.admin.listUsers({ perPage: 1000 });
   for (const u of data.users.filter((x) => x.email?.endsWith('@teste.resolveaqui.test'))) await admin.auth.admin.deleteUser(u.id);
   await admin.from('services').update({ active: true }).eq('slug', 'piscineiro');
   await admin.from('service_synonyms').delete().eq('term', 'piscina suja');
   await admin.from('rate_events').delete().gte('id', 0); // zera limites de frequência entre execuções
+  await admin.from('service_categories').update({ active: false }).eq('slug', 'credito-imobiliario');
+  await admin.from('app_settings').upsert({ key: 'verificacao_obrigatoria', value: { enabled: false } });
 };
 
 /** Intercepta a abertura do WhatsApp e devolve a URL gerada. */
