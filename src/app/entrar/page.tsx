@@ -14,6 +14,7 @@ const REASONS: Record<string, string> = {
   util: 'Entre para marcar a publicação como útil.',
   publicar: 'Entre para publicar na comunidade.',
   salvar: 'Entre para salvar a publicação.',
+  agendar: 'Entre ou crie sua conta para agendar. Você volta para o agendamento logo depois.',
 };
 
 export default async function Entrar({ searchParams }: { searchParams: Promise<{ next?: string; motivo?: string; erro?: string }> }) {

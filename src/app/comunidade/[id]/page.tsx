@@ -32,7 +32,7 @@ export default async function Publicacao({ params, searchParams }: { params: Pro
       <div className="mx-auto max-w-xl post p-6 text-center" data-testid="post-unavailable">
         <h1 className="text-2xl font-extrabold">Publicação indisponível</h1>
         <p className="mt-2 text-stone-700">Ela foi apagada pelo autor, ocultada pela moderação ou o perfil saiu do ar.</p>
-        <Link href="/" className="btn-primary mt-4">Voltar à comunidade</Link>
+        <Link href="/comunidade" className="btn-primary mt-4">Voltar à comunidade</Link>
       </div>
     );
   }

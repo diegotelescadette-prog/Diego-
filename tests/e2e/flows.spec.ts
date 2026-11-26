@@ -8,7 +8,7 @@ test.beforeAll(async () => { await reseed(); });
 test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => {
   const wa = await captureWhatsApp(page);
   await page.goto('/');
-  await page.getByTestId('cta-hoje').click(); // atalho no começo da comunidade
+  await page.getByTestId('cta-hoje').click(); // botão de destaque no topo da tela inicial
   await expect(page).toHaveURL(/\/hoje$/);
   await expect(page.getByRole('heading', { name: 'Preciso para hoje' })).toBeVisible();
   await expect(page.getByText('Campo Grande–MS').first()).toBeVisible();
@@ -59,7 +59,6 @@ test('início: profissionais perto de você; WhatsApp do perfil pede login uma v
   const wa = await captureWhatsApp(page);
   await page.goto('/');
   await expect(page.getByTestId('cta-hoje')).toBeVisible();
-  await expect(page.getByTestId('quick-services').getByRole('link', { name: 'Encanador' })).toHaveAttribute('href', /\/buscar\?servico=encanador/);
   const near = page.getByTestId('near-item');
   await expect(near.first()).toBeVisible();
   // quem atende hoje vem primeiro; perfis pausados e suspensos não aparecem
@@ -80,7 +79,7 @@ test('início: profissionais perto de você; WhatsApp do perfil pede login uma v
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Resolve Aqui. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
   // publicação profissional: sem conta, o WhatsApp volta para a publicação
   await page.context().clearCookies();
-  await page.goto('/?tipo=trabalho');
+  await page.goto('/comunidade?tipo=trabalho');
   await page.getByTestId('post').filter({ hasText: 'Carlos Hidráulica' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
   await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fcomunidade%2F/);
 });
@@ -218,8 +217,7 @@ test('prestador: cria conta, confirma e-mail, publica e ativa/desativa Atendo ho
     .jpeg().withExif({ IFD0: { Make: 'CameraTeste' }, IFD3: { GPSLatitudeRef: 'S', GPSLatitude: '20/1 27/1 0/1', GPSLongitudeRef: 'W', GPSLongitude: '54/1 37/1 0/1' } }).toBuffer();
   expect((await sharp(jpeg).metadata()).exif).toBeTruthy();
 
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Sou prestador' }).first().click();
+  await page.goto('/sou-prestador');
   await expect(page).toHaveURL(/\/cadastrar\?next=%2Fpainel%2Fperfil/);
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Senha').fill('senha-forte-123');

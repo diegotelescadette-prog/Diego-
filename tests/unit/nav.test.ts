@@ -19,9 +19,9 @@ test('área pelo caminho e barra inferior só na busca', () => {
 
 test('menu por perfil: visitante, prestador e admin só veem a área permitida', () => {
   const labels = (a: Parameters<typeof navItems>[0], v: typeof visitor) => navItems(a, v).map((i) => i.label);
-  assert.deepEqual(labels('busca', visitor), ['Início', 'Preciso para hoje', 'Buscar profissional', 'Vagas de emprego', 'Salvos', 'Ofereço meu trabalho']);
-  assert.deepEqual(labels('busca', provider), ['Início', 'Preciso para hoje', 'Buscar profissional', 'Vagas de emprego', 'Salvos', 'Minhas publicações', 'Painel do prestador']);
-  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Meu perfil', 'Criar publicação', 'Minhas publicações', 'Serviços e fotos', 'Onde atendo', 'Disponibilidade', 'Verificação do perfil', 'Prévia do perfil', 'Minha conta', 'Voltar ao início']);
+  assert.deepEqual(labels('busca', visitor), ['Início', 'Preciso para hoje', 'Serviços com preço', 'Buscar profissional', 'Meus pedidos', 'Salvos', 'Comunidade', 'Vagas de emprego', 'Trabalhe com a gente']);
+  assert.deepEqual(labels('busca', provider), ['Início', 'Preciso para hoje', 'Serviços com preço', 'Buscar profissional', 'Meus pedidos', 'Salvos', 'Minhas publicações', 'Comunidade', 'Vagas de emprego', 'Painel do profissional']);
+  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Pedidos para mim', 'Meu perfil', 'Criar publicação', 'Minhas publicações', 'Serviços e fotos', 'Onde atendo', 'Disponibilidade', 'Verificação do perfil', 'Prévia do perfil', 'Minha conta', 'Voltar ao início']);
   // sem permissão, a área administrativa mostra o menu da comunidade
   assert.equal(labels('admin', provider)[0], 'Início');
   assert.equal(labels('admin', adm)[0], 'Visão geral');
@@ -32,7 +32,9 @@ test('item ativo: exato, prefixo e seção do admin', () => {
   const busca = navItems('busca', visitor);
   assert.equal(activeHref(busca, '/'), '/');
   assert.equal(activeHref(busca, '/hoje'), '/hoje');
-  assert.equal(activeHref(busca, '/comunidade/abc'), '/');
+  assert.equal(activeHref(busca, '/comunidade/abc'), '/comunidade');
+  assert.equal(activeHref(busca, '/agendar/trocar-chuveiro'), '/servicos');
+  assert.equal(activeHref(busca, '/pedidos/abc'), '/pedidos');
   assert.equal(activeHref(busca, '/vagas/nova'), '/vagas');
   assert.equal(activeHref(busca, '/minhas-vagas'), '/vagas');
   assert.equal(activeHref(busca, '/p/carlos-demo'), '/buscar');
@@ -57,9 +59,9 @@ test('filtros do feed: leitura segura, URL que mantém a seleção e cursor est�
   assert.deepEqual(readFilters({ tipo: 'pedido', categoria: 'eletrica-e-climatizacao', bairro: '12' }), { kind: 'pedido', category: 'eletrica-e-climatizacao', neighborhood: 12 });
   assert.deepEqual(readFilters({ tipo: 'x', categoria: '<script>', bairro: '-1' }), { kind: null, category: null, neighborhood: null });
   const f = readFilters({ tipo: 'trabalho', bairro: '3' });
-  assert.equal(feedHref(f), '/?tipo=trabalho&bairro=3');
-  assert.equal(feedHref(f, { pages: 2 }), '/?tipo=trabalho&bairro=3&pagina=2');
-  assert.equal(feedHref(f, { kind: null, neighborhood: null }), '/');
+  assert.equal(feedHref(f), '/comunidade?tipo=trabalho&bairro=3');
+  assert.equal(feedHref(f, { pages: 2 }), '/comunidade?tipo=trabalho&bairro=3&pagina=2');
+  assert.equal(feedHref(f, { kind: null, neighborhood: null }), '/comunidade');
   const c = encodeCursor({ createdAt: '2026-11-25T19:00:00.123456+00:00', id: '5cdbd068-4211-4ce4-8c9b-d0a9c883cf93' });
   assert.deepEqual(decodeCursor(c), { before: '2026-11-25T19:00:00.123456+00:00', beforeId: '5cdbd068-4211-4ce4-8c9b-d0a9c883cf93' });
   assert.equal(decodeCursor('lixo'), null);

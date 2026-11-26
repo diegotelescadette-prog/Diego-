@@ -27,7 +27,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <div className="mx-auto flex max-w-7xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-stone-600">
         <span>© {new Date().getFullYear()} {APP_NAME} · Piloto em Campo Grande–MS</span>
         <Link href="/privacidade" className="underline">Privacidade</Link>
-        <Link href="/sou-prestador" className="underline">Sou prestador</Link>
       </div>
     </footer>
   );

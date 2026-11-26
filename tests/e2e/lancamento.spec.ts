@@ -70,7 +70,7 @@ test('equipe confere na fila, aprova e o perfil passa a contar no lançamento co
   await expect(v.getByTestId('profile-badges')).toContainText('Experiência informada: 5 anos');
   await v.getByText('O que os selos significam').click();
   await expect(v.getByTestId('badges-explained')).toContainText('Não são garantia');
-  await v.goto('/?tipo=divulgacao');
+  await v.goto('/comunidade?tipo=divulgacao');
   await expect(v.getByTestId('post').filter({ hasText: 'Bia Faxina' }).getByTestId('post-badges')).toContainText('Identidade conferida');
 });
 

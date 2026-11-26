@@ -10,9 +10,9 @@
   --color-brand-700: #4a776a;
   --color-brand-800: #3f6559;
   --color-brand-900: #2f4d44;
-  --color-hoje-500: #d9925f;
-  --color-hoje-600: #a65f34;
-  --color-hoje-700: #8a4e2b;
+  --color-hoje-500: #e07a3f;
+  --color-hoje-600: #b8592a;
+  --color-hoje-700: #9c4a22;
   --color-zap-600: #2e7d55;
   --color-zap-700: #25674a;
   --color-paper: #f7f5f1;
@@ -26,6 +26,7 @@
 }
 
 html { -webkit-text-size-adjust: 100%; }
+fieldset { min-width: 0; }
 body { @apply bg-paper text-stone-900 antialiased; }
 
 /* Foco visível para navegação por teclado */
@@ -244,3 +245,50 @@ body { @apply bg-paper text-stone-900 antialiased; }
 .pf-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .pf-actions > * { flex: 1 1 200px; }
 .pf-actions > form > button { width: 100%; }
+
+/* ---------------- Preço fixo e agendamento ---------------- */
+.price { display: inline-flex; flex-direction: column; align-items: flex-end; flex: none; line-height: 1.05; }
+.price-from { font-size: 11.5px; font-weight: 600; color: var(--color-stone-500); }
+.price-md { font-size: 20px; font-weight: 800; color: var(--color-stone-900); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.price-lg { font-size: 30px; font-weight: 800; color: var(--color-stone-900); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.pkg { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--color-line); border-radius: 18px; padding: 14px; }
+.pkg > :last-child { margin-top: auto; padding-top: 12px; }
+.guarantee { background: var(--color-sage); border-radius: 20px; padding: 16px 18px; }
+.how-step { display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 1px solid var(--color-line); border-radius: 16px; padding: 14px; }
+.how-num { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; background: var(--color-sand); color: var(--color-hoje-700); font-weight: 800; }
+.cat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 640px) { .cat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .cat-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.cat-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 96px; padding: 10px 6px; text-align: center; background: #fff; border: 1px solid var(--color-line); border-radius: 18px; font-size: 13.5px; font-weight: 700; line-height: 1.2; color: var(--color-stone-800); }
+.cat-tile:hover { border-color: var(--color-brand-400); background: var(--color-paper); }
+.cat-tile small { font-weight: 500; color: var(--color-stone-500); font-size: 12px; }
+.hero-today { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 16px; background: var(--color-hoje-600); color: #fff; font-weight: 800; font-size: 17px; }
+.hero-today:hover { background: var(--color-hoje-700); }
+.choice { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 14px; border: 1.5px solid var(--color-line); border-radius: 14px; background: #fff; cursor: pointer; font-weight: 600; }
+.choice:has(input:checked) { border-color: var(--color-brand-700); background: var(--color-sage); color: var(--color-brand-900); }
+.choice:has(input:focus-visible) { outline: 3px solid var(--color-hoje-500); outline-offset: 2px; }
+.choice:has(input:disabled) { opacity: .5; cursor: not-allowed; }
+.choice input { accent-color: var(--color-brand-700); width: 18px; height: 18px; flex: none; }
+.day-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.day-row::-webkit-scrollbar { display: none; }
+.day { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; min-width: 92px; padding: 8px 10px; border: 1.5px solid var(--color-line); border-radius: 14px; background: #fff; cursor: pointer; font-weight: 700; font-size: 14px; }
+.day input { position: absolute; opacity: 0; pointer-events: none; }
+.day:has(input:checked) { border-color: var(--color-brand-700); background: var(--color-sage); color: var(--color-brand-900); }
+.day:has(input:focus-visible) { outline: 3px solid var(--color-hoje-500); outline-offset: 2px; }
+.day-today { border-color: var(--color-hoje-500); color: var(--color-hoje-700); }
+.day-today:has(input:checked) { border-color: var(--color-hoje-600); background: var(--color-sand); color: var(--color-hoje-700); }
+.summary-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
+.timeline { position: relative; display: grid; gap: 0; }
+.tl-step { position: relative; display: flex; gap: 12px; padding-bottom: 18px; }
+.tl-step:last-child { padding-bottom: 0; }
+.tl-step:not(:last-child)::before { content: ""; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: var(--color-line); }
+.tl-step.done:not(:last-child)::before { background: var(--color-brand-400); }
+.tl-dot { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: #fff; border: 2px solid var(--color-line); color: var(--color-stone-400); font-size: 13px; font-weight: 800; z-index: 1; }
+.tl-step.done .tl-dot { background: var(--color-brand-700); border-color: var(--color-brand-700); color: #fff; }
+.tl-step.now .tl-dot { background: #fff; border-color: var(--color-hoje-600); color: var(--color-hoje-700); box-shadow: 0 0 0 4px var(--color-sand); }
+.st-tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 700; background: var(--color-sky); color: #2f5670; }
+.st-concluido { background: var(--color-sage); color: var(--color-brand-900); }
+.st-cancelado { background: var(--color-rose); color: #8a3f3b; }
+.st-solicitado { background: var(--color-sand); color: var(--color-hoje-700); }
+.scroll-fade { position: relative; }
+.scroll-fade::after { content: ""; position: absolute; top: 0; right: -16px; bottom: 0; width: 40px; pointer-events: none; background: linear-gradient(to right, transparent, var(--color-paper)); }

@@ -56,7 +56,7 @@ export function feedHref(f: FeedFilters, change: Partial<FeedFilters> & { pages?
   if (n.neighborhood) q.set('bairro', String(n.neighborhood));
   if (change.pages && change.pages > 1) q.set('pagina', String(change.pages));
   const s = q.toString();
-  return s ? `/?${s}` : '/';
+  return s ? `/comunidade?${s}` : '/comunidade';
 }
 export const hasFilters = (f: FeedFilters) => !!(f.kind || f.category || f.neighborhood);
 /** Cursor estável de paginação: data + id da última publicação. */
