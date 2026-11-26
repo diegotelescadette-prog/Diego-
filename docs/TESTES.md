@@ -14,6 +14,18 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 9 (26/11/2026): preparação do lançamento — todos passando
+
+Unitários (16), banco/API (46) e E2E (41 cenários × computador e celular = 82).
+
+- Cobertura por serviço: perfil com quatro serviços soma nas quatro linhas e uma vez no total; pausado, suspenso e verificação pendente ficam fora da oferta apta; "Em análise" conta quem está em análise ou com pendência; só administrador consulta.
+- Verificação: envio exige nome completo, WhatsApp, ao menos uma referência válida, aviso às referências e aceite do aviso de privacidade; aprovação exige identidade e WhatsApp conferidos e uma referência confirmada; alterar uma referência confirmada ou trocar o WhatsApp volta o cadastro para análise; pendência mostra o motivo ao prestador; histórico registra a ação sem contatos.
+- Dados privados: outra conta, outro prestador e visitante não leem referências nem a verificação; o dono não vê a nota interna, não confirma a própria referência nem se aprova; detalhe da verificação só para a equipe (tela mostra "Acesso restrito").
+- Regra do piloto (desligada por padrão): ligada, quem não foi aprovado sai da busca, do feed, do perfil público e do contato, e volta quando a regra desliga (nada é apagado).
+- Crédito imobiliário: categoria e dois serviços criados desligados; fora da busca e do "Preciso para hoje" (nem forçando); habilitada pela equipe, aparece só para o perfil com canal oficial conferido; "Acessar canal oficial" redireciona ao endereço conferido.
+- Busca de serviço sem prestador mostra "Estamos cadastrando profissionais para este serviço".
+- Corrigido: salvar configurações na administração (coleta de CPF e a nova regra) falhava porque o histórico não tinha alvo.
+
 ## Rodada 8 (25/11/2026): Comunidade de Campo Grande — todos passando
 
 Unitários (16), banco/API (40) e E2E (34 cenários × computador e celular = 68).
@@ -115,3 +127,9 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Consulta de CEP (ViaCEP): o ambiente de teste não tinha internet para esse serviço; o caminho de preenchimento manual foi testado.
 - Abertura real do WhatsApp: o teste intercepta o link `wa.me` e confere número e texto.
 - Expiração à meia-noite foi testada pela função de cálculo e simulando o vencimento, não esperando o relógio virar.
+
+## Rodada 10: visual suave (início limpo, barra lateral, perfil)
+
+- Unidade 16/16, integração 46/46, e2e 82/82 (computador e Pixel 7).
+- Início sem abas e sem caixa de filtros; links antigos com ?tipo= e ?bairro= continuam filtrando e mostram "Ver tudo".
+- Perfil com capa, números (publicações, acharam útil, salvaram) e abas Trabalhos, Sobre e Publicações.

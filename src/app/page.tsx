@@ -1,23 +1,40 @@
 import Link from 'next/link';
-import { FeedPost } from '@/components/FeedPost';
 import { PostCard } from '@/components/PostCard';
 import { Avatar } from '@/components/Avatar';
 import { Glyph } from '@/components/CategoryIcon';
 import { getCatalog, getNeighborhoods, getPilotCity, getUser } from '@/lib/data';
 import { getFeed, getLatestJobs } from '@/lib/feed';
 import { getPosts } from '@/lib/posts';
-import { encodeCursor, feedHref, hasFilters, KIND_LABEL, POST_KINDS, readFilters, type PostView } from '@/lib/posts-shared';
+import { encodeCursor, feedHref, hasFilters, KIND_LABEL, readFilters, type PostView } from '@/lib/posts-shared';
+import { createClient } from '@/lib/supabase/server';
 import { generalMessage } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
 
 const SEARCH = 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4';
 const BOLT = 'M13 2 4 14h7l-1 8 9-12h-7z';
-const PLUS = 'M12 5v14M5 12h14';
 const PAGE = 12;
 const MAX_PAGES = 8;
+/** Atalhos de serviço da tela inicial, na ordem de procura mais comum. Só entram os que existem no catálogo. */
+const QUICK_SERVICES = ['encanador', 'eletricista', 'diarista', 'pedreiro', 'pintor', 'chaveiro', 'montador-de-moveis', 'jardineiro'];
 
-/** Comunidade de Campo Grande: publicações de prestadores e moradores, com filtros, e atalhos para urgência e busca. */
+function greeting(timeZone: string) {
+  const h = Number(new Intl.DateTimeFormat('pt-BR', { hour: 'numeric', hourCycle: 'h23', timeZone }).format(new Date()));
+  return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+}
+
+async function firstName(userId: string | undefined) {
+  if (!userId) return null;
+  const supabase = await createClient();
+  const [{ data: nm }, { data: prof }] = await Promise.all([
+    supabase.from('member_names').select('name').eq('user_id', userId).maybeSingle(),
+    supabase.from('provider_profiles').select('display_name').eq('id', userId).maybeSingle(),
+  ]);
+  const name = (nm?.name ?? prof?.display_name ?? '').trim();
+  return name ? name.split(/\s+/)[0] : null;
+}
+
+/** Tela inicial limpa: saudação, busca, atalhos de serviço, profissionais perto de você e publicações da comunidade. */
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const f = readFilters(sp);
@@ -43,86 +60,69 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     return { posts: out, more: false };
   }
 
-  const [catalog, hoods, feed, jobs, { posts, more }] = await Promise.all([
-    getCatalog(), getNeighborhoods(city.id), getFeed(city.slug), getLatestJobs(), loadPosts(),
+  const [catalog, hoods, feed, jobs, { posts, more }, name] = await Promise.all([
+    getCatalog(), getNeighborhoods(city.id), getFeed(city.slug), getLatestJobs(), loadPosts(), firstName(user?.id),
   ]);
-  const posted = new Set(posts.filter((p) => p.author.isProvider).map((p) => p.author.id));
-  const showcase = !filtered && pages === 1 && posts.length < 6 ? feed.filter((p) => !posted.has(p.id)).slice(0, 6) : [];
+  const services = catalog.flatMap((c) => c.services);
+  const quick = QUICK_SERVICES.flatMap((slug) => services.filter((s) => s.slug === slug)).slice(0, 6);
+  const near = feed.slice(0, 12);
   const today = feed.filter((p) => p.availableToday);
   const catName = catalog.find((c) => c.slug === f.category)?.name;
   const hoodName = hoods.find((n) => n.id === f.neighborhood)?.name;
   const publishHref = (tipo: string) => `/publicar?tipo=${tipo}${f.category ? `&categoria=${f.category}` : ''}`;
 
   return (
-    <div className="mx-auto max-w-5xl lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6">
-      <div className="min-w-0 space-y-4">
-        <header className="space-y-3">
+    <div className="mx-auto max-w-5xl lg:grid lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-6">
+      <div className="min-w-0 space-y-6">
+        <header className="space-y-4">
           <div>
-            <h1 className="text-2xl font-extrabold leading-tight">Comunidade de {city.name}</h1>
-            <p className="hidden text-stone-700 sm:block">Trabalhos de prestadores da cidade, divulgações e pedidos de indicação dos vizinhos.</p>
+            <h1 className="text-2xl font-bold leading-tight text-stone-800 sm:text-3xl">{greeting(city.timezone || 'America/Campo_Grande')}{name ? `, ${name}` : ''}</h1>
+            <p className="mt-0.5 text-stone-600">O que você precisa hoje em {city.name}?</p>
           </div>
-          <form action="/buscar" method="get" role="search" className="md:hidden">
-            <div className="sb-row">
+          <form action="/buscar" method="get" role="search" data-testid="home-search">
+            <div className="home-search">
               <Glyph d={SEARCH} size={20} />
-              <input name="q" aria-label="Que serviço você procura?" placeholder="Que serviço você procura?" enterKeyHint="search" />
+              <input name="q" aria-label="Buscar serviço ou profissional" placeholder="Buscar serviço ou profissional" enterKeyHint="search" />
               <input type="hidden" name="cidade" value={city.slug} />
-              <button className="btn-primary min-h-11 px-4" type="submit">Buscar</button>
+              <button className="btn-primary min-h-10 rounded-xl px-4" type="submit">Buscar</button>
             </div>
           </form>
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/hoje" className="btn-hoje min-h-12 gap-2 px-3" data-testid="cta-hoje"><Glyph d={BOLT} size={18} /> Preciso para hoje</Link>
-            <Link href="/publicar" className="btn-primary min-h-12 gap-2 px-3" data-testid="cta-publicar"><Glyph d={PLUS} size={18} /> Criar publicação</Link>
-          </div>
+          <nav aria-label="Atalhos de serviço" className="chips-row" data-testid="quick-services">
+            <Link href="/hoje" className="soft-chip soft-chip-hoje" data-testid="cta-hoje"><Glyph d={BOLT} size={15} /> Para hoje</Link>
+            {quick.map((s) => <Link key={s.slug} href={`/buscar?servico=${s.slug}&cidade=${city.slug}`} className="soft-chip">{s.name}</Link>)}
+            <Link href={`/buscar?cidade=${city.slug}`} className="soft-chip">Todos os serviços</Link>
+          </nav>
         </header>
 
-        <section className="post p-3 sm:p-4" aria-labelledby="share-t" data-testid="composer">
-          <h2 id="share-t" className="font-bold">O que você quer compartilhar?</h2>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {POST_KINDS.map((k) => (
-              <Link key={k.key} href={user ? publishHref(k.key) : `/entrar?motivo=publicar&next=${encodeURIComponent(publishHref(k.key))}`} className="kind-opt">
-                <span className="block text-sm font-bold leading-tight sm:text-base">{k.cta}</span>
-                <span className="hidden text-sm text-stone-600 sm:block">{k.hint}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
+        {near.length > 0 && !filtered && (
+          <section aria-labelledby="perto-t" data-testid="near-you">
+            <div className="mb-2 flex items-baseline justify-between">
+              <h2 id="perto-t" className="text-lg font-bold text-stone-800">Perto de você</h2>
+              <Link href={`/buscar?cidade=${city.slug}`} className="text-sm font-semibold text-brand-700 hover:underline">Ver todos</Link>
+            </div>
+            <ul className="near-row">
+              {near.map((p) => (
+                <li key={p.id}>
+                  <Link href={`/p/${p.slug}`} className="near-item" data-testid="near-item">
+                    <span className={`near-ring${p.availableToday ? ' near-today' : ''}`}><Avatar src={p.avatar} name={p.name} size={68} round /></span>
+                    <span className="near-name">{p.name}</span>
+                    <span className="near-svc">{p.availableToday ? <span className="text-hoje-700">● Atende hoje</span> : p.service}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section aria-labelledby="feed-titulo" className="space-y-4" id="feed">
-          <h2 id="feed-titulo" className="sr-only">Publicações da comunidade</h2>
-          <nav aria-label="Tipo de publicação" className="chips-row" data-testid="feed-tabs">
-            <Link href={feedHref(f, { kind: null })} className="qchip" aria-current={!f.kind ? 'page' : undefined} scroll={false}>Todos</Link>
-            {POST_KINDS.map((k) => (
-              <Link key={k.key} href={feedHref(f, { kind: k.key })} className="qchip" aria-current={f.kind === k.key ? 'page' : undefined} scroll={false}>{k.plural}</Link>
-            ))}
-          </nav>
-          <details className="post" open={!!(f.category || f.neighborhood)} data-testid="feed-filters">
-            <summary className="flex min-h-11 cursor-pointer items-center px-4 font-semibold">Filtrar por categoria e bairro</summary>
-            <form method="get" action="/" className="grid gap-2 border-t border-stone-200 p-3 sm:grid-cols-[1fr_1fr_auto]" aria-label="Filtrar publicações">
-              {f.kind && <input type="hidden" name="tipo" value={f.kind} />}
-              <div>
-                <label htmlFor="f-cat" className="label text-sm">Categoria</label>
-                <select id="f-cat" name="categoria" className="input" defaultValue={f.category ?? ''}>
-                  <option value="">Todas as categorias</option>
-                  {catalog.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label htmlFor="f-bairro" className="label text-sm">Bairro</label>
-                <select id="f-bairro" name="bairro" className="input" defaultValue={f.neighborhood ?? ''}>
-                  <option value="">Todos os bairros</option>
-                  {hoods.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
-                </select>
-              </div>
-              <button type="submit" className="btn-outline min-h-11 self-end px-4">Filtrar</button>
-            </form>
-          </details>
+          <h2 id="feed-titulo" className="text-lg font-bold text-stone-800">Da comunidade</h2>
           {filtered && (
             <div className="flex flex-wrap items-center gap-2 text-sm" data-testid="active-filters">
-              <span className="font-semibold text-stone-700">Filtros:</span>
+              <span className="font-semibold text-stone-700">Mostrando:</span>
               {f.kind && <Link href={feedHref(f, { kind: null })} className="filter-chip" aria-label={`Tirar filtro ${KIND_LABEL[f.kind]}`}>{KIND_LABEL[f.kind]} ✕</Link>}
               {catName && <Link href={feedHref(f, { category: null })} className="filter-chip" aria-label={`Tirar filtro ${catName}`}>{catName} ✕</Link>}
               {hoodName && <Link href={feedHref(f, { neighborhood: null })} className="filter-chip" aria-label={`Tirar filtro ${hoodName}`}>{hoodName} ✕</Link>}
-              <Link href="/" className="font-semibold text-brand-700 underline">Limpar filtros</Link>
+              <Link href="/" className="font-semibold text-brand-700 underline">Ver tudo</Link>
             </div>
           )}
 
@@ -136,7 +136,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
           {!posts.length && filtered && (
             <div className="post p-5 text-stone-700" data-testid="feed-empty-filter">
-              <p>Nenhuma publicação com esses filtros ainda.</p>
+              <p>Nenhuma publicação assim ainda.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link href="/" className="btn-primary min-h-11 px-4">Tirar os filtros</Link>
                 <Link href={user ? publishHref('pedido') : `/entrar?motivo=publicar&next=${encodeURIComponent(publishHref('pedido'))}`} className="btn-outline min-h-11 px-4">Pedir uma indicação</Link>
@@ -150,45 +150,32 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
               <Link href="/publicar" className="btn-primary mt-3 min-h-11 px-4">Criar publicação</Link>
             </div>
           )}
-
-          {showcase.length > 0 && (
-            <section aria-labelledby="vitrine-t" className="space-y-4" data-testid="showcase">
-              <h2 id="vitrine-t" className="px-1 pt-2 text-lg font-bold">Prestadores da cidade</h2>
-              {showcase.map((p) => (
-                <FeedPost key={p.id} post={p} loggedIn={!!user} message={generalMessage(p.service ?? 'um serviço', city.name, false)} />
-              ))}
-              <Link href={`/buscar?cidade=${city.slug}`} className="btn-outline w-full">Ver todos os prestadores</Link>
-            </section>
-          )}
         </section>
       </div>
 
-      <aside className="mt-6 space-y-4 lg:sticky lg:top-20 lg:mt-0 lg:self-start" aria-label="Destaques">
+      <aside className="mt-6 hidden space-y-4 lg:sticky lg:top-20 lg:mt-0 lg:block lg:self-start" aria-label="Destaques">
         <section className="post p-4" aria-labelledby="hoje-lado">
-          <h2 id="hoje-lado" className="flex items-center gap-2 font-bold text-hoje-700"><Glyph d={BOLT} size={18} /> Atendem hoje</h2>
+          <h2 id="hoje-lado" className="font-bold text-stone-800">Atendem hoje</h2>
           {today.length ? (
             <ul className="mt-2 space-y-1">
               {today.slice(0, 5).map((p) => (
-                <li key={p.id}><Link href={`/p/${p.slug}`} className="flex items-center gap-3 rounded-xl p-1.5 hover:bg-stone-50">
-                  <Avatar src={p.avatar} name={p.name} size={36} />
+                <li key={p.id}><Link href={`/p/${p.slug}`} className="flex items-center gap-3 rounded-xl p-1.5 hover:bg-paper">
+                  <Avatar src={p.avatar} name={p.name} size={38} round />
                   <span className="min-w-0 text-sm"><span className="block truncate font-semibold">{p.name}</span><span className="block truncate text-stone-600">{p.service}</span></span>
                 </Link></li>
               ))}
             </ul>
           ) : <p className="mt-2 text-sm text-stone-600">Ninguém confirmou ainda hoje. Peça no “Preciso para hoje” e veja quem pode ir.</p>}
-          <Link href="/hoje" className="btn-hoje mt-3 w-full text-sm">Preciso para hoje</Link>
+          <Link href="/hoje" className="mt-2 inline-block text-sm font-semibold text-brand-700 hover:underline">Preciso para hoje →</Link>
         </section>
         <section className="post p-4" aria-labelledby="vagas-lado">
-          <h2 id="vagas-lado" className="font-bold">Vagas recentes</h2>
+          <h2 id="vagas-lado" className="font-bold text-stone-800">Vagas novas</h2>
           {jobs.length > 0 ? (
             <ul className="mt-2 space-y-2 text-sm">
-              {jobs.map((j) => <li key={j.id}><Link href={`/vagas/${j.id}`} className="block hover:underline"><span className="font-semibold">{j.title}</span><span className="block text-stone-600">{j.company}{j.place ? ` · ${j.place}` : ''}</span></Link></li>)}
+              {jobs.map((j) => <li key={j.id}><Link href={`/vagas/${j.id}`} className="block rounded-xl p-1.5 hover:bg-paper"><span className="font-semibold">{j.title}</span><span className="block text-stone-600">{j.company}{j.place ? ` · ${j.place}` : ''}</span></Link></li>)}
             </ul>
           ) : <p className="mt-2 text-sm text-stone-600">Nenhuma vaga aberta agora.</p>}
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Link href="/vagas" className="btn-outline px-2 text-center text-sm">Ver vagas</Link>
-            <Link href="/vagas/meu-curriculo" className="btn-outline px-2 text-center text-sm">Meu currículo</Link>
-          </div>
+          <Link href="/vagas" className="mt-2 inline-block text-sm font-semibold text-brand-700 hover:underline">Ver vagas →</Link>
         </section>
       </aside>
     </div>

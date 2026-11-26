@@ -1,4 +1,5 @@
 import 'server-only';
+import type { Badges } from '@/lib/verification';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { photoUrl } from '@/lib/data';
@@ -27,6 +28,18 @@ async function signPaths(paths: string[]): Promise<Map<string, string>> {
   return out;
 }
 
+/** Selos públicos (só checagens feitas) de vários perfis de uma vez. */
+export async function getBadges(ids: string[]): Promise<Map<string, Badges>> {
+  const out = new Map<string, Badges>();
+  if (!ids.length) return out;
+  const supabase = await createClient();
+  const { data } = await supabase.rpc('provider_badges', { p_ids: ids });
+  for (const b of (data ?? []) as { provider_id: string; identity_checked: boolean; refs_confirmed: number; experience_years: number | null }[]) {
+    out.set(b.provider_id, { identity: b.identity_checked, refs: Number(b.refs_confirmed), experience: b.experience_years });
+  }
+  return out;
+}
+
 export interface PostQuery {
   citySlug?: string; author?: string; post?: string; limit?: number;
   kind?: PostKind | null; category?: string | null; neighborhood?: number | null; saved?: boolean;
@@ -44,11 +57,13 @@ export async function getPosts(q: PostQuery = {}): Promise<PostView[]> {
   if (error) return [];
   const rows = (data ?? []) as Row[];
   const urls = await signPaths(rows.flatMap((r) => (r.media ?? []).map((m) => m.path)));
+  const badges = await getBadges([...new Set(rows.filter((r) => r.is_provider).map((r) => r.author_id))]);
   return rows.map((r) => ({
     id: r.id, kind: r.kind, body: r.body, createdAt: r.created_at, editedAt: r.edited_at,
     author: {
       id: r.author_id, isProvider: r.is_provider, slug: r.slug, name: r.display_name ?? 'Membro da comunidade',
       avatar: r.is_provider ? photoUrl(r.photo_path) : null, area: r.area_label, availableToday: r.available_today,
+      badges: r.is_provider ? badges.get(r.author_id) ?? null : null,
     },
     service: r.service_name, serviceSlug: r.service_slug, category: r.category_name, categorySlug: r.category_slug,
     neighborhood: r.neighborhood_name, price: r.price_label, found: r.found,

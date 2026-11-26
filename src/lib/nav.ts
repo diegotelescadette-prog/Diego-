@@ -20,7 +20,11 @@ export interface NavItem {
   group?: string;
   /** Frase curta embaixo do nome, explicando a opção. */
   hint?: string;
+  /** Tom pastel do fundo do ícone. */
+  tone?: NavTone;
 }
+
+export type NavTone = 'sage' | 'sand' | 'sky' | 'lavender' | 'rose';
 
 export const NAV_ICONS = {
   home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
@@ -46,6 +50,8 @@ export const NAV_ICONS = {
   briefcase: 'M4 8h16v11H4zM9 8V5h6v3M4 13h16',
   file: 'M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6',
   megaphone: 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10',
+  shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5',
+  rocket: 'M14 4c3 0 6 1 6 1s1 3 1 6c-2 4-6 7-9 8l-4-4c1-3 4-7 6-11zM9 15l-4 1 1-4M15 9a1 1 0 1 0 .01 0M6 18c-1 1-2 3-2 3s2-1 3-2',
 } as const;
 
 /** Área em uso a partir do caminho. */
@@ -55,18 +61,21 @@ export function areaFor(pathname: string): NavArea {
   return 'busca';
 }
 
-/** Menu da comunidade (área de busca). O botão "Criar publicação" fica em destaque acima da lista. */
+/**
+ * Menu principal: Início e, em dois grupos, tudo o que antes ficava em blocos na tela inicial.
+ * O botão "Criar publicação" fica embaixo da lista.
+ */
 export function searchItems(v: NavViewer): NavItem[] {
   return [
-    { href: '/', label: 'Comunidade', icon: 'home', match: ['/comunidade/'], hint: 'Trabalhos, divulgações e pedidos' },
-    { href: '/buscar', label: 'Buscar serviços', icon: 'search', match: ['/buscar', '/p/'], hint: 'Por serviço ou bairro' },
-    { href: '/hoje', label: 'Preciso para hoje', icon: 'bolt', urgent: true, match: ['/hoje'], hint: 'Quem pode ir hoje, no WhatsApp' },
-    { href: '/vagas', label: 'Vagas e currículos', icon: 'briefcase', match: ['/vagas', '/minhas-candidaturas', '/minhas-vagas'], hint: 'Procurar vaga, currículo ou anunciar' },
-    { href: '/favoritos', label: 'Favoritos e salvos', icon: 'heart', match: ['/favoritos'], hint: 'Prestadores e publicações salvas' },
-    ...(v.loggedIn ? [{ href: '/minhas-publicacoes', label: 'Minhas publicações', icon: 'photo', match: ['/minhas-publicacoes'], hint: 'Editar, apagar e copiar o link' }] as NavItem[] : []),
+    { href: '/', label: 'Início', icon: 'home', match: ['/comunidade/'], tone: 'sage' },
+    { href: '/hoje', label: 'Preciso para hoje', icon: 'bolt', urgent: true, match: ['/hoje'], hint: 'Quem atende agora', group: 'Encontrar', tone: 'sand' },
+    { href: '/buscar', label: 'Buscar profissional', icon: 'search', match: ['/buscar', '/p/'], hint: 'Por serviço e bairro', group: 'Encontrar', tone: 'sky' },
+    { href: '/vagas', label: 'Vagas de emprego', icon: 'briefcase', match: ['/vagas', '/minhas-candidaturas', '/minhas-vagas'], hint: 'Vagas e currículos', group: 'Encontrar', tone: 'lavender' },
+    { href: '/favoritos', label: 'Salvos', icon: 'heart', match: ['/favoritos'], hint: 'Profissionais e publicações', group: 'Meu espaço', tone: 'rose' },
+    ...(v.loggedIn ? [{ href: '/minhas-publicacoes', label: 'Minhas publicações', icon: 'photo', match: ['/minhas-publicacoes'], hint: 'Editar, apagar e copiar o link', group: 'Meu espaço', tone: 'sage' }] as NavItem[] : []),
     v.hasProfile
-      ? { href: '/painel', label: 'Painel do prestador', icon: 'tool', match: [], hint: 'Perfil, área e “Atendo hoje”' }
-      : { href: '/sou-prestador', label: 'Sou prestador', icon: 'tool', match: ['/sou-prestador'], hint: 'Crie seu perfil grátis' },
+      ? { href: '/painel', label: 'Painel do prestador', icon: 'tool', match: [], hint: 'Perfil, área e “Atendo hoje”', group: 'Meu espaço', tone: 'sand' }
+      : { href: '/sou-prestador', label: 'Ofereço meu trabalho', icon: 'tool', match: ['/sou-prestador'], hint: 'Crie seu perfil profissional', group: 'Meu espaço', tone: 'sand' },
   ];
 }
 
@@ -78,13 +87,15 @@ export const PROVIDER_ITEMS: NavItem[] = [
   { href: '/painel/servicos', label: 'Serviços e fotos', icon: 'photo' },
   { href: '/painel/atendimento', label: 'Onde atendo', icon: 'pin' },
   { href: '/painel/disponibilidade', label: 'Disponibilidade', icon: 'clock' },
+  { href: '/painel/verificacao', label: 'Verificação do perfil', icon: 'shield' },
   { href: '/painel/previa', label: 'Prévia do perfil', icon: 'eye' },
   { href: '/conta', label: 'Minha conta', icon: 'account' },
-  { href: '/buscar', label: 'Buscar serviços', icon: 'back' },
+  { href: '/', label: 'Voltar ao início', icon: 'back' },
 ];
 
 export const ADMIN_SECTIONS = [
   { key: 'visao', label: 'Visão geral', icon: 'gauge' },
+  { key: 'lancamento', label: 'Preparar lançamento', icon: 'rocket' },
   { key: 'perfis', label: 'Prestadores', icon: 'users' },
   { key: 'catalogo', label: 'Catálogo', icon: 'book' },
   { key: 'sugestoes', label: 'Sugestões', icon: 'bulb' },
@@ -103,7 +114,7 @@ export function adminSection(aba: string | null | undefined): AdminSection {
 
 export const ADMIN_ITEMS: NavItem[] = [
   ...ADMIN_SECTIONS.map((s) => ({ href: `/admin?aba=${s.key}`, label: s.label, icon: s.icon })),
-  { href: '/buscar', label: 'Voltar à busca', icon: 'back' },
+  { href: '/', label: 'Voltar ao início', icon: 'back' },
 ];
 
 /** Itens do menu lateral para a área e para quem está usando. */
@@ -131,19 +142,21 @@ export function activeHref(items: NavItem[], pathname: string, section?: string 
 
 /** Nome da tela exibido no cabeçalho. */
 export function screenTitle(pathname: string, section?: string | null): string {
+  if (pathname.startsWith('/admin/verificacao')) return 'Administração · Verificação do perfil';
   if (pathname.startsWith('/admin')) {
     return `Administração · ${ADMIN_SECTIONS.find((s) => s.key === adminSection(section))!.label}`;
   }
   const exact: Record<string, string> = {
-    '/': 'Comunidade', '/buscar': 'Buscar serviços', '/hoje': 'Preciso para hoje', '/favoritos': 'Favoritos e salvos', '/minhas-publicacoes': 'Minhas publicações',
+    '/': 'Início', '/buscar': 'Buscar profissional', '/hoje': 'Preciso para hoje', '/favoritos': 'Salvos', '/minhas-publicacoes': 'Minhas publicações',
     '/painel': 'Painel do prestador', '/painel/perfil': 'Meu perfil', '/painel/servicos': 'Serviços e fotos',
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
+    '/painel/verificacao': 'Verificação do perfil',
     '/conta': 'Minha conta', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
     '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Meu currículo', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };
   if (exact[pathname]) return exact[pathname];
-  if (pathname.startsWith('/p/')) return 'Perfil do prestador';
+  if (pathname.startsWith('/p/')) return 'Perfil';
   if (pathname.startsWith('/comunidade/')) return pathname.endsWith('/editar') ? 'Editar publicação' : 'Publicação';
   if (pathname.startsWith('/minhas-vagas/')) return 'Candidatos da vaga';
   if (pathname.startsWith('/vagas/')) return pathname.endsWith('/editar') ? 'Editar vaga' : 'Vaga de emprego';

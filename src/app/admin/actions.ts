@@ -142,3 +142,34 @@ export async function adminJobAction(form: FormData) {
   }
   done('vagas', msg);
 }
+
+/** Liga ou desliga a regra de verificação do piloto (registrada no histórico por gatilho). */
+export async function saveVerificationRule(form: FormData) {
+  const sb = await admin();
+  const enabled = form.get('enabled') === 'on';
+  const { error } = await sb.from('app_settings').upsert({ key: 'verificacao_obrigatoria', value: { enabled } });
+  done('config', error ? 'Não foi possível salvar' : enabled ? 'Regra de verificação ligada: só perfis aprovados aparecem' : 'Regra de verificação desligada');
+}
+
+const VERIF_MSG: Record<string, string> = {
+  identidade_ok: 'Identidade conferida', identidade_desfazer: 'Conferência de identidade desfeita',
+  contato_ok: 'WhatsApp conferido', contato_desfazer: 'Conferência do WhatsApp desfeita',
+  referencia_confirmada: 'Referência confirmada', referencia_nao_confirmada: 'Referência registrada como não confirmada', referencia_desfazer: 'Referência volta para “a conferir”',
+  canal_ok: 'Canal oficial conferido', canal_desfazer: 'Conferência do canal oficial desfeita',
+  aprovar: 'Cadastro aprovado', pendencia: 'Pendência registrada e enviada ao prestador',
+};
+
+/** Conferências da fila de verificação. O banco confere a permissão e as condições de aprovação. */
+export async function verificationAction(form: FormData) {
+  const sb = await admin();
+  const provider = String(form.get('provider_id') ?? '');
+  const op = String(form.get('op') ?? '');
+  const back = String(form.get('back') ?? '');
+  const { error } = await sb.rpc('admin_verification_action', {
+    p_provider: provider, p_action: op, p_ref: Number(form.get('ref_id')) || null, p_note: String(form.get('note') ?? '') || null,
+  });
+  revalidatePath('/', 'layout');
+  const qs = new URLSearchParams({ msg: error ? (error.code === '23514' || error.code === 'P0002' ? error.message : 'Não foi possível registrar. Tente de novo.') : VERIF_MSG[op] ?? 'Registrado' });
+  if (/^\/admin\?aba=[a-z]+/.test(back)) qs.set('voltar', back);
+  redirect(`/admin/verificacao/${encodeURIComponent(provider)}?${qs}`);
+}

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { hitLimit } from '@/lib/rate-limit';
 import { POST_LIMITS, POST_REPORT_REASON, PROVIDER_KINDS } from '@/lib/posts-shared';
+import { forbiddenPromise } from '@/lib/verification';
 
 export type Result = { ok?: boolean; message?: string; id?: string; login?: boolean };
 
@@ -74,6 +75,8 @@ export async function createPost(raw: PostInputT & { token: string }): Promise<R
   if (PROVIDER_KINDS.includes(p.kind) && !p.serviceId) return { message: 'Escolha o serviço.' };
   if (p.kind === 'pedido' && !p.serviceId && !p.categoryId) return { message: 'Escolha o serviço ou a categoria.' };
   if (p.kind !== 'trabalho' && body.length < 10) return { message: p.kind === 'pedido' ? 'Descreva o que você precisa (pelo menos 10 letras).' : 'Escreva o texto da divulgação (pelo menos 10 letras).' };
+  const promise = forbiddenPromise(`${body} ${p.price ?? ''}`);
+  if (promise) return { message: promise };
   const nameErr = p.kind === 'pedido' ? await saveName(supabase, user.id, p.publicName) : null;
   if (nameErr) return { message: nameErr };
   if (!(await hitLimit('post', user.id, 20, 86400))) return { message: 'Muitas publicações hoje. Tente amanhã.' };
@@ -116,6 +119,8 @@ export async function updatePost(postId: string, raw: PostInputT): Promise<Resul
   if (mErr) return { message: mErr };
   const body = p.body.trim();
   if (cur.kind !== 'trabalho' && body.length < 10) return { message: 'Escreva pelo menos 10 letras.' };
+  const promise = forbiddenPromise(`${body} ${p.price ?? ''}`);
+  if (promise) return { message: promise };
 
   const { error } = await supabase.from('posts').update({
     body, service_id: p.serviceId, category_id: p.serviceId ? null : p.categoryId, neighborhood_id: p.neighborhoodId,

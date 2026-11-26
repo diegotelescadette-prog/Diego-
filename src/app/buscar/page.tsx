@@ -6,8 +6,9 @@ import { getAllServices, getCatalog, getCities, getNeighborhoods, getPilotCity, 
 import { generalMessage } from '@/lib/whatsapp';
 import { createClient } from '@/lib/supabase/server';
 import type { ProviderCardData } from '@/lib/types';
+import { track } from '@/lib/usage';
 
-export const metadata: Metadata = { title: 'Buscar serviços' };
+export const metadata: Metadata = { title: 'Buscar profissional' };
 export const dynamic = 'force-dynamic';
 
 type SP = { q?: string; servico?: string; categoria?: string; cidade?: string; bairro?: string; online?: string; hoje?: string; pagina?: string; chamar?: string };
@@ -47,6 +48,10 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
   ]);
   const results = (data ?? []) as (ProviderCardData & { total_count: number })[];
   const total = results[0]?.total_count ?? 0;
+  if (!error && page === 1 && (q || service || category)) {
+    const only = (matched.data ?? []).length === 1 ? (matched.data as { service_id: number }[])[0].service_id : null;
+    await track('busca', { serviceId: service?.id ?? only, categoryId: category?.id ?? null, cityId: city?.id ?? null, results: total });
+  }
   const matchedNames = services.filter((s) => (matched.data ?? []).some((m: { service_id: number }) => m.service_id === s.id)).map((s) => s.name);
 
   const applied: { label: string; remove: Partial<SP> }[] = [];
@@ -74,7 +79,7 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold sm:text-3xl">Buscar serviços</h1>
+      <h1 className="text-2xl font-extrabold sm:text-3xl">Buscar profissional</h1>
       <form action="/buscar" method="get" role="search" className="mt-4 flex flex-col gap-2 sm:flex-row">
         <label htmlFor="q" className="sr-only">Nome, serviço ou problema</label>
         <input id="q" name="q" defaultValue={q} className="input" placeholder="Nome, serviço ou problema (ex.: vazamento)" />
@@ -162,7 +167,11 @@ export default async function BuscarPage({ searchParams }: { searchParams: Promi
             </div>
           ) : results.length === 0 ? (
             <div className="card p-6" data-testid="empty-search">
-              <p className="text-lg font-semibold">Nenhum prestador encontrado{q ? ` para “${q}”` : ''}.</p>
+              {service && !q && !neighborhood && !today && !online ? (
+                <p className="text-lg font-semibold" data-testid="cadastrando">Estamos cadastrando profissionais para este serviço.</p>
+              ) : (
+                <p className="text-lg font-semibold">Nenhum prestador encontrado{q ? ` para “${q}”` : ''}.</p>
+              )}
               <p className="mt-1 text-stone-700">Tente retirar um filtro ou procurar na cidade inteira:</p>
               <ul className="mt-3 flex flex-wrap gap-2">
                 {neighborhood && <li><Link className="btn-primary" href={href(sp, { bairro: undefined })}>Buscar em toda {city?.name}</Link></li>}

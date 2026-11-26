@@ -116,7 +116,7 @@ test('candidato retira a candidatura e o currículo é apagado', async ({ page }
 test('visitante: vagas no menu e páginas privadas pedem login', async ({ page, isMobile }) => {
   await page.goto('/');
   if (isMobile) await page.getByRole('navigation', { name: 'Navegação rápida' }).getByRole('link', { name: 'Vagas' }).click();
-  else await page.getByRole('navigation', { name: 'Comunidade' }).getByRole('link', { name: /Vagas e currículos/ }).click();
+  else await page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link', { name: /Vagas de emprego/ }).click();
   await expect(page).toHaveURL(/\/vagas$/);
   await expect(page.getByTestId('vagas-total')).toContainText('vagas abertas');
   await page.goto('/minhas-candidaturas');

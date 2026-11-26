@@ -11,8 +11,8 @@ test('menu: destaca a opção em uso, navega com teclado e abre o destino certo'
     const menu = page.getByRole('button', { name: /^Menu/ });
     await menu.click();
     const drawer = page.getByRole('dialog', { name: 'Menu' });
-    await expect(drawer.getByRole('link', { name: /Buscar serviços/ })).toHaveAttribute('aria-current', 'page');
-    await expect(drawer.getByRole('link', { name: /Buscar serviços/ })).toContainText('atual'); // não só pela cor
+    await expect(drawer.getByRole('link', { name: /Buscar profissional/ })).toHaveAttribute('aria-current', 'page');
+    await expect(drawer.getByRole('link', { name: /Buscar profissional/ })).toContainText('atual'); // não só pela cor
     await page.keyboard.press('Escape');
     await expect(drawer).toHaveCount(0);
     await expect(menu).toBeFocused(); // foco volta ao botão
@@ -20,10 +20,10 @@ test('menu: destaca a opção em uso, navega com teclado e abre o destino certo'
     await page.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Preciso para hoje' }).click();
     await expect(page.getByRole('dialog', { name: 'Menu' })).toHaveCount(0); // fecha ao navegar
   } else {
-    const nav = page.getByRole('navigation', { name: 'Comunidade' });
-    await expect(nav.getByRole('link', { name: /Buscar serviços/ })).toHaveAttribute('aria-current', 'page');
-    await nav.getByRole('link', { name: /Buscar serviços/ }).focus();
-    await page.keyboard.press('Tab');
+    const nav = page.getByRole('navigation', { name: 'Menu principal' });
+    await expect(nav.getByRole('link', { name: /Buscar profissional/ })).toHaveAttribute('aria-current', 'page');
+    await nav.getByRole('link', { name: /Buscar profissional/ }).focus();
+    await page.keyboard.press('Shift+Tab');
     await expect(nav.getByRole('link', { name: 'Preciso para hoje' })).toBeFocused();
     await page.keyboard.press('Enter');
   }

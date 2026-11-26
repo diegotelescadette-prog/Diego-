@@ -15,7 +15,7 @@ export const STATUS_HELP: Record<ProviderStatus, string> = {
 };
 
 export interface Service { id: number; name: string; slug: string; mode: 'presencial' | 'online' | 'ambos'; urgent_pilot: boolean; active: boolean; category_id: number; sort: number }
-export interface Category { id: number; name: string; slug: string; active: boolean; sort: number; services: Service[] }
+export interface Category { id: number; name: string; slug: string; active: boolean; sort: number; official_channel?: boolean; services: Service[] }
 export interface Neighborhood { id: number; name: string; slug: string; city_id: number }
 export interface City { id: number; name: string; uf: string; slug: string; timezone: string; is_pilot: boolean }
 

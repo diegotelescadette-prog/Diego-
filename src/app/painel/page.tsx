@@ -10,6 +10,8 @@ import { SubmitButton } from '@/components/SubmitButton';
 import { getUser } from '@/lib/data';
 import { siteUrl } from '@/lib/site';
 import { STATUS_LABEL } from '@/lib/types';
+import { createClient } from '@/lib/supabase/server';
+import { VERIFICATION_LABEL, VERIFICATION_STYLE, verificationNext, type VerificationStatus } from '@/lib/verification';
 
 export const metadata: Metadata = { title: 'Painel do prestador' };
 export const dynamic = 'force-dynamic';
@@ -23,6 +25,8 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
   if (!d) redirect('/painel/perfil');
   const { p, coverage, today, cityName } = d;
   const step = nextStep(d);
+  const { data: ver } = await (await createClient()).from('provider_verification').select('status, pending_reason').eq('provider_id', user.id).maybeSingle();
+  const vStatus = (ver?.status ?? 'rascunho') as VerificationStatus;
   const visible = p.status === 'published' && coverage !== 'pendente';
   const visibility = p.status === 'published'
     ? (visible ? 'Visível na busca.' : 'Fora da busca até você confirmar a área de atendimento.')
@@ -81,6 +85,17 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
           )}
           <Link className="btn-ghost" href="/painel/perfil">Editar perfil</Link>
         </div>
+      </section>
+
+      <section className="card p-5" aria-labelledby="verif" data-testid="panel-verification">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="verif" className="text-xl font-bold">Verificação do perfil</h2>
+          <span className={`tag ${VERIFICATION_STYLE[vStatus]}`}>{VERIFICATION_LABEL[vStatus]}</span>
+        </div>
+        <p className="mt-1 text-stone-800">{verificationNext(vStatus, ver?.pending_reason)}</p>
+        <Link className={vStatus === 'aprovado' || vStatus === 'em_analise' ? 'btn-ghost mt-3' : 'btn-primary mt-3'} href="/painel/verificacao">
+          {vStatus === 'rascunho' ? 'Começar verificação' : vStatus === 'pendencia' ? 'Corrigir e reenviar' : 'Ver verificação'}
+        </Link>
       </section>
 
       <section className="card border-hoje-500/40 p-5" aria-labelledby="hoje">
