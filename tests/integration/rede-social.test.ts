@@ -2,7 +2,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { admin, anon, signIn } from './helpers.ts';
+import { admin, anon, signIn, viewer } from './helpers.ts';
 
 // Fase 3 (parte 1): reações com tipo, "Feito pelo Próximo" e seguir prestadores.
 const reseed = () => execSync('npm run -s seed:demo', { stdio: 'ignore' });
@@ -33,7 +33,7 @@ test('reações: o "Útil" antigo vira Valeu; trocar o tipo mantém uma reação
   const outro = await signIn('prestador-carlos');
   await outro.from('post_reactions').update({ reaction: 'indico' }).eq('post_id', pant.id).eq('user_id', me);
   assert.equal((await feed(cliente, { p_post: pant.id }))[0].my_reaction, 'inspirou', 'ninguém troca a reação dos outros');
-  assert.equal((await feed(anon(), { p_post: pant.id }))[0].my_reaction, null);
+  assert.equal((await feed(await viewer(), { p_post: pant.id }))[0].my_reaction, null);
 });
 
 test('Feito pelo Próximo: só pedido concluído do próprio prestador; mostra a nota; vínculo não muda depois', async () => {
@@ -60,7 +60,7 @@ test('Feito pelo Próximo: só pedido concluído do próprio prestador; mostra a
   const { data: post, error } = await carlos.from('posts').insert({ ...T, booking_id: done }).select('id').single();
   assert.ok(!error, error?.message);
   await admin.from('post_media').insert({ post_id: post!.id, kind: 'foto', path: `${me}/prova.webp`, sort: 0 });
-  const row = (await feed(anon(), { p_post: post!.id }))[0];
+  const row = (await feed(await viewer(), { p_post: post!.id }))[0];
   assert.equal(row.proof?.rating, 5);
   assert.ok(row.proof?.done_at);
   assert.ok((await carlos.from('posts').insert({ ...T, booking_id: done })).error, 'um post por pedido');
@@ -72,14 +72,14 @@ test('Feito pelo Próximo: só pedido concluído do próprio prestador; mostra a
 
   const bia = await signIn('prestador-bia');
   assert.ok((await bia.from('posts').insert({ ...T, author_id: await uid(bia), booking_id: done })).error, 'pedido de outro prestador');
-  const plain = (await feed(anon())).find((r) => r.id !== post!.id && r.display_name === 'Elétrica Pantanal (demo)')!;
+  const plain = (await feed(await viewer())).find((r) => r.id !== post!.id && r.display_name === 'Elétrica Pantanal (demo)')!;
   assert.equal(plain.proof, null, 'post sem pedido não tem selo');
 });
 
 test('seguir: conta logada segue prestador publicado; contagem pública; lista privada; filtro "Quem eu sigo"', async () => {
   const cliente = await signIn('cliente');
   const me = await uid(cliente);
-  const pantId = (await feed(anon())).find((r) => r.display_name === 'Elétrica Pantanal (demo)')!.author_id;
+  const pantId = (await feed(await viewer())).find((r) => r.display_name === 'Elétrica Pantanal (demo)')!.author_id;
   assert.equal((await feed(cliente, { p_following: true })).length, 0);
   assert.ok((await anon().from('provider_follows').insert({ follower_id: me, provider_id: pantId })).error, 'visitante não segue');
   assert.ok(!(await cliente.from('provider_follows').insert({ follower_id: me, provider_id: pantId })).error);
@@ -87,13 +87,13 @@ test('seguir: conta logada segue prestador publicado; contagem pública; lista p
 
   const rows = await feed(cliente, { p_following: true });
   assert.ok(rows.length > 0 && rows.every((r) => r.author_id === pantId));
-  assert.equal((await anon().rpc('follower_count', { p_provider: pantId })).data, 1);
+  assert.equal((await (await viewer()).rpc('follower_count', { p_provider: pantId })).data, 1);
   const carlos = await signIn('prestador-carlos');
   assert.equal(((await carlos.from('provider_follows').select('*')).data ?? []).length, 0, 'ninguém vê quem os outros seguem');
-  assert.equal((await feed(anon(), { p_following: true })).length, 0, 'visitante não tem "Quem eu sigo"');
+  assert.equal((await feed(await viewer(), { p_following: true })).length, 0, 'visitante não tem "Quem eu sigo"');
 
   await cliente.from('provider_follows').delete().eq('follower_id', me).eq('provider_id', pantId);
-  assert.equal((await anon().rpc('follower_count', { p_provider: pantId })).data, 0);
+  assert.equal((await (await viewer()).rpc('follower_count', { p_provider: pantId })).data, 0);
 });
 
 test('dia a dia: qualquer conta com nome público posta; sem serviço nem preço; aparece no feed e no filtro', async () => {
@@ -108,14 +108,14 @@ test('dia a dia: qualquer conta com nome público posta; sem serviço nem preço
   assert.equal(p!.service_id, null, 'serviço é ignorado');
   assert.equal(p!.price_label, null, 'preço é ignorado');
   assert.ok(p!.city_id, 'entra na cidade do piloto');
-  const row = (await feed(anon(), { p_kind: 'dia_a_dia' })).find((r) => r.id === p!.id);
+  const row = (await feed(await viewer(), { p_kind: 'dia_a_dia' })).find((r) => r.id === p!.id);
   assert.ok(row, 'visitante vê no filtro Dia a dia');
   assert.equal((row as unknown as { is_provider: boolean }).is_provider, false);
 
   // Prestador na comunidade: o post do dia a dia leva ao perfil dele.
   const pant = await signIn('prestador-pantanal');
   const { data: q } = await pant.from('posts').insert({ author_id: await uid(pant), kind: 'dia_a_dia', body: 'Café antes da obra' }).select('id').single();
-  const prow = (await feed(anon(), { p_post: q!.id }))[0] as unknown as { is_provider: boolean; slug: string | null };
+  const prow = (await feed(await viewer(), { p_post: q!.id }))[0] as unknown as { is_provider: boolean; slug: string | null };
   assert.equal(prow.is_provider, true);
   assert.equal(prow.slug, 'pantanal-demo');
 
@@ -143,7 +143,7 @@ test('momentos: publica na própria pasta, some em 24 h, "visto" por pessoa, den
 
   type G = { author_id: string; is_mine: boolean; all_seen: boolean; items: { id: string; seen: boolean }[] };
   const bar = async (c: SupabaseClient) => ((await c.rpc('stories_feed')).data ?? []) as G[];
-  assert.ok((await bar(anon())).some((g) => g.author_id === me), 'visitante vê a faixa');
+  assert.ok((await bar(await viewer())).some((g) => g.author_id === me), 'visitante vê a faixa');
   assert.equal((await bar(carlos)).find((g) => g.author_id === me)!.all_seen, false);
   assert.ok(!(await carlos.from('story_views').insert({ story_id: s!.id, viewer_id: carlosId })).error);
   assert.equal((await bar(carlos)).find((g) => g.author_id === me)!.all_seen, true);
@@ -156,7 +156,7 @@ test('momentos: publica na própria pasta, some em 24 h, "visto" por pessoa, den
   assert.ok((await carlos.rpc('admin_remove_story', { p_story: s!.id, p_note: 'teste' })).error, 'só administrador remove');
   const adm = await signIn('admin');
   assert.ok(!(await adm.rpc('admin_remove_story', { p_story: s!.id, p_note: 'teste' })).error);
-  assert.equal((await bar(anon())).some((g) => g.author_id === me), false, 'removido some da faixa');
+  assert.equal((await bar(await viewer())).some((g) => g.author_id === me), false, 'removido some da faixa');
   assert.equal((await admin.from('story_reports').select('status').eq('story_id', s!.id).single()).data!.status, 'procedente');
 
   // Vencido: some para todos, mas o autor ainda enxerga para apagar o arquivo.

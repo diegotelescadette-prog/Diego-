@@ -2,7 +2,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { admin, anon, profileId, signIn } from './helpers.ts';
+import { admin, anon, profileId, signIn, viewer } from './helpers.ts';
 
 const reseed = () => execSync('npm run -s seed:demo', { stdio: 'ignore' });
 before(reseed);
@@ -28,7 +28,7 @@ test('contratante novo: primeira vaga fica guardada até a equipe conferir', asy
   const c = await signIn('contratante');
   const job = await newJob(c);
   assert.equal(job.held, true);
-  const { data: pub } = await anon().from('jobs').select('id').eq('id', job.id);
+  const { data: pub } = await (await viewer()).from('jobs').select('id').eq('id', job.id);
   assert.equal(pub!.length, 0, 'vaga guardada não aparece ao público');
   const { data: own } = await c.from('jobs').select('id, held').eq('id', job.id).single();
   assert.equal(own!.held, true, 'quem publicou vê a própria vaga');
@@ -53,7 +53,7 @@ test('contratante novo: primeira vaga fica guardada até a equipe conferir', asy
   const adm = await signIn('admin');
   const ok = await adm.rpc('admin_review_employer', { p_user: await uid(c), p_status: 'verificado' });
   assert.equal(ok.error, null, ok.error?.message);
-  const { data: live } = await anon().from('jobs').select('id, poster_verified').eq('id', job.id).single();
+  const { data: live } = await (await viewer()).from('jobs').select('id, poster_verified').eq('id', job.id).single();
   assert.equal(live!.poster_verified, true);
   // as próximas entram direto
   const second = await newJob(c, 'Segunda vaga');
@@ -61,7 +61,7 @@ test('contratante novo: primeira vaga fica guardada até a equipe conferir', asy
 });
 
 test('empresa verificada: vaga entra no ar com o selo', async () => {
-  const { data } = await anon().from('jobs').select('title, poster_verified').eq('title', 'Vendedor(a) de loja (demo)').single();
+  const { data } = await (await viewer()).from('jobs').select('title, poster_verified').eq('title', 'Vendedor(a) de loja (demo)').single();
   assert.equal(data!.poster_verified, true);
 });
 

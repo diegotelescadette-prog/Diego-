@@ -190,3 +190,14 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Criar (/criar): post do dia a dia, Momento, trabalho feito (ou "Ofereço meus serviços"), pedido de indicação e vaga.
 - Perfil (/perfil): conta, pedidos, currículo, candidaturas, vagas, painel de prestador, publicações, favoritos, Administração (só para a equipe), aparência e Sair.
 - Painel do prestador e Administração: abas no topo do conteúdo, com a atual destacada.
+
+## Rodada 15 (26/11/2026): prompt v3, item 3 (cadastro obrigatório)
+
+- Unidade 26/26, integração 65/65, e2e 128/128 (computador e celular).
+- Sem conta, só abrem a página de entrada, entrar, criar conta, senha, confirmação de e-mail, Privacidade e Termos. Qualquer outro link (perfil, publicação, vaga) leva ao login com `next=` seguro e volta para o link depois de entrar ou criar a conta. As APIs respondem 401.
+- No banco, o visitante deixou de ler feed, perfis, vagas, Momentos, busca e "Preciso para hoje"; catálogo, cidades e bairros continuam abertos para o cadastro e a página de entrada.
+- Criar conta (uma tela): nome completo, nome público, celular com WhatsApp, bairro, e-mail, senha e aceite dos Termos e do Aviso de privacidade, com o resumo de como os dados são usados. Erro ao lado do campo, ofensa no nome pede carinho, o que foi escrito continua no formulário.
+- Depois de confirmar o e-mail: "O que você quer fazer primeiro?" com as seis áreas (opcional, só define o primeiro destino).
+- Conta antiga sem esses dados completa o cadastro uma vez (/completar-cadastro) e segue para onde ia; Minha conta (excluir a conta) continua aberta.
+- Celular guardado só para a própria pessoa e a equipe; nunca aparece no app. Campo pronto para a confirmação por código no WhatsApp (fase 7).
+- Atualização do banco `2026-11-26-cadastro-obrigatorio.sql` aplica sem erro num banco igual ao de produção, depois das três da fase 3.

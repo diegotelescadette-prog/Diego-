@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { admin, demoEmail, expect, login, reseed } from './helpers';
+import { admin, demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
@@ -64,7 +64,7 @@ test('equipe confere na fila, aprova e o perfil passa a contar no lançamento co
 
   // selos no perfil e no post
   const v = await (await page.context().browser()!.newContext()).newPage();
-  await v.goto('/p/bia-demo');
+  await enter(v, '/p/bia-demo');
   await expect(v.getByTestId('profile-badges')).toContainText('Identidade conferida');
   await expect(v.getByTestId('profile-badges')).toContainText('1 referência conferida');
   await expect(v.getByTestId('profile-badges')).toContainText('Experiência informada: 5 anos');
@@ -91,16 +91,17 @@ test('conta sem permissão não abre documentos e contatos de referência', asyn
 });
 
 test('serviço sem prestador mostra que estamos cadastrando', async ({ page }) => {
-  await page.goto('/buscar?servico=marceneiro');
+  await enter(page, '/buscar?servico=marceneiro');
   await expect(page.getByTestId('cadastrando')).toHaveText('Estamos cadastrando profissionais para este serviço.');
 });
 
 test('crédito imobiliário: oculto até a aprovação; depois mostra quem atende e o canal oficial', async ({ page }) => {
-  await page.goto('/p/ana-demo');
+  await enter(page, '/p/ana-demo');
   await expect(page.getByTestId('canal-oficial')).toHaveCount(0);
   await page.goto('/buscar?q=financiamento');
   await expect(page.getByTestId('empty-search')).toBeVisible();
 
+  await page.context().clearCookies();
   await page.goto('/entrar?next=%2Fadmin%3Faba%3Dcatalogo');
   await login(page, demoEmail('admin'));
   const cat = page.locator('details').filter({ hasText: 'Crédito imobiliário' });
@@ -110,7 +111,7 @@ test('crédito imobiliário: oculto até a aprovação; depois mostra quem atend
   await expect(page.locator('details').filter({ hasText: 'Crédito imobiliário' }).locator('summary')).not.toContainText('desativada');
 
   const v = await (await page.context().browser()!.newContext()).newPage();
-  await v.goto('/buscar?q=financiamento');
+  await enter(v, '/buscar?q=financiamento');
   await expect(v.getByTestId('result-count')).toHaveText('1 prestador encontrado');
   await expect(v.getByRole('button', { name: /Ana Crédito/ })).toBeVisible();
   await v.goto('/p/ana-demo');
@@ -132,7 +133,7 @@ test('regra de verificação: prévia do impacto e liga/desliga pela configuraç
   await page.getByTestId('rule-form').getByRole('button', { name: 'Salvar' }).click();
   await expect(page.getByRole('status')).toContainText('Regra de verificação ligada');
   const v = await (await page.context().browser()!.newContext()).newPage();
-  await v.goto('/buscar?servico=chaveiro');
+  await enter(v, '/buscar?servico=chaveiro');
   await expect(v.getByTestId('cadastrando')).toBeVisible();
   await v.goto('/buscar?servico=encanador');
   await expect(v.getByRole('button', { name: /Carlos Hidráulica/ })).toBeVisible();

@@ -1,5 +1,5 @@
 import { test, type Page } from '@playwright/test';
-import { admin, demoEmail, expect, login, reseed } from './helpers';
+import { admin, demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
@@ -32,7 +32,7 @@ test('currículo no app: barra mostra o que falta, salva e baixa em PDF', async 
 });
 
 test('vagas: filtros por área e salário', async ({ page }) => {
-  await page.goto('/vagas?area=cozinha-alimentacao');
+  await enter(page, '/vagas?area=cozinha-alimentacao');
   await expect(page.getByTestId('job-card')).toHaveCount(1);
   await expect(page.getByTestId('job-card')).toContainText('Auxiliar de cozinha (demo)');
   await page.goto('/vagas?salario=1500-3000&tipo=clt');

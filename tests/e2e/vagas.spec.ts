@@ -1,5 +1,5 @@
 import { test, type Page } from '@playwright/test';
-import { admin, demoEmail, expect, login, reseed } from './helpers';
+import { admin, demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
@@ -47,11 +47,9 @@ test('empresa publica vaga: valida campos e cai no painel da vaga', async ({ pag
 });
 
 test('candidato entra, envia currículo em PDF com consentimento e acompanha', async ({ page }) => {
-  await page.goto('/vagas');
+  await enter(page, '/vagas', 'cliente');
   await page.getByTestId('job-card').filter({ hasText: 'Auxiliar de cozinha (demo)' }).click();
   await expect(page.getByRole('heading', { name: 'Auxiliar de cozinha (demo)' })).toBeVisible();
-  await page.getByRole('link', { name: 'Entrar para se candidatar' }).click();
-  await login(page, demoEmail('cliente'));
   await expect(page).toHaveURL(/\/vagas\/[0-9a-f-]{36}$/);
   await expect(page.getByTestId('no-resume')).toBeVisible();
   await page.getByText('Prefiro enviar um PDF').click();
@@ -122,11 +120,13 @@ test('candidato retira a candidatura e o currículo é apagado', async ({ page }
   expect(error).toBeTruthy();
 });
 
-test('visitante: vagas a partir da tela inicial e páginas privadas pedem login', async ({ page }) => {
-  await page.goto('/');
-  await page.getByTestId('home-trabalho').click();
-  await expect(page).toHaveURL(/\/vagas$/);
-  await expect(page.getByTestId('vagas-total')).toContainText('vagas abertas');
+test('visitante: vagas e páginas privadas pedem login e voltam para onde ia', async ({ page }) => {
   await page.goto('/minhas-candidaturas');
   await expect(page).toHaveURL(/\/entrar\?next=%2Fminhas-candidaturas/);
+  await page.goto('/');
+  await page.getByTestId('home-trabalho').click();
+  await expect(page).toHaveURL(/\/entrar\?next=%2Fvagas$/);
+  await login(page, demoEmail('leitor'));
+  await expect(page).toHaveURL(/\/vagas$/);
+  await expect(page.getByTestId('vagas-total')).toContainText('vagas abertas');
 });

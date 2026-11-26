@@ -1,5 +1,5 @@
 import { test, type Page } from '@playwright/test';
-import { admin, demoEmail, expect, login, reseed } from './helpers';
+import { admin, demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
@@ -38,16 +38,12 @@ test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem lin
 });
 
 test('cliente agenda "Trocar chuveiro" pelo preço fixo e acompanha até concluir', async ({ page, browser }) => {
-  await page.goto('/');
+  await enter(page, '/', 'cliente');
   await page.getByTestId('most-requested').getByTestId('package-card').filter({ hasText: 'Trocar chuveiro' }).getByTestId('agendar').click();
   await expect(page).toHaveURL(/\/agendar\/trocar-chuveiro$/);
   await expect(page.getByTestId('price').first()).toHaveText('R$ 90');
   await expect(page.getByTestId('includes')).toContainText('Instalação e teste do novo');
   await expect(page.getByTestId('excludes')).toContainText('Chuveiro novo');
-  await page.getByTestId('login-to-book').click();
-  await expect(page.getByText('Entre ou crie sua conta para agendar.')).toBeVisible();
-  await login(page, demoEmail('cliente'));
-  await expect(page).toHaveURL(/\/agendar\/trocar-chuveiro$/);
 
   // o primeiro dia livre já vem escolhido (hoje, enquanto houver faixa)
   const hour = Number(new Intl.DateTimeFormat('pt-BR', { hour: 'numeric', hourCycle: 'h23', timeZone: 'America/Campo_Grande' }).format(new Date()));

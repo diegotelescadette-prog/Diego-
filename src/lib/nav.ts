@@ -98,6 +98,21 @@ export function profileLinks(v: NavViewer): (NavItem & { testid: string })[] {
   ];
 }
 
+/**
+ * As seis áreas do app: os botões da tela inicial e da pergunta "O que você quer fazer primeiro?".
+ * Os mesmos para todas as contas; a escolha só define o destino.
+ */
+export const FIRST_GOALS = [
+  { key: 'servico', label: 'Preciso de um serviço', hint: 'Preço fechado e profissional verificado', href: '/servicos', icon: 'search' },
+  { key: 'prestar', label: 'Ofereço meus serviços', hint: 'Mostre seus trabalhos e receba pedidos', href: '/sou-prestador', icon: 'tool' },
+  { key: 'emprego', label: 'Procuro emprego', hint: 'Vagas de Campo Grande, sem pagar nada', href: '/vagas', icon: 'briefcase' },
+  { key: 'vaga', label: 'Ofereço uma vaga', hint: 'Anuncie grátis e receba currículos', href: '/vagas/nova', icon: 'megaphone' },
+  { key: 'comercio', label: 'Comércio', hint: 'Anuncie o que vende ou ache quem vende', href: '/comercio', icon: 'tag' },
+  { key: 'comunidade', label: 'Comunidade', hint: 'O dia a dia da cidade e indicações', href: '/comunidade', icon: 'users' },
+] as const satisfies readonly { key: string; label: string; hint: string; href: string; icon: keyof typeof NAV_ICONS }[];
+
+export type FirstGoal = (typeof FIRST_GOALS)[number]['key'];
+
 export const PROVIDER_ITEMS: NavItem[] = [
   { href: '/painel', label: 'Visão geral', icon: 'gauge' },
   { href: '/painel/pedidos', label: 'Pedidos para mim', icon: 'clipboard' },
@@ -175,7 +190,7 @@ export function screenTitle(pathname: string, section?: string | null): string {
     '/painel': 'Painel do prestador', '/painel/perfil': 'Meu perfil', '/painel/servicos': 'Serviços e fotos',
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
     '/painel/verificacao': 'Verificação do perfil',
-    '/notificacoes': 'Notificações', '/conta': 'Minha conta', '/perfil': 'Perfil', '/criar': 'Criar', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
+    '/notificacoes': 'Notificações', '/completar-cadastro': 'Complete seu cadastro', '/boas-vindas': 'Boas-vindas', '/termos': 'Termos de uso', '/conta': 'Minha conta', '/perfil': 'Perfil', '/criar': 'Criar', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
     '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Banco de currículos', '/curriculo': 'Meu currículo', '/vagas/verificacao': 'Verificação de quem contrata', '/painel/pacotes': 'Pacotes que eu faço', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };

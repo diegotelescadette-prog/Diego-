@@ -46,6 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <div className="mx-auto flex max-w-7xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-stone-600">
         <span>© {new Date().getFullYear()} {APP_NAME} · Piloto em Campo Grande–MS</span>
         <Link href="/privacidade" className="underline">Privacidade</Link>
+        <Link href="/termos" className="underline">Termos de uso</Link>
         <form action={setTheme} className="flex flex-wrap items-center gap-x-3" aria-label="Aparência" data-testid="theme-picker">
           <span>Aparência:</span>
           {([['auto', 'Automático'], ['claro', 'Claro'], ['escuro', 'Escuro']] as const).map(([v, label]) => (

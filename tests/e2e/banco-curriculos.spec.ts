@@ -1,5 +1,5 @@
 import { test, type Page } from '@playwright/test';
-import { demoEmail, expect, login, reseed } from './helpers';
+import { demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
@@ -14,11 +14,11 @@ async function signInAs(page: Page, who: string, next: string) {
 }
 
 test('vagas: duas áreas, Oferecer trabalho e Enviar currículo', async ({ page }) => {
-  await page.goto('/vagas');
+  await enter(page, '/vagas');
   await expect(page.getByTestId('area-oferecer').getByRole('heading', { name: 'Oferecer trabalho' })).toBeVisible();
   await expect(page.getByTestId('area-curriculo').getByRole('heading', { name: 'Enviar currículo' })).toBeVisible();
   await page.getByTestId('area-curriculo').getByRole('link', { name: 'Deixar meu currículo' }).click();
-  await expect(page).toHaveURL(/\/entrar\?next=(%2F|\/)vagas(%2F|\/)meu-curriculo/);
+  await expect(page).toHaveURL(/\/vagas\/meu-curriculo/);
 });
 
 test('candidato deixa o currículo no banco, oculta e mostra de novo', async ({ page }) => {

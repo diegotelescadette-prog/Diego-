@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { demoEmail, expect, login, reseed } from './helpers';
+import { demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
@@ -68,7 +68,7 @@ test('prestador: ajusta o dia, confere na busca e pausa; Ver perfil abre só o p
   await expect(page.getByTestId('today-active')).not.toContainText('Amambaí');
 
   const visitor = await page.context().browser()!.newPage();
-  await visitor.goto('/hoje?servico=encanador&bairro=amambai');
+  await enter(visitor, '/hoje?servico=encanador&bairro=amambai');
   await expect(visitor.getByTestId('urgent-result').filter({ hasText: 'Carlos Hidráulica' })).toHaveCount(0);
   await visitor.goto('/hoje?servico=encanador&bairro=centro');
   const card = visitor.getByTestId('urgent-result').filter({ hasText: 'Carlos Hidráulica' });

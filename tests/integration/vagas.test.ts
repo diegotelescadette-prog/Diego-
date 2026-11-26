@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { admin, anon, signIn } from './helpers.ts';
+import { admin, anon, signIn, viewer } from './helpers.ts';
 
 const reseed = () => execSync('npm run -s seed:demo', { stdio: 'ignore' });
 before(reseed);
@@ -39,19 +39,19 @@ async function apply(c: SupabaseClient, jobId: string, pathOwner?: string) {
 }
 
 test('vagas: visitante vê só as abertas; quem publicou vê as próprias encerradas', async () => {
-  const { data } = await anon().from('jobs').select('title');
+  const { data } = await (await viewer()).from('jobs').select('title');
   assert.equal(data!.length, 3);
   const empresa = await signIn('empresa');
   const job = await demoJob('Eletricista para obra (demo)');
   const r = await empresa.rpc('set_my_job_status', { p_job: job.id, p_status: 'encerrada' });
   assert.equal(r.error, null);
-  const { data: after } = await anon().from('jobs').select('title');
+  const { data: after } = await (await viewer()).from('jobs').select('title');
   assert.ok(!after!.some((j) => j.title === 'Eletricista para obra (demo)'));
   const { data: own } = await empresa.from('jobs').select('title, status').eq('id', job.id).single();
   assert.equal(own!.status, 'encerrada');
   // reabrir renova o prazo
   await empresa.rpc('set_my_job_status', { p_job: job.id, p_status: 'aberta' });
-  const { data: again } = await anon().from('jobs').select('expires_at').eq('id', job.id).single();
+  const { data: again } = await (await viewer()).from('jobs').select('expires_at').eq('id', job.id).single();
   assert.ok(new Date(again!.expires_at).getTime() > Date.now() + 29 * 86_400_000);
 });
 
@@ -145,7 +145,7 @@ test('moderação: remove vaga com motivo; quem publicou não reabre; usuário c
   assert.ok(noNote.error);
   const r = await a.rpc('admin_set_job_status', { p_job: jobId, p_status: 'removida', p_note: 'Cobrava taxa' });
   assert.equal(r.error, null);
-  const { data: pub } = await anon().from('jobs').select('id').eq('id', jobId);
+  const { data: pub } = await (await viewer()).from('jobs').select('id').eq('id', jobId);
   assert.equal(pub!.length, 0);
   const reopen = await cliente.rpc('set_my_job_status', { p_job: jobId, p_status: 'aberta' });
   assert.match(reopen.error?.message ?? '', /moderação/);
