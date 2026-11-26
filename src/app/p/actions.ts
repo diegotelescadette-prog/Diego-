@@ -20,6 +20,22 @@ export async function toggleFavorite(form: FormData) {
   revalidatePath('/favoritos');
 }
 
+/** Segue ou deixa de seguir o prestador (as publicações dele entram no filtro "Quem eu sigo"). */
+export async function toggleFollow(form: FormData) {
+  const supabase = await createClient();
+  const back = safeNext(String(form.get('back') ?? ''), '/');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect(`/entrar?motivo=seguir&next=${encodeURIComponent(back)}`);
+  const providerId = z.string().uuid().parse(form.get('provider_id'));
+  if (form.get('following') === '1') {
+    await supabase.from('provider_follows').delete().eq('follower_id', user.id).eq('provider_id', providerId);
+  } else if (providerId !== user.id) {
+    await supabase.from('provider_follows').insert({ follower_id: user.id, provider_id: providerId });
+  }
+  revalidatePath(back.split('?')[0]);
+  revalidatePath('/comunidade');
+}
+
 export type ReportState = { ok?: boolean; message?: string; errors?: Record<string, string> } | undefined;
 const REASONS = ['informacoes_falsas', 'golpe_ou_cobranca', 'comportamento_inadequado', 'conteudo_improprio', 'outro'] as const;
 

@@ -14,6 +14,17 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 10 (26/11/2026): fase 3, parte 1 (rede social) — passando
+
+Unitários (24), banco/API (57) e E2E (51 cenários × computador e celular = 102; 100 passaram, 2 falharam, ver abaixo).
+
+- Reações: Valeu, Inspirou, Tô junto e Indico, uma por pessoa; o "Útil" de antes vira Valeu; trocar o tipo não soma outra reação; tipo fora da lista é recusado; ninguém troca a reação de outra pessoa; o botão principal marca Valeu e tocar de novo tira.
+- Feito pelo Próximo: só pedido concluído do próprio prestador, só em Trabalho e um post por pedido; mostra a nota do cliente (sem nome nem comentário); editar o post não muda o pedido ligado; "Mostrar este trabalho no feed" em Pedidos para mim abre o formulário já ligado ao pedido.
+- Seguir: só conta logada segue prestador publicado, ninguém segue a si mesmo; a contagem de seguidores é pública e a lista é privada; a aba "Quem eu sigo" mostra só esses perfis e explica o que fazer quando está vazia.
+- Fim do feed: "Você está em dia. Vai lá viver o seu dia." quando não há mais publicações.
+- Corrigido antes de subir: o feed falhava para visitantes porque faltava a permissão de leitura na tabela de quem segue.
+- Instável, fora desta mudança: "busca sem resultados sugere retirar filtro" às vezes falha no computador (a página de busca não foi alterada; passa ao repetir).
+
 ## Rodada 9 (26/11/2026): preparação do lançamento — todos passando
 
 Unitários (16), banco/API (46) e E2E (41 cenários × computador e celular = 82).

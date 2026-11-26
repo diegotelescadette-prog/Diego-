@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation';
 import { ProfileDetails, type ProfileTab } from '@/components/ProfileDetails';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { GeneralContactButton, ReportForm, UrgentContactButton } from '@/components/ProfileActions';
-import { toggleFavorite } from '@/app/p/actions';
+import { toggleFavorite, toggleFollow } from '@/app/p/actions';
 import { loadProfile } from '@/lib/profile';
 import { getNeighborhoods, getUser } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
@@ -46,18 +46,24 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
   const urgentCtx = ctxService?.urgent_pilot && sp.hoje === '1' && sp.servico === ctxService.slug && p.available_today;
 
   let isFav = false;
+  let isFollowing = false;
+  const supabase = await createClient();
   if (user) {
-    const supabase = await createClient();
-    const { data } = await supabase.from('favorites').select('provider_id').eq('user_id', user.id).eq('provider_id', p.id).maybeSingle();
+    const [{ data }, { data: fol }] = await Promise.all([
+      supabase.from('favorites').select('provider_id').eq('user_id', user.id).eq('provider_id', p.id).maybeSingle(),
+      supabase.from('provider_follows').select('provider_id').eq('follower_id', user.id).eq('provider_id', p.id).maybeSingle(),
+    ]);
     isFav = !!data;
+    isFollowing = !!fol;
   }
+  const { data: followers } = p.status === 'published' ? await supabase.rpc('follower_count', { p_provider: p.id }) : { data: 0 };
   const isOwner = user?.id === p.id;
   const posts = p.status === 'published' ? await getPosts({ author: p.id, limit: 20 }) : [];
   // Número de pessoas que salvaram: só a contagem, lida pelo servidor (a lista de favoritos é privada).
   const saved = p.status === 'published'
     ? (await createAdminClient().from('favorites').select('provider_id', { count: 'exact', head: true }).eq('provider_id', p.id)).count ?? 0
     : 0;
-  const stats = { posts: posts.length, useful: posts.reduce((n, po) => n + po.reactions, 0), saved };
+  const stats = { posts: posts.length, useful: posts.reduce((n, po) => n + po.reactions, 0), saved, followers: Number(followers ?? 0) };
   const tabs: ProfileTab[] = ['trabalhos', 'sobre', 'publicacoes'];
   const tab: ProfileTab = tabs.includes(sp.aba as ProfileTab) ? sp.aba as ProfileTab
     : p.work_photos.length ? 'trabalhos' : posts.length ? 'publicacoes' : 'sobre';
@@ -79,6 +85,14 @@ export default async function PerfilPublico({ params, searchParams }: { params: 
       ) : (
         <Link className="btn-zap" href={`/entrar?motivo=contato&next=${encodeURIComponent(here)}`}>Chamar no WhatsApp</Link>
       )}
+      <form action={toggleFollow}>
+        <input type="hidden" name="provider_id" value={p.id} />
+        <input type="hidden" name="back" value={here} />
+        <input type="hidden" name="following" value={isFollowing ? '1' : '0'} />
+        <button type="submit" className={`${isFollowing ? 'btn-outline' : 'btn-primary'} w-full`} aria-pressed={isFollowing} data-testid="follow">
+          {isFollowing ? 'Seguindo' : 'Seguir'}
+        </button>
+      </form>
       <form action={toggleFavorite}>
         <input type="hidden" name="provider_id" value={p.id} />
         <input type="hidden" name="back" value={here} />

@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { bookingAction } from '@/app/pedidos/actions';
 import { BookingItems } from '@/components/BookingTimeline';
 import { getContacts, listBookings, type BookingView } from '@/lib/booking';
 import { dateLabel, formatPrice, SLOT_LABEL, STATUS_LABEL } from '@/lib/booking-shared';
 import { getSetting, getUser } from '@/lib/data';
+import { createClient } from '@/lib/supabase/server';
 
 export const metadata: Metadata = { title: 'Pedidos para mim' };
 export const dynamic = 'force-dynamic';
@@ -24,7 +26,7 @@ function Act({ b, action, label, cls = 'btn-primary' }: { b: BookingView; action
   );
 }
 
-async function Card({ b }: { b: BookingView }) {
+async function Card({ b, shown }: { b: BookingView; shown: boolean }) {
   const c = await getContacts(b.id);
   const confirmed = b.status !== 'solicitado';
   return (
@@ -59,6 +61,12 @@ async function Card({ b }: { b: BookingView }) {
       {b.status === 'concluido' && b.commission_cents !== null && (
         <p className="text-sm text-stone-600">Comissão da plataforma: {formatPrice(b.commission_cents)} · você recebe {formatPrice(b.total_cents - b.commission_cents)}</p>
       )}
+      {b.status === 'concluido' && !shown && (
+        <Link href={`/publicar?tipo=trabalho&pedido=${b.id}`} className="btn-outline min-h-11 w-full px-4" data-testid="show-work">
+          Mostrar este trabalho no feed
+        </Link>
+      )}
+      {b.status === 'concluido' && shown && <p className="text-sm font-semibold text-oliva-800">✓ Já está no feed com o selo Feito pelo Próximo</p>}
     </li>
   );
 }
@@ -68,7 +76,12 @@ export default async function PedidosParaMim({ searchParams }: { searchParams: P
   const user = await getUser();
   if (!user) redirect('/entrar?next=%2Fpainel%2Fpedidos');
   const { msg } = await searchParams;
-  const [list, pct] = await Promise.all([listBookings({ provider: user.id, limit: 100 }), getSetting<{ percent: number }>('comissao')]);
+  const sb = await createClient();
+  const [list, pct, { data: posted }] = await Promise.all([
+    listBookings({ provider: user.id, limit: 100 }), getSetting<{ percent: number }>('comissao'),
+    sb.from('posts').select('booking_id').eq('author_id', user.id).not('booking_id', 'is', null),
+  ]);
+  const shown = new Set((posted ?? []).map((p) => p.booking_id as string));
   const groups = [
     { title: 'Esperando sua confirmação', items: list.filter((b) => b.status === 'solicitado') },
     { title: 'Próximos e em andamento', items: list.filter((b) => ['confirmado', 'a_caminho', 'em_andamento'].includes(b.status)) },
@@ -85,7 +98,7 @@ export default async function PedidosParaMim({ searchParams }: { searchParams: P
       {groups.filter((g) => g.items.length).map((g) => (
         <section key={g.title} className="space-y-2">
           <h2 className="font-bold text-stone-800">{g.title}</h2>
-          <ul className="space-y-3">{g.items.map((b) => <Card key={b.id} b={b} />)}</ul>
+          <ul className="space-y-3">{g.items.map((b) => <Card key={b.id} b={b} shown={shown.has(b.id)} />)}</ul>
         </section>
       ))}
     </div>

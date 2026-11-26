@@ -2,6 +2,25 @@ import type { Badges } from './verification';
 // Tipos e regras das publicações da comunidade, usados no servidor e no navegador.
 export type PostKind = 'trabalho' | 'divulgacao' | 'pedido';
 export type MediaLabel = 'antes' | 'depois' | null;
+export type ReactionKind = 'valeu' | 'inspirou' | 'to_junto' | 'indico';
+/** Reações da comunidade (uma por pessoa; tocar de novo na mesma tira). */
+export const REACTIONS: { key: ReactionKind; label: string }[] = [
+  { key: 'valeu', label: 'Valeu' },
+  { key: 'inspirou', label: 'Inspirou' },
+  { key: 'to_junto', label: 'Tô junto' },
+  { key: 'indico', label: 'Indico' },
+];
+export const isReaction = (r: unknown): r is ReactionKind => REACTIONS.some((x) => x.key === r);
+/** "12 reações · 8 Valeu" — o tipo mais usado aparece junto do total. */
+export function reactionSummary(counts: Partial<Record<ReactionKind, number>>): string {
+  const total = REACTIONS.reduce((n, r) => n + (counts[r.key] ?? 0), 0);
+  if (!total) return '';
+  const top = [...REACTIONS].sort((a, b) => (counts[b.key] ?? 0) - (counts[a.key] ?? 0))[0];
+  const head = total === 1 ? '1 reação' : `${total} reações`;
+  return (counts[top.key] ?? 0) === total ? `${head} · ${top.label}` : `${head} · mais: ${top.label}`;
+}
+/** Prova do "Feito pelo Próximo": quando o pedido foi concluído e a nota do cliente (se avaliou). */
+export interface PostProof { doneAt: string | null; rating: number | null }
 
 export interface PostMedia { kind: 'foto' | 'video'; url: string; path: string; label: MediaLabel }
 export interface PostView {
@@ -10,6 +29,7 @@ export interface PostView {
   service: string | null; serviceSlug: string | null; category: string | null; categorySlug: string | null;
   neighborhood: string | null; price: string | null; found: boolean;
   media: PostMedia[]; reactions: number; comments: number; reacted: boolean; saved: boolean;
+  myReaction: ReactionKind | null; reactionCounts: Partial<Record<ReactionKind, number>>; proof: PostProof | null;
   lastComment: { name: string; body: string } | null;
 }
 export interface CommentView {
@@ -34,8 +54,8 @@ export const POST_REPORT_REASON: Record<string, string> = {
   golpe_ou_cobranca: 'Golpe ou cobrança', conteudo_improprio: 'Conteúdo impróprio', ofensa_ou_assedio: 'Ofensa ou assédio', spam: 'Propaganda repetida (spam)', outro: 'Outro',
 };
 
-/** Filtros do feed lidos da URL (?tipo=&categoria=&bairro=). Valores inválidos são ignorados. */
-export interface FeedFilters { kind: PostKind | null; category: string | null; neighborhood: number | null }
+/** Filtros do feed lidos da URL (?tipo=&categoria=&bairro=&seguindo=1). Valores inválidos são ignorados. */
+export interface FeedFilters { kind: PostKind | null; category: string | null; neighborhood: number | null; following: boolean }
 export function readFilters(sp: Record<string, string | string[] | undefined>): FeedFilters {
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
   const tipo = one(sp.tipo);
@@ -45,6 +65,7 @@ export function readFilters(sp: Record<string, string | string[] | undefined>): 
     kind: isKind(tipo) ? tipo : null,
     category: /^[a-z0-9-]{1,60}$/.test(cat) ? cat : null,
     neighborhood: Number.isInteger(bairro) && bairro > 0 ? bairro : null,
+    following: one(sp.seguindo) === '1',
   };
 }
 /** Monta a URL do feed mantendo os filtros (e trocando os que forem passados). `pages` = quantas páginas mostrar ("Carregar mais"). */
@@ -54,11 +75,12 @@ export function feedHref(f: FeedFilters, change: Partial<FeedFilters> & { pages?
   if (n.kind) q.set('tipo', n.kind);
   if (n.category) q.set('categoria', n.category);
   if (n.neighborhood) q.set('bairro', String(n.neighborhood));
+  if (n.following) q.set('seguindo', '1');
   if (change.pages && change.pages > 1) q.set('pagina', String(change.pages));
   const s = q.toString();
   return s ? `/comunidade?${s}` : '/comunidade';
 }
-export const hasFilters = (f: FeedFilters) => !!(f.kind || f.category || f.neighborhood);
+export const hasFilters = (f: FeedFilters) => !!(f.kind || f.category || f.neighborhood || f.following);
 /** Cursor estável de paginação: data + id da última publicação. */
 export function encodeCursor(p: { createdAt: string; id: string }): string { return `${p.createdAt}_${p.id}`; }
 export function decodeCursor(c: string | undefined): { before: string; beforeId: string } | null {

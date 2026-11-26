@@ -11,8 +11,8 @@ const BOOKMARK = 'M6 3h12v18l-6-4-6 4z';
 const SHARE = 'M7 17L17 7M9 7h8v8';
 import { PostGallery } from './PostGallery';
 import { useWhatsApp } from './useWhatsApp';
-import { deletePost, toggleFound, toggleSave, toggleUseful } from '@/app/comunidade/actions';
-import { KIND_LABEL, timeAgo, type PostView } from '@/lib/posts-shared';
+import { deletePost, setReaction, toggleFound, toggleSave } from '@/app/comunidade/actions';
+import { KIND_LABEL, REACTIONS, reactionSummary, timeAgo, type PostView, type ReactionKind } from '@/lib/posts-shared';
 import { badgeTexts } from '@/lib/verification';
 
 const KIND_CLASS = { trabalho: 'kind-trabalho', divulgacao: 'kind-divulgacao', pedido: 'kind-pedido' } as const;
@@ -30,7 +30,8 @@ export function PostCard({ post, viewerId, message, detail = false }: {
   const mine = viewerId === post.author.id;
   const pro = post.author.isProvider;
   const { open: whatsapp, busy, err } = useWhatsApp(post.author.id, page, !!viewerId, message);
-  const [useful, setUseful] = useState({ on: post.reacted, n: post.reactions });
+  const [react, setReact] = useState<{ mine: ReactionKind | null; counts: Partial<Record<ReactionKind, number>> }>({ mine: post.myReaction, counts: post.reactionCounts });
+  const [picker, setPicker] = useState(false);
   const [saved, setSaved] = useState(post.saved);
   const [found, setFound] = useState(post.found);
   const [menu, setMenu] = useState(false);
@@ -44,11 +45,17 @@ export function PostCard({ post, viewerId, message, detail = false }: {
   function needLogin(motivo: string) {
     router.push(`/entrar?motivo=${motivo}&next=${encodeURIComponent(here())}`);
   }
-  function toggle() {
+  /** Escolhe a reação; tocar na que já está marcada tira. O botão principal usa "Valeu". */
+  function choose(r: ReactionKind) {
     if (!viewerId) return needLogin('util');
-    const next = { on: !useful.on, n: useful.n + (useful.on ? -1 : 1) };
-    setUseful(next);
-    start(async () => { const r = await toggleUseful(post.id, next.on); if (!r.ok) setUseful(useful); });
+    const prev = react;
+    const next = prev.mine === r ? null : r;
+    const counts = { ...prev.counts };
+    if (prev.mine) counts[prev.mine] = Math.max(0, (counts[prev.mine] ?? 1) - 1);
+    if (next) counts[next] = (counts[next] ?? 0) + 1;
+    setReact({ mine: next, counts });
+    setPicker(false);
+    start(async () => { const res = await setReaction(post.id, next); if (!res.ok) setReact(prev); });
   }
   function save() {
     if (!viewerId) return needLogin('salvar');
@@ -130,6 +137,11 @@ export function PostCard({ post, viewerId, message, detail = false }: {
 
       <p className="flex flex-wrap items-center gap-2 px-4 pt-3 text-sm">
         <span className={`kind-tag ${KIND_CLASS[post.kind]}`}>{KIND_LABEL[post.kind]}</span>
+        {post.proof && (
+          <span className="proof-tag" data-testid="proof" title="Serviço contratado e concluído pelo Próximo">
+            Feito pelo Próximo{post.proof.rating ? ` · nota ${post.proof.rating}` : ''}
+          </span>
+        )}
         {subject && <span className="font-semibold text-stone-800">{subject}</span>}
         {post.neighborhood && post.kind !== 'pedido' && <span className="text-stone-600">· Bairro {post.neighborhood}</span>}
         {post.price && <span className="price-tag">{post.price}</span>}
@@ -154,15 +166,27 @@ export function PostCard({ post, viewerId, message, detail = false }: {
       )}
 
       <div className="flex items-center justify-between px-4 pt-3 text-sm text-stone-600">
-        <span data-testid="useful-count">{useful.n > 0 ? `${useful.n} ${useful.n === 1 ? 'achou útil' : 'acharam útil'}` : ''}</span>
+        <span data-testid="useful-count">{reactionSummary(react.counts)}</span>
         {post.comments > 0 && <Link href={`${page}#comentarios`} className="hover:underline">{post.comments === 1 ? '1 comentário' : `${post.comments} comentários`}</Link>}
       </div>
       <div className="post-row">
-        <button type="button" className={`post-act${useful.on ? ' on' : ''}`} aria-pressed={useful.on} onClick={toggle}><Glyph d={THUMB} size={18} /> Útil</button>
+        <button type="button" className={`post-act${react.mine ? ' on' : ''}`} aria-pressed={!!react.mine} data-testid="react-main"
+          onClick={() => choose(react.mine ?? 'valeu')}><Glyph d={THUMB} size={18} /> {REACTIONS.find((r) => r.key === react.mine)?.label ?? 'Valeu'}</button>
+        <button type="button" className={`post-act flex-none! px-2${picker ? ' on' : ''}`} aria-expanded={picker} aria-label="Escolher outra reação" data-testid="react-more"
+          onClick={() => (viewerId ? setPicker(!picker) : needLogin('util'))}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+        </button>
         <Link href={`${page}#comentar`} className="post-act"><Glyph d={BUBBLE} size={18} /> {post.kind === 'pedido' ? 'Indicar' : 'Comentar'}</Link>
         <button type="button" className={`post-act${saved ? ' on' : ''}`} aria-pressed={saved} onClick={save}><Glyph d={BOOKMARK} size={18} /> {saved ? 'Salvo' : 'Salvar'}</button>
         <button type="button" className="post-act" onClick={share} aria-label="Compartilhar publicação"><Glyph d={SHARE} size={18} /> <span className="hidden sm:inline">Compartilhar</span></button>
       </div>
+      {picker && (
+        <div className="react-pick" role="group" aria-label="Reações" data-testid="react-pick">
+          {REACTIONS.map((r) => (
+            <button key={r.key} type="button" className="react-opt" aria-pressed={react.mine === r.key} onClick={() => choose(r.key)} disabled={pending}>{r.label}</button>
+          ))}
+        </div>
+      )}
       {pro && !mine && (
         <div className="grid grid-cols-2 gap-2 px-4 pb-3">
           {profile && <Link href={profile} className="btn-outline min-h-11 px-3 text-sm">Ver perfil</Link>}

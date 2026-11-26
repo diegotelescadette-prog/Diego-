@@ -58,13 +58,24 @@ test('item ativo: exato, prefixo e seção do admin', () => {
 
 test('filtros do feed: leitura segura, URL que mantém a seleção e cursor estável', async () => {
   const { readFilters, feedHref, decodeCursor, encodeCursor } = await import('../../src/lib/posts-shared.ts');
-  assert.deepEqual(readFilters({ tipo: 'pedido', categoria: 'eletrica-e-climatizacao', bairro: '12' }), { kind: 'pedido', category: 'eletrica-e-climatizacao', neighborhood: 12 });
-  assert.deepEqual(readFilters({ tipo: 'x', categoria: '<script>', bairro: '-1' }), { kind: null, category: null, neighborhood: null });
+  assert.deepEqual(readFilters({ tipo: 'pedido', categoria: 'eletrica-e-climatizacao', bairro: '12' }), { kind: 'pedido', category: 'eletrica-e-climatizacao', neighborhood: 12, following: false });
+  assert.deepEqual(readFilters({ tipo: 'x', categoria: '<script>', bairro: '-1' }), { kind: null, category: null, neighborhood: null, following: false });
   const f = readFilters({ tipo: 'trabalho', bairro: '3' });
   assert.equal(feedHref(f), '/comunidade?tipo=trabalho&bairro=3');
   assert.equal(feedHref(f, { pages: 2 }), '/comunidade?tipo=trabalho&bairro=3&pagina=2');
   assert.equal(feedHref(f, { kind: null, neighborhood: null }), '/comunidade');
+  assert.equal(readFilters({ seguindo: '1' }).following, true);
+  assert.equal(feedHref(readFilters({ seguindo: '1' })), '/comunidade?seguindo=1');
   const c = encodeCursor({ createdAt: '2026-11-25T19:00:00.123456+00:00', id: '5cdbd068-4211-4ce4-8c9b-d0a9c883cf93' });
   assert.deepEqual(decodeCursor(c), { before: '2026-11-25T19:00:00.123456+00:00', beforeId: '5cdbd068-4211-4ce4-8c9b-d0a9c883cf93' });
   assert.equal(decodeCursor('lixo'), null);
+});
+
+test('reações: resumo com total e o tipo mais usado', async () => {
+  const { reactionSummary, isReaction } = await import('../../src/lib/posts-shared.ts');
+  assert.equal(reactionSummary({}), '');
+  assert.equal(reactionSummary({ valeu: 1 }), '1 reação · Valeu');
+  assert.equal(reactionSummary({ valeu: 2, inspirou: 5 }), '7 reações · mais: Inspirou');
+  assert.equal(isReaction('to_junto'), true);
+  assert.equal(isReaction('util'), false);
 });

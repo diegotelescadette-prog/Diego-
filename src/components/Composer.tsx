@@ -15,6 +15,8 @@ export interface ComposerProps {
   publicName: string | null; firstPost: boolean;
   catalog: ComposerCatalog[]; neighborhoods: { id: number; name: string }[];
   initialKind?: PostKind | null; initialCategory?: string | null;
+  /** Pedidos concluídos pelo app que ainda não viraram publicação ("Feito pelo Próximo"). */
+  bookings?: { id: string; serviceId: number; label: string }[]; initialBooking?: string | null;
   edit?: { id: string; kind: PostKind; body: string; serviceId: number | null; categoryId: number | null; neighborhoodId: number | null; price: string | null;
     media: { kind: 'foto' | 'video'; path: string; url: string; label: MediaLabel }[] };
 }
@@ -51,9 +53,12 @@ export function Composer(props: ComposerProps) {
   const suggestedService = startCategory ? services.find((s) => startCategory.services.some((x) => x.id === s.id))?.id ?? null : null;
   const [kind, setKind] = useState<PostKind | null>(edit?.kind ?? props.initialKind ?? null);
   const [body, setBody] = useState(edit?.body ?? '');
-  const [serviceId, setServiceId] = useState<number | null>(edit?.serviceId ?? suggestedService ?? props.mainServiceId ?? services[0]?.id ?? null);
+  const [serviceId, setServiceId] = useState<number | null>(edit?.serviceId ?? props.bookings?.find((b) => b.id === props.initialBooking)?.serviceId ?? suggestedService ?? props.mainServiceId ?? services[0]?.id ?? null);
   const [reqCategory, setReqCategory] = useState<number | null>(edit?.categoryId ?? startCategory?.id ?? null);
   const [reqService, setReqService] = useState<number | null>(edit?.kind === 'pedido' ? edit.serviceId : null);
+  const bookings = edit ? [] : props.bookings ?? [];
+  const startBooking = bookings.find((b) => b.id === props.initialBooking) ?? null;
+  const [booking, setBooking] = useState<string | null>(startBooking?.id ?? null);
   const [hood, setHood] = useState<number | null>(edit?.neighborhoodId ?? null);
   const [price, setPrice] = useState(edit?.price ?? '');
   const [name, setName] = useState('');
@@ -152,6 +157,7 @@ export function Composer(props: ComposerProps) {
         neighborhoodId: hood, price: kind === 'divulgacao' ? price : null,
         media: working.map((m) => ({ kind: m.kind, path: m.path!, label: m.kind === 'foto' ? m.label : null })),
         ...(kind === 'pedido' && !props.publicName ? { publicName: name } : {}),
+        ...(kind === 'trabalho' && booking && !edit ? { bookingId: booking } : {}),
       };
       const r = edit ? await updatePost(edit.id, input) : await createPost({ ...input, token: token.current });
       if (!r.ok || !r.id) throw new Error(r.message ?? 'Não foi possível publicar.');
@@ -210,10 +216,28 @@ export function Composer(props: ComposerProps) {
             </p>
           )}
 
+          {kind === 'trabalho' && bookings.length > 0 && (
+            <div className="rounded-2xl border border-line bg-white p-3" data-testid="proof-picker">
+              <label htmlFor="p-booking" className="label">Foi um pedido feito pelo Próximo?</label>
+              <select id="p-booking" className="input" value={booking ?? ''}
+                onChange={(e) => {
+                  const b = bookings.find((x) => x.id === e.target.value) ?? null;
+                  setBooking(b?.id ?? null);
+                  if (b) setServiceId(b.serviceId);
+                }}>
+                <option value="">Não, foi um trabalho por fora</option>
+                {bookings.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
+              </select>
+              <p className="mt-1 text-sm text-stone-600">
+                Ligado ao pedido, o post ganha o selo <strong>Feito pelo Próximo</strong> com a nota que o cliente deu. O nome e o endereço do cliente não aparecem.
+              </p>
+            </div>
+          )}
+
           {providerKind && (
             <div>
               <label htmlFor="p-service" className="label">Serviço</label>
-              <select id="p-service" className="input" value={serviceId ?? ''} onChange={(e) => setServiceId(Number(e.target.value) || null)} required>
+              <select id="p-service" className="input" value={serviceId ?? ''} onChange={(e) => setServiceId(Number(e.target.value) || null)} required disabled={!!booking && kind === 'trabalho'}>
                 {services.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>

@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { hitLimit } from '@/lib/rate-limit';
-import { POST_LIMITS, POST_REPORT_REASON, PROVIDER_KINDS } from '@/lib/posts-shared';
+import { isReaction, POST_LIMITS, POST_REPORT_REASON, PROVIDER_KINDS, type ReactionKind } from '@/lib/posts-shared';
 import { forbiddenPromise } from '@/lib/verification';
 
 export type Result = { ok?: boolean; message?: string; id?: string; login?: boolean };
@@ -20,6 +20,7 @@ const PostInput = z.object({
   price: z.string().max(POST_LIMITS.price).nullable(),
   media: MediaList,
   publicName: z.string().max(60).optional(),
+  bookingId: z.string().uuid().optional(),
 });
 export type PostInputT = z.infer<typeof PostInput>;
 
@@ -84,6 +85,7 @@ export async function createPost(raw: PostInputT & { token: string }): Promise<R
   const { data: post, error } = await supabase.from('posts').insert({
     author_id: user.id, kind: p.kind, body, service_id: p.serviceId, category_id: p.serviceId ? null : p.categoryId,
     neighborhood_id: p.neighborhoodId, price_label: p.kind === 'divulgacao' ? (p.price?.trim() || null) : null, client_token: token.data,
+    ...(p.kind === 'trabalho' && p.bookingId ? { booking_id: p.bookingId } : {}),
   }).select('id').single();
   if (error || !post) {
     if (error?.code === '23505') {
@@ -186,20 +188,28 @@ export async function toggleFound(postId: string, found: boolean): Promise<Resul
   return { ok: true };
 }
 
-/** Marca ou desmarca "Útil". */
-export async function toggleUseful(postId: string, on: boolean): Promise<Result> {
+/** Reage à publicação (Valeu, Inspirou, Tô junto ou Indico) ou tira a reação (`null`). */
+export async function setReaction(postId: string, reaction: ReactionKind | null): Promise<Result> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { login: true };
   const id = z.string().uuid().safeParse(postId);
-  if (!id.success) return { message: 'Publicação inválida.' };
-  if (on) {
-    const { error } = await supabase.from('post_reactions').insert({ post_id: id.data, user_id: user.id });
-    if (error && error.code !== '23505') return { message: 'Não foi possível marcar.' };
-  } else {
+  if (!id.success || (reaction !== null && !isReaction(reaction))) return { message: 'Reação inválida.' };
+  if (reaction === null) {
     await supabase.from('post_reactions').delete().eq('post_id', id.data).eq('user_id', user.id);
+    return { ok: true };
   }
+  const { error } = await supabase.from('post_reactions').insert({ post_id: id.data, user_id: user.id, reaction });
+  if (error?.code === '23505') {
+    const { error: e2 } = await supabase.from('post_reactions').update({ reaction }).eq('post_id', id.data).eq('user_id', user.id);
+    if (e2) return { message: 'Não foi possível reagir.' };
+  } else if (error) return { message: 'Não foi possível reagir.' };
   return { ok: true };
+}
+
+/** Compatibilidade: "Útil" de antes vira "Valeu". */
+export async function toggleUseful(postId: string, on: boolean): Promise<Result> {
+  return setReaction(postId, on ? 'valeu' : null);
 }
 
 /** Salva ou tira dos salvos. */
