@@ -55,6 +55,7 @@ export const NAV_ICONS = {
   clipboard: 'M8 4h8v3H8zM6 5H5v16h14V5h-1M8 12h8M8 16h5',
   calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h3',
   bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
+  plus: 'M12 5v14M5 12h14',
   rocket: 'M14 4c3 0 6 1 6 1s1 3 1 6c-2 4-6 7-9 8l-4-4c1-3 4-7 6-11zM9 15l-4 1 1-4M15 9a1 1 0 1 0 .01 0M6 18c-1 1-2 3-2 3s2-1 3-2',
 } as const;
 
@@ -66,24 +67,34 @@ export function areaFor(pathname: string): NavArea {
 }
 
 /**
- * Menu principal: Início e, em dois grupos, tudo o que antes ficava em blocos na tela inicial.
- * O botão "Criar publicação" fica embaixo da lista.
+ * Navegação principal (v3, sem menu lateral): os mesmos 5 itens na barra inferior do celular
+ * e na barra superior do computador. O resto fica na tela inicial, no (+) Criar e no Perfil.
  */
-export function searchItems(v: NavViewer): NavItem[] {
+export function mainItems(v: NavViewer): NavItem[] {
   return [
-    { href: '/', label: 'Início', icon: 'home', tone: 'sage' },
-    { href: '/servicos', label: 'Catálogo de serviços', icon: 'tag', match: ['/servicos', '/agendar/'], hint: 'Escolha, agende e pague depois', group: 'Serviços', tone: 'sand' },
-    { href: '/hoje', label: 'Preciso para hoje', icon: 'bolt', urgent: true, match: ['/hoje'], hint: 'Quem atende agora', group: 'Serviços', tone: 'sand' },
-    { href: '/buscar', label: 'Buscar profissional', icon: 'search', match: ['/buscar', '/p/'], hint: 'Por serviço e bairro', group: 'Serviços', tone: 'sand' },
-    { href: '/vagas', label: 'Vagas de emprego', icon: 'briefcase', match: ['/vagas', '/minhas-candidaturas'], hint: 'Vagas e meu currículo', group: 'Trabalho', tone: 'sage' },
-    { href: '/curriculo', label: 'Meu currículo', icon: 'file', match: ['/curriculo'], hint: 'Monte, complete e baixe em PDF', group: 'Trabalho', tone: 'sage' },
-    { href: '/vagas/nova', label: 'Quero contratar', icon: 'megaphone', match: ['/vagas/nova', '/minhas-vagas', '/vagas/verificacao'], hint: 'Publique uma vaga', group: 'Trabalho', tone: 'sage' },
-    { href: '/agenda', label: 'Minha agenda', icon: 'calendar', match: ['/agenda', '/pedidos'], hint: 'Pedidos e próximos compromissos', group: 'Agenda', tone: 'sky' },
-    { href: '/favoritos', label: 'Salvos', icon: 'heart', match: ['/favoritos'], hint: 'Profissionais e publicações', group: 'Agenda', tone: 'rose' },
-    { href: '/comunidade', label: 'Comunidade', icon: 'users', match: ['/comunidade', '/publicar', '/minhas-publicacoes'], hint: 'Trabalhos, dicas e indicações', group: 'Mais', tone: 'lavender' },
+    { href: '/', label: 'Início', icon: 'home', match: ['/servicos', '/agendar/', '/hoje', '/buscar', '/p/', '/vagas', '/sou-prestador'] },
+    { href: '/comunidade', label: 'Comunidade', icon: 'users', match: ['/comunidade', '/publicacoes', '/momentos/'] },
+    { href: '/criar', label: 'Criar', icon: 'plus', match: ['/criar', '/publicar', '/momentos/novo'] },
+    { href: '/agenda', label: 'Agenda', icon: 'calendar', match: ['/agenda', '/pedidos'] },
+    { href: v.loggedIn ? '/perfil' : '/entrar', label: 'Perfil', icon: 'user',
+      match: ['/perfil', '/conta', '/favoritos', '/curriculo', '/minhas-candidaturas', '/minhas-vagas', '/minhas-publicacoes', '/notificacoes', '/entrar', '/cadastrar'] },
+  ];
+}
+
+/** Atalhos reunidos no Perfil (sem repetir os itens da barra). Admin só para administradores. */
+export function profileLinks(v: NavViewer): (NavItem & { testid: string })[] {
+  return [
+    { href: '/conta', label: 'Minha conta', icon: 'account', hint: 'E-mail, senha e excluir conta', testid: 'perfil-conta' },
+    { href: '/pedidos', label: 'Meus pedidos', icon: 'clipboard', hint: 'Serviços que você contratou', testid: 'perfil-pedidos' },
+    { href: '/curriculo', label: 'Meu currículo', icon: 'file', hint: 'Monte, complete e baixe em PDF', testid: 'perfil-curriculo' },
+    { href: '/minhas-candidaturas', label: 'Minhas candidaturas', icon: 'briefcase', hint: 'Vagas em que você se candidatou', testid: 'perfil-candidaturas' },
+    { href: '/minhas-vagas', label: 'Minhas vagas', icon: 'megaphone', hint: 'Vagas que você publicou', testid: 'perfil-vagas' },
     v.hasProfile
-      ? { href: '/painel', label: 'Painel do profissional', icon: 'tool', match: [], hint: 'Pedidos, perfil e “Atendo hoje”', group: 'Mais', tone: 'sand' }
-      : { href: '/sou-prestador', label: 'Trabalhe com a gente', icon: 'tool', match: ['/sou-prestador'], hint: 'Receba pedidos sem pagar para ver', group: 'Mais', tone: 'sand' },
+      ? { href: '/painel', label: 'Meu painel de prestador', icon: 'tool', hint: 'Pedidos, perfil e “Atendo hoje”', testid: 'perfil-painel' }
+      : { href: '/sou-prestador', label: 'Ofereço meus serviços', icon: 'tool', hint: 'Receba pedidos sem pagar para ver', testid: 'perfil-painel' },
+    { href: '/minhas-publicacoes', label: 'Minhas publicações', icon: 'photo', hint: 'O que você publicou na comunidade', testid: 'perfil-publicacoes' },
+    { href: '/favoritos', label: 'Favoritos e salvos', icon: 'heart', hint: 'Profissionais e publicações', testid: 'perfil-favoritos' },
+    ...(v.isAdmin ? [{ href: '/admin', label: 'Administração', icon: 'gear', hint: 'Só para a equipe', testid: 'perfil-admin' } as NavItem & { testid: string }] : []),
   ];
 }
 
@@ -91,16 +102,12 @@ export const PROVIDER_ITEMS: NavItem[] = [
   { href: '/painel', label: 'Visão geral', icon: 'gauge' },
   { href: '/painel/pedidos', label: 'Pedidos para mim', icon: 'clipboard' },
   { href: '/painel/perfil', label: 'Meu perfil', icon: 'user' },
-  { href: '/publicar', label: 'Criar publicação', icon: 'megaphone' },
-  { href: '/minhas-publicacoes', label: 'Minhas publicações', icon: 'photo' },
   { href: '/painel/servicos', label: 'Serviços e fotos', icon: 'photo' },
   { href: '/painel/pacotes', label: 'Pacotes que eu faço', icon: 'clipboard' },
   { href: '/painel/atendimento', label: 'Onde atendo', icon: 'pin' },
   { href: '/painel/disponibilidade', label: 'Disponibilidade', icon: 'clock' },
   { href: '/painel/verificacao', label: 'Verificação do perfil', icon: 'shield' },
   { href: '/painel/previa', label: 'Prévia do perfil', icon: 'eye' },
-  { href: '/conta', label: 'Minha conta', icon: 'account' },
-  { href: '/', label: 'Voltar ao início', icon: 'back' },
 ];
 
 export const ADMIN_SECTIONS = [
@@ -129,14 +136,13 @@ export const ADMIN_ITEMS: NavItem[] = [
   { href: '/admin/pacotes', label: 'Pacotes e preços', icon: 'tag' },
   { href: '/admin/contratantes', label: 'Contratantes', icon: 'shield' },
   ...ADMIN_SECTIONS.slice(2).map((s) => ({ href: `/admin?aba=${s.key}`, label: s.label, icon: s.icon })),
-  { href: '/', label: 'Voltar ao início', icon: 'back' },
 ];
 
-/** Itens do menu lateral para a área e para quem está usando. */
+/** Abas da área (painel do prestador e administração), mostradas no topo do conteúdo. Fora delas, nada. */
 export function navItems(area: NavArea, v: NavViewer): NavItem[] {
   if (area === 'admin' && v.isAdmin) return ADMIN_ITEMS;
   if (area === 'prestador' && v.loggedIn) return PROVIDER_ITEMS;
-  return searchItems(v);
+  return [];
 }
 
 /** Item ativo: caminho exato (e seção, no admin) vale mais que um prefixo de `match`. */
@@ -169,7 +175,7 @@ export function screenTitle(pathname: string, section?: string | null): string {
     '/painel': 'Painel do prestador', '/painel/perfil': 'Meu perfil', '/painel/servicos': 'Serviços e fotos',
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
     '/painel/verificacao': 'Verificação do perfil',
-    '/notificacoes': 'Notificações', '/conta': 'Perfil', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
+    '/notificacoes': 'Notificações', '/conta': 'Minha conta', '/perfil': 'Perfil', '/criar': 'Criar', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
     '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Banco de currículos', '/curriculo': 'Meu currículo', '/vagas/verificacao': 'Verificação de quem contrata', '/painel/pacotes': 'Pacotes que eu faço', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };
@@ -184,7 +190,7 @@ export function screenTitle(pathname: string, section?: string | null): string {
   return '';
 }
 
-/** A barra inferior do celular fica só na área de busca. */
-export function showBottomNav(pathname: string): boolean {
-  return areaFor(pathname) === 'busca';
+/** A barra inferior do celular aparece em todas as telas (a navegação não depende mais do menu lateral). */
+export function showBottomNav(_pathname: string): boolean {
+  return true;
 }

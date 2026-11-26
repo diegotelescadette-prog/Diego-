@@ -277,7 +277,7 @@ body { @apply bg-paper text-stone-900 antialiased; }
 .lb-btn:hover, .lb-btn:focus-visible { background: rgb(255 255 255 / .3); }
 .bn[aria-current="page"] { font-weight: 800; }
 .bn-ico { display: grid; place-items: center; height: 30px; }
-.bn-primary .bn-ico { width: 44px; height: 30px; border-radius: 12px; background: var(--color-brand-700); color: #fff; }
+.bn-primary .bn-ico { width: 44px; height: 30px; border-radius: 12px; background: var(--color-brand-500); color: #1c1a17; }
 .bn-primary[aria-current="page"] svg { background: transparent; padding: 0; width: 22px; }
 
 /* ---------------- Verificação e lançamento ---------------- */
@@ -377,7 +377,9 @@ h3 { font-family: var(--font-serif); font-weight: 600; }
 .mod-servicos { background: var(--color-sand); color: var(--color-mod-servicos); }
 .mod-trabalho { background: var(--color-sage); color: var(--color-mod-trabalho); }
 .mod-encontros { background: var(--color-sky); color: var(--color-mod-encontros); }
-.mod-eventos { background: var(--color-rose); color: var(--color-mod-eventos); }
+.mod-eventos { background: var(--color-sky); color: var(--color-mod-eventos); }
+.mod-comercio { background: var(--color-rose); color: var(--color-mod-comercio); }
+.mod-comunidade { background: var(--color-lavender); color: var(--color-mod-comunidade); }
 .verified { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 700; background: var(--color-oliva-50); color: var(--color-oliva-800); }
 .verified svg { color: var(--color-oliva-600); }
 .safety { border-radius: 20px; background: var(--color-oliva-50); color: var(--color-oliva-800); padding: 16px; }
@@ -437,3 +439,17 @@ h3 { font-family: var(--font-serif); font-weight: 600; }
 /* Sino do topo: contador coral com texto escuro. */
 .bell-count { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--color-brand-500); color: #1c1a17; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
 .notif-unread { background: var(--color-brand-50); }
+
+/* ---------------- Navegação v3 (sem menu lateral) ---------------- */
+.top-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; font-weight: 600; color: var(--color-stone-700); }
+.top-link:hover { background: var(--color-brand-50); color: var(--color-stone-900); }
+.top-link[aria-current="page"] { background: var(--color-sage); color: var(--color-stone-900); font-weight: 700; }
+.top-create { background: var(--color-brand-500); color: #1c1a17; }
+.top-create:hover, .top-create[aria-current="page"] { background: var(--color-brand-400); color: #1c1a17; }
+.area-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: -8px -16px 16px; padding: 4px 16px 8px; border-bottom: 1px solid var(--color-line); }
+.area-tabs::-webkit-scrollbar { display: none; }
+.area-tab { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); font-size: 14px; font-weight: 600; color: var(--color-stone-700); white-space: nowrap; }
+.area-tab[aria-current="page"] { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
+:root[data-theme="dark"] .area-tab[aria-current="page"] { background: #ffffff; border-color: #ffffff; color: #1c1a17; }
+.hub-link { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 14px; border-radius: 16px; }
+.hub-link:hover { background: var(--color-paper); }

@@ -181,3 +181,12 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Administração → Palavras bloqueadas: a equipe adiciona e remove; ninguém mais vê a lista.
 - Notificações (sino no topo e /notificacoes): reação, comentário, resposta e novo seguidor. Só a própria pessoa vê; ninguém cria aviso na mão; reagir de novo no mesmo post não repete o aviso; ao abrir a lista, tudo fica como lido.
 - As três atualizações do banco (`2026-11-26-rede-social.sql`, `2026-11-26-dia-a-dia-momentos.sql`, `2026-11-26-moderacao-notificacoes.sql`) aplicam sem erro, nessa ordem, num banco igual ao de produção.
+
+## Rodada 14 (26/11/2026): prompt v3, itens 1 e 2 (paleta Canteiro e navegação sem menu lateral)
+
+- Unidade 26/26, e2e 122/122 (computador e celular).
+- Paleta "Canteiro" no claro e no escuro: laranja #F47B20 sempre com texto grafite, nunca branco; nova ilustração do início (sol, prédios e guindaste).
+- Sem menu lateral e sem botão "Menu". Celular: barra inferior Início · Comunidade · (+) Criar · Agenda · Perfil. Computador: os mesmos cinco no topo, com o sino.
+- Criar (/criar): post do dia a dia, Momento, trabalho feito (ou "Ofereço meus serviços"), pedido de indicação e vaga.
+- Perfil (/perfil): conta, pedidos, currículo, candidaturas, vagas, painel de prestador, publicações, favoritos, Administração (só para a equipe), aparência e Sair.
+- Painel do prestador e Administração: abas no topo do conteúdo, com a atual destacada.

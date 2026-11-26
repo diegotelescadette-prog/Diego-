@@ -28,14 +28,13 @@ test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem lin
   for (const empty of ['Indicados pela sua rede', 'Palestras esta semana', 'Ninguém confirmou ainda hoje', 'Nenhuma vaga aberta agora']) {
     await expect(page.getByText(empty)).toHaveCount(0);
   }
-  if (isMobile) {
-    const bottom = page.getByRole('navigation', { name: 'Navegação rápida' });
-    await expect(bottom.getByRole('link')).toHaveText(['Início', 'Serviços', 'Trabalho', 'Agenda', 'Perfil']);
-    await page.getByRole('button', { name: /^Menu/ }).click();
-  }
-  const hrefs = await page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+  // sem menu lateral: a mesma navegação na barra inferior (celular) e na superior (computador), sem repetição
+  const nav = page.getByRole('navigation', { name: isMobile ? 'Navegação rápida' : 'Principal' });
+  await expect(nav.getByRole('link')).toHaveText(['Início', 'Comunidade', 'Criar', 'Agenda', 'Perfil']);
+  await expect(page.locator('aside')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Menu/ })).toHaveCount(0);
+  const hrefs = await nav.getByRole('link').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
   expect(new Set(hrefs).size).toBe(hrefs.length);
-  expect(hrefs.filter((h) => h === '/')).toHaveLength(1);
 });
 
 test('cliente agenda "Trocar chuveiro" pelo preço fixo e acompanha até concluir', async ({ page, browser }) => {
