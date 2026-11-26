@@ -7,7 +7,7 @@ import { BottomNav } from './BottomNav';
 import { Glyph } from './CategoryIcon';
 import { activeHref, areaFor, NAV_ICONS, navItems, screenTitle, showBottomNav, type NavArea, type NavItem, type NavViewer } from '@/lib/nav';
 
-const AREA_LABEL: Record<NavArea, string> = { busca: 'Para quem busca', prestador: 'Painel do prestador', admin: 'Administração' };
+const AREA_LABEL: Record<NavArea, string> = { busca: 'Comunidade', prestador: 'Painel do prestador', admin: 'Administração' };
 
 function NavLink({ it, on, onNavigate }: { it: NavItem; on: boolean; onNavigate?: () => void }) {
   return (
@@ -66,7 +66,11 @@ function Navigation({ viewer, onNavigate, section }: { viewer: NavViewer; onNavi
   const items = navItems(area, viewer);
   return (
     <nav aria-label={AREA_LABEL[area]}>
-      {!items.some((it) => it.group) && <p className="side-heading">{AREA_LABEL[area]}</p>}
+      {area === 'busca' ? (
+        <Link href="/publicar" onClick={onNavigate} className="btn-hoje mb-3 w-full gap-2" data-testid="side-publicar">
+          <Glyph d="M12 5v14M5 12h14" size={20} /> Criar publicação
+        </Link>
+      ) : !items.some((it) => it.group) && <p className="side-heading">{AREA_LABEL[area]}</p>}
       <NavList items={items} active={activeHref(items, path, section)} onNavigate={onNavigate} />
       <OtherAreas area={area} viewer={viewer} onNavigate={onNavigate} />
     </nav>
@@ -203,8 +207,12 @@ export function AppShell({ viewer, children, footer }: {
             <Glyph d="M4 6h16M4 12h16M4 18h16" size={22} /> Menu
           </button>
           <Link href="/" aria-label="Página inicial" className="md:w-[236px] md:flex-none"><Logo /></Link>
-          <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
             <Suspense fallback={null}><Title /></Suspense>
+            {!path.startsWith('/buscar') && <form action="/buscar" method="get" role="search" className="hidden min-w-0 flex-1 md:block md:max-w-md" data-testid="header-search">
+              <label htmlFor="hq" className="sr-only">Que serviço você procura?</label>
+              <input id="hq" name="q" className="input min-h-10 rounded-full py-1.5" placeholder="Que serviço você procura?" enterKeyHint="search" />
+            </form>}
           </div>
           <nav aria-label="Conta" className="flex items-center gap-1 text-sm sm:text-base">
             <AccountActions viewer={viewer} />
@@ -219,7 +227,7 @@ export function AppShell({ viewer, children, footer }: {
       </div>
       {footer}
       <Drawer open={open} onClose={close} viewer={viewer} returnFocusTo={menuBtn} />
-      {bottom && <BottomNav proHref={viewer.hasProfile ? '/painel' : '/sou-prestador'} proLabel={viewer.hasProfile ? 'Meu perfil' : 'Sou prestador'} />}
+      {bottom && <BottomNav accountHref={viewer.loggedIn ? '/conta' : '/entrar'} />}
     </>
   );
 }

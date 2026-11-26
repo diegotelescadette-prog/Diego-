@@ -12,7 +12,8 @@ const REASONS: Record<string, string> = {
   denuncia: 'Entre para denunciar um perfil.',
   comentar: 'Entre para comentar a publicação.',
   util: 'Entre para marcar a publicação como útil.',
-  publicar: 'Entre com sua conta de prestador para publicar.',
+  publicar: 'Entre para publicar na comunidade.',
+  salvar: 'Entre para salvar a publicação.',
 };
 
 export default async function Entrar({ searchParams }: { searchParams: Promise<{ next?: string; motivo?: string; erro?: string }> }) {

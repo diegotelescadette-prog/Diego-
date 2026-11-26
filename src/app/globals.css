@@ -163,3 +163,25 @@ body { @apply bg-stone-50 text-stone-900 antialiased; }
 .post-act:disabled { opacity: .7; cursor: progress; }
 .gallery.gallery-all { grid-template-columns: 1fr 1fr; grid-template-rows: none; aspect-ratio: auto; }
 .gallery.gallery-all > * { aspect-ratio: 1; }
+
+/* Comunidade: tipos de publicação, filtros, galeria e barra inferior */
+.kind-opt { display: block; text-align: left; border: 1.5px solid var(--color-stone-200); border-radius: 14px; padding: 10px 12px; background: var(--color-stone-50); min-height: 44px; }
+.kind-opt:hover, .kind-opt:focus-visible { border-color: var(--color-brand-600); background: #fff; }
+.kind-tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 12.5px; font-weight: 800; letter-spacing: .01em; }
+.kind-trabalho { background: var(--color-brand-50); color: var(--color-brand-800); }
+.kind-divulgacao { background: #eef2ff; color: #3730a3; }
+.kind-pedido { background: #fff7ed; color: #9a3412; }
+.price-tag { border-radius: 8px; background: var(--color-stone-100); padding: 1px 8px; font-weight: 700; color: var(--color-stone-800); }
+.found-tag { border-radius: 999px; background: #dcfce7; color: #14532d; padding: 2px 10px; font-weight: 800; font-size: 12.5px; }
+.ba-tag { position: absolute; left: 8px; top: 8px; border-radius: 999px; background: rgb(0 0 0 / .7); color: #fff; padding: 2px 10px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.filter-chip { display: inline-flex; align-items: center; min-height: 36px; border-radius: 999px; background: var(--color-brand-50); color: var(--color-brand-800); padding: 4px 12px; font-weight: 700; }
+.filter-chip:hover { background: var(--color-brand-100); }
+.qchip[aria-current="page"] { background: var(--color-brand-700); border-color: var(--color-brand-700); color: #fff; }
+.qchip[aria-current="page"]::before { content: "✓"; font-weight: 800; }
+.lightbox { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 56px 12px 24px; background: rgb(10 15 15 / .92); }
+.lb-btn { position: absolute; z-index: 20; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 999px; background: rgb(255 255 255 / .15); color: #fff; font-size: 28px; line-height: 1; }
+.lb-btn:hover, .lb-btn:focus-visible { background: rgb(255 255 255 / .3); }
+.bn[aria-current="page"] { font-weight: 800; }
+.bn-ico { display: grid; place-items: center; height: 30px; }
+.bn-primary .bn-ico { width: 44px; height: 30px; border-radius: 12px; background: var(--color-hoje-600); color: #fff; }
+.bn-primary[aria-current="page"] svg { background: transparent; padding: 0; width: 22px; }

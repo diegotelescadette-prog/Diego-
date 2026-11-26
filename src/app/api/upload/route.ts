@@ -26,9 +26,9 @@ export async function POST(req: Request) {
   if (!(file instanceof File)) return NextResponse.json({ error: 'Selecione uma imagem' }, { status: 400 });
   if (file.size > MAX_INPUT) return NextResponse.json({ error: 'A imagem deve ter até 8 MB' }, { status: 413 });
 
+  // Fotos da comunidade: qualquer conta (pedidos de indicação também levam fotos). A publicação valida o tipo e a autoria.
   const { data: profile } = await supabase.from('provider_profiles').select('id, photo_path, status').eq('id', user.id).maybeSingle();
-  if (!profile) return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
-  if (kind === 'post' && profile.status !== 'published') return NextResponse.json({ error: 'Publique seu perfil antes de postar' }, { status: 403 });
+  if (!profile && kind !== 'post') return NextResponse.json({ error: 'Perfil não encontrado' }, { status: 404 });
   if (kind === 'work') {
     const { count } = await supabase.from('provider_work_photos').select('id', { count: 'exact', head: true }).eq('provider_id', user.id);
     if ((count ?? 0) >= MAX_WORK_PHOTOS) return NextResponse.json({ error: `Limite de ${MAX_WORK_PHOTOS} fotos de trabalhos` }, { status: 400 });
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   // Foto de publicação: só o arquivo; a publicação é criada depois, com todas as mídias.
   if (kind === 'post') return NextResponse.json({ path });
 
-  if (kind === 'profile') {
+  if (kind === 'profile' && profile) {
     await supabase.from('provider_profiles').update({ photo_path: path }).eq('id', user.id);
     if (profile.photo_path) await supabase.storage.from('profile-photos').remove([profile.photo_path]);
     return NextResponse.json({ path, url: photoUrl(path) });

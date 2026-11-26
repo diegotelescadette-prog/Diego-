@@ -41,7 +41,26 @@ function readBody(req) {
   return new Promise((resolve) => { const chunks = []; req.on('data', (c) => chunks.push(c)); req.on('end', () => resolve(Buffer.concat(chunks))); });
 }
 
-const PUBLIC_BUCKETS = new Set(['profile-photos', 'post-media']);
+const PUBLIC_BUCKETS = new Set(['profile-photos']);
+// Links assinados (bucket privado post-media): token HMAC com caminho e validade.
+const signToken = (url, exp) => `${exp}.${crypto.createHmac('sha256', JWT_SECRET).update(`${url}|${exp}`).digest('base64url')}`;
+const tokenOk = (url, token) => {
+  const [exp, sig] = String(token || '').split('.');
+  return Number(exp) * 1000 > Date.now() && sig && signToken(url, exp) === `${exp}.${sig}`;
+};
+function serveFile(req, res, file) {
+  const size = fs.statSync(file).size;
+  const type = mimeOf(file);
+  const range = /bytes=(\d*)-(\d*)/.exec(req.headers.range || '');
+  if (range) {
+    const start = range[1] ? Number(range[1]) : 0;
+    const end = range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+    res.writeHead(206, { 'content-type': type, 'accept-ranges': 'bytes', 'content-range': `bytes ${start}-${end}/${size}`, 'content-length': end - start + 1 });
+    return fs.createReadStream(file, { start, end }).pipe(res);
+  }
+  res.writeHead(200, { 'content-type': type, 'accept-ranges': 'bytes', 'content-length': size, 'cache-control': 'private, max-age=60' });
+  return fs.createReadStream(file).pipe(res);
+}
 const mimeOf = (f) => ({ '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.webm': 'video/webm' })[path.extname(f).toLowerCase()] ?? 'image/webp';
 
 async function storage(req, res) {
@@ -56,9 +75,33 @@ async function storage(req, res) {
     res.writeHead(200, { 'content-type': mimeOf(file), 'cache-control': 'public, max-age=60' });
     return fs.createReadStream(file).pipe(res);
   }
+  m = p.match(/^\/object\/sign\/([^/]+)\/(.+)$/);
+  if (m && req.method === 'GET') {
+    const name = decodeURIComponent(m[2]);
+    if (!tokenOk(`${m[1]}/${name}`, url.searchParams.get('token'))) return json(400, { statusCode: '400', error: 'InvalidJWT', message: 'invalid signature' });
+    const file = path.join(STORAGE_DIR, m[1], name);
+    if (!file.startsWith(STORAGE_DIR) || !fs.existsSync(file)) return json(404, { error: 'not_found' });
+    return serveFile(req, res, file);
+  }
   const auth = (req.headers.authorization || '').replace(/^Bearer /, '');
   const claims = verifyJwt(auth);
   if (!claims) return json(401, { error: 'unauthorized' });
+  // Gerar links assinados: service_role (qualquer arquivo) ou o dono da pasta.
+  m = p.match(/^\/object\/sign\/([^/]+)(?:\/(.+))?$/);
+  if (m && req.method === 'POST') {
+    const body = JSON.parse((await readBody(req)).toString() || '{}');
+    const exp = Math.floor(Date.now() / 1000) + Number(body.expiresIn || 60);
+    const sign = (name) => {
+      if (claims.role !== 'service_role' && name.split('/')[0] !== claims.sub) return { path: name, signedURL: null, error: 'not_found' };
+      if (!fs.existsSync(path.join(STORAGE_DIR, m[1], name))) return { path: name, signedURL: null, error: 'Object not found' };
+      return { path: name, error: null, signedURL: `/object/sign/${m[1]}/${encodeURI(name)}?token=${signToken(`${m[1]}/${name}`, exp)}` };
+    };
+    if (m[2]) {
+      const r = sign(decodeURIComponent(m[2]));
+      return r.error ? json(400, { statusCode: '404', error: r.error }) : json(200, { signedURL: r.signedURL });
+    }
+    return json(200, (body.paths || []).map(sign));
+  }
   m = p.match(/^\/object\/([^/]+)\/(.+)$/);
   if (m && (req.method === 'POST' || req.method === 'PUT')) {
     const name = decodeURIComponent(m[2]);

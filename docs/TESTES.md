@@ -14,6 +14,20 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 8 (25/11/2026): Comunidade de Campo Grande — todos passando
+
+Unitários (16), banco/API (40) e E2E (34 cenários × computador e celular = 68).
+
+- Trabalho e divulgação: só prestador publicado com área confirmada e serviço do próprio perfil (Zé, sem área, é barrado); divulgação exige texto.
+- Pedido de indicação: qualquer conta com nome público; categoria ou serviço; sem preço; só o autor marca "Indicação encontrada"; comentário indica perfil público (pausado não).
+- Filtros: tipo, categoria e bairro pela área de atendimento (cidade inteira entra em qualquer bairro; pedido para a cidade toda também); paginação por data + id sem repetir nem pular.
+- Salvos privados; respostas de um nível; só quem escreveu edita o comentário; ocultar pelo autor do post fica no histórico.
+- Mídia privada: endereço público recusado, link assinado só para posts visíveis; perfil suspenso tira post e mídia e eles voltam quando o perfil volta; ocultação pela moderação idem.
+- Envio repetido com o mesmo token não duplica; após falha, o formulário mantém o texto e reaproveita as fotos já enviadas.
+- Telas: visitante filtra (com filtros ativos e "Tirar os filtros"), abre o post, salva, entra e volta ao post; galeria com Antes/Depois, setas e teclado;
+  prestador publica antes e depois reordenando, edita (texto e fotos) e outra conta vê "Acesso restrito"; vídeo curto; morador pede indicação,
+  recebe indicação de perfil, responde e marca encontrada; denúncia → moderação oculta → link mostra "Publicação indisponível"; autor apaga em Minhas publicações.
+
 ## Rodada 7 (25/11/2026): publicações com foto, vídeo e comentários — todos passando
 
 Unitários (15), banco/API (33) e E2E (31 cenários × computador e celular = 62).
