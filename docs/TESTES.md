@@ -209,3 +209,11 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Camada escura por cima da foto para o texto branco ficar legível; conferido no computador e no celular nos três períodos.
 - Arquivos estáticos (fotos e ícones) abrem sem conta, para a página de entrada poder usar.
 - e2e: a foto carrega e o crédito aponta para o Commons.
+
+## Rodada 17 (26/11/2026): prompt v3, item 4 (página de entrada)
+
+- Integração 66/66, e2e 130/130 (computador e celular).
+- Sem conta, `/` é a página de entrada: foto do céu com "Gente de confiança, perto de você.", Criar conta grátis e Entrar; as seis áreas com uma frase cada (cada uma leva ao cadastro e depois à área); sem a barra do app.
+- Vitrine de vagas: "Qual vaga você procura?" mostra quantas vagas abertas combinam e até 5 (cargo, bairro e tipo). Empresa, salário e contato nunca aparecem; a consulta é uma função do banco que só devolve esses campos.
+- Números de confiança só quando não são zero (hoje: profissionais verificados e vagas abertas). Bloco "Como mantemos você seguro".
+- Atualização do banco `2026-11-26-pagina-entrada.sql` aplica sem erro depois de `2026-11-26-cadastro-obrigatorio.sql`.

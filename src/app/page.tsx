@@ -7,6 +7,8 @@ import { getAgenda } from '@/lib/agenda';
 import { AgendaCard } from '@/components/AgendaCard';
 import { getPilotCity, getUser } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
+import { SKY, hourIn, skyPeriod } from '@/lib/sky';
+import { Entrada } from '@/components/Entrada';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,24 +18,6 @@ const BAG = 'M4 8h16v11H4zM9 8V5h6v3M4 13h16';
 const MEGA = 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10';
 const SHIELD = 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5';
 const BOLT = 'M13 2 4 14h7l-1 8 9-12h-7z';
-
-/**
- * Fotos reais do céu de Campo Grande, uma por período (manhã, tarde e noite pelo horário da cidade).
- * Fotos do Wikimedia Commons; a licença pede o crédito, que fica no canto da foto.
- */
-const SKY = {
-  manha: { src: '/ceu/dia.webp', pos: '50% 30%', alt: 'Céu azul sobre os prédios de Campo Grande', credit: 'Rodrigo Santos · CC BY 3.0', href: 'https://commons.wikimedia.org/wiki/File:Skyline_de_CG_visto_da_Av._Salgado_Filho_-_panoramio.jpg' },
-  tarde: { src: '/ceu/tarde.webp', pos: '50% 45%', alt: 'Pôr do sol refletido no lago, com prédios de Campo Grande', credit: 'Camilo Carromeu · domínio público', href: 'https://commons.wikimedia.org/wiki/File:Por_do_sol.jpg' },
-  noite: { src: '/ceu/noite.webp', pos: '50% 35%', alt: 'Céu azul do anoitecer na Praça Nazareth, em Campo Grande', credit: 'bigfield767 · CC BY-SA 3.0', href: 'https://commons.wikimedia.org/wiki/File:Entardecer_-_Pra%C3%A7a_Nazareth_-_panoramio.jpg' },
-} as const;
-
-function skyPeriod(hour: number): keyof typeof SKY {
-  return hour >= 5 && hour < 12 ? 'manha' : hour >= 12 && hour < 18 ? 'tarde' : 'noite';
-}
-
-function hourIn(timeZone: string) {
-  return Number(new Intl.DateTimeFormat('pt-BR', { hour: 'numeric', hourCycle: 'h23', timeZone }).format(new Date()));
-}
 
 function greeting(h: number) {
   return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
@@ -55,9 +39,11 @@ async function firstName(userId: string | undefined) {
  * os serviços mais pedidos e a garantia. Cada seção só aparece quando tem conteúdo.
  * "Indicados pela sua rede" e "Palestras esta semana" entram quando esses módulos existirem (fases 4 e 5).
  */
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ vaga?: string }> }) {
   const city = await getPilotCity();
   const user = await getUser();
+  // Sem conta: a página de entrada, que explica cada área e convida a entrar ou criar a conta.
+  if (!user) return <Entrada vaga={(await searchParams).vaga ?? ''} timezone={city.timezone || 'America/Campo_Grande'} />;
   const [pkgs, name, upcoming] = await Promise.all([getPackages(), firstName(user?.id), user ? getAgenda(user.id, 1) : Promise.resolve([])]);
   const featured = [...pkgs.filter((p) => p.featured), ...pkgs.filter((p) => !p.featured)].slice(0, 4);
   const next = upcoming[0];

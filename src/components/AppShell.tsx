@@ -69,7 +69,8 @@ export function AppShell({ viewer, children, footer }: {
       <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2">
           <Link href="/" aria-label="Página inicial" className="flex-none"><Logo /></Link>
-          <div className="flex min-w-0 flex-1 justify-end md:justify-center"><TopNav viewer={viewer} /></div>
+          {/* Sem conta não há navegação: tudo fica do lado de dentro, depois do login. */}
+          <div className="flex min-w-0 flex-1 justify-end md:justify-center">{viewer.loggedIn && <TopNav viewer={viewer} />}</div>
           <div className="flex items-center gap-1">
             {viewer.loggedIn
               ? <Bell unread={viewer.unread ?? 0} />
@@ -82,7 +83,7 @@ export function AppShell({ viewer, children, footer }: {
         {children}
       </main>
       {footer}
-      <BottomNav viewer={viewer} />
+      {viewer.loggedIn && <BottomNav viewer={viewer} />}
     </>
   );
 }

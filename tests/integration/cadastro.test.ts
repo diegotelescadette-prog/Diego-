@@ -74,3 +74,17 @@ test('rotas: visitante vai para o login com o link de volta; conta antiga comple
     await admin.from('member_accounts').insert(u!);
   }
 });
+
+test('página de entrada: vitrine devolve só cargo, bairro e tipo; números de confiança só contam', async () => {
+  const v = anon();
+  const { data, error } = await v.rpc('entry_job_showcase', { p_q: 'COZÍNHA' });
+  assert.equal(error, null);
+  const show = data as { total: number; vagas: Record<string, unknown>[] };
+  assert.equal(show.total, 1, 'acento e maiúscula não atrapalham');
+  assert.deepEqual(Object.keys(show.vagas[0]).sort(), ['bairro', 'cargo', 'tipo']);
+  const all = (await v.rpc('entry_job_showcase', {})).data as { total: number; vagas: unknown[] };
+  assert.ok(all.total >= all.vagas.length && all.vagas.length <= 5);
+  assert.ok(!JSON.stringify(all).includes('Restaurante'), 'nunca o nome da empresa');
+  const trust = (await v.rpc('entry_trust_numbers')).data as Record<string, number>;
+  assert.deepEqual(Object.keys(trust).sort(), ['concluidos', 'vagas', 'verificados']);
+});

@@ -12,8 +12,8 @@ async function fillWhere(page: Page) {
 }
 
 test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem links repetidos no menu', async ({ page, isMobile }) => {
-  await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^(Bom dia|Boa tarde|Boa noite)\.$/);
+  await enter(page, '/');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^(Bom dia|Boa tarde|Boa noite), Léo\.$/);
   await expect(page.getByText('Gente de confiança, perto de você.')).toBeVisible();
   // foto real do céu conforme o horário, carregada e com o crédito da licença
   const foto = page.getByTestId('home-dawn').locator('img');
@@ -28,7 +28,7 @@ test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem lin
   await expect(most.getByTestId('package-card').filter({ hasText: 'Trocar chuveiro' })).toContainText('R$ 90');
   await expect(page.getByTestId('guarantee')).toContainText('Preço combinado é preço pago');
   await expect(page.getByTestId('home-quote')).toHaveText('Servir bem é a nossa forma de cuidar do próximo.');
-  // sem login não há agenda; seções sem dados não aparecem
+  // sem compromisso marcado não há agenda; seções sem dados não aparecem
   await expect(page.getByTestId('next-meeting')).toHaveCount(0);
   for (const empty of ['Indicados pela sua rede', 'Palestras esta semana', 'Ninguém confirmou ainda hoje', 'Nenhuma vaga aberta agora']) {
     await expect(page.getByText(empty)).toHaveCount(0);

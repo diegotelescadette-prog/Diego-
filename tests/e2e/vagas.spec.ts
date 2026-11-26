@@ -124,7 +124,9 @@ test('visitante: vagas e páginas privadas pedem login e voltam para onde ia', a
   await page.goto('/minhas-candidaturas');
   await expect(page).toHaveURL(/\/entrar\?next=%2Fminhas-candidaturas/);
   await page.goto('/');
-  await page.getByTestId('home-trabalho').click();
+  await page.getByTestId('vitrine-cta').click();
+  await expect(page).toHaveURL(/\/cadastrar\?next=%2Fvagas$/);
+  await page.getByRole('link', { name: 'Entrar' }).last().click();
   await expect(page).toHaveURL(/\/entrar\?next=%2Fvagas$/);
   await login(page, demoEmail('leitor'));
   await expect(page).toHaveURL(/\/vagas$/);
