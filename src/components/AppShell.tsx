@@ -94,7 +94,17 @@ function Title() {
   return t ? <p className="hidden truncate text-lg font-bold text-stone-800 md:block" data-testid="screen-title">{t}</p> : null;
 }
 
-function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | null } }) {
+function Bell({ unread }: { unread: number }) {
+  const label = unread ? `Notificações, ${unread} ${unread === 1 ? 'nova' : 'novas'}` : 'Notificações';
+  return (
+    <Link href="/notificacoes" className="btn-ghost relative min-h-11 px-2.5" aria-label={label} data-testid="bell">
+      <Glyph d={NAV_ICONS.bell} size={22} />
+      {unread > 0 && <span className="bell-count" data-testid="bell-count">{unread > 9 ? '9+' : unread}</span>}
+    </Link>
+  );
+}
+
+function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | null; unread?: number } }) {
   if (!viewer.loggedIn) {
     return (
       <>
@@ -103,6 +113,8 @@ function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | nul
     );
   }
   return (
+    <>
+    <Bell unread={viewer.unread ?? 0} />
     <details className="relative">
       <summary className="btn-ghost cursor-pointer list-none" aria-label="Abrir menu do perfil">Perfil ▾</summary>
       <ul className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-stone-200 bg-surface p-2 shadow-lg">
@@ -125,6 +137,7 @@ function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | nul
         </li>
       </ul>
     </details>
+    </>
   );
 }
 
@@ -182,7 +195,7 @@ function Drawer({ open, onClose, viewer, returnFocusTo }: {
 }
 
 export function AppShell({ viewer, children, footer }: {
-  viewer: NavViewer & { email?: string | null }; children: React.ReactNode; footer: React.ReactNode;
+  viewer: NavViewer & { email?: string | null; unread?: number }; children: React.ReactNode; footer: React.ReactNode;
 }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);

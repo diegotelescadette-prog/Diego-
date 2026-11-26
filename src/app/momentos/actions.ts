@@ -30,14 +30,14 @@ export async function createStory(raw: z.infer<typeof Input>): Promise<StoryResu
     const n = p.publicName.trim();
     if (n.length < 2 || n.length > 60) return { message: 'Informe seu nome público (2 a 60 letras).' };
     const { error } = await supabase.from('member_names').upsert({ user_id: user.id, name: n, updated_at: new Date().toISOString() });
-    if (error) return { message: 'Não foi possível salvar seu nome.' };
+    if (error) return { message: error.message.includes('carinho') ? error.message : 'Não foi possível salvar seu nome.' };
   }
   if (!(await hitLimit('story', user.id, 20, 86400))) return { message: 'Muitos momentos hoje. Tente amanhã.' };
 
   const { error } = await supabase.from('stories').insert({ author_id: user.id, kind: p.kind, path: p.path, caption });
   if (error) {
     if (error.code === '54000') return { message: 'Limite de 15 momentos por dia.' };
-    if (error.code === '23514') return { message: 'Informe seu nome público para publicar.' };
+    if (error.code === '23514') return { message: error.message.includes('carinho') ? error.message : 'Informe seu nome público para publicar.' };
     return { message: 'Não foi possível publicar o momento. Tente de novo.' };
   }
 

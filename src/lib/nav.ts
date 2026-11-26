@@ -54,6 +54,7 @@ export const NAV_ICONS = {
   tag: 'M3 12V4h8l10 10-8 8zM7.5 7.5a1 1 0 1 0 .01 0',
   clipboard: 'M8 4h8v3H8zM6 5H5v16h14V5h-1M8 12h8M8 16h5',
   calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4M8 14h3',
+  bell: 'M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0',
   rocket: 'M14 4c3 0 6 1 6 1s1 3 1 6c-2 4-6 7-9 8l-4-4c1-3 4-7 6-11zM9 15l-4 1 1-4M15 9a1 1 0 1 0 .01 0M6 18c-1 1-2 3-2 3s2-1 3-2',
 } as const;
 
@@ -111,6 +112,7 @@ export const ADMIN_SECTIONS = [
   { key: 'denuncias', label: 'Denúncias', icon: 'flag' },
   { key: 'publicacoes', label: 'Publicações', icon: 'photo' },
   { key: 'vagas', label: 'Vagas', icon: 'briefcase' },
+  { key: 'palavras', label: 'Palavras bloqueadas', icon: 'shield' },
   { key: 'historico', label: 'Histórico', icon: 'history' },
   { key: 'config', label: 'Configurações', icon: 'gear' },
 ] as const satisfies readonly { key: string; label: string; icon: keyof typeof NAV_ICONS }[];
@@ -167,7 +169,7 @@ export function screenTitle(pathname: string, section?: string | null): string {
     '/painel': 'Painel do prestador', '/painel/perfil': 'Meu perfil', '/painel/servicos': 'Serviços e fotos',
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
     '/painel/verificacao': 'Verificação do perfil',
-    '/conta': 'Perfil', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
+    '/notificacoes': 'Notificações', '/conta': 'Perfil', '/entrar': 'Entrar', '/cadastrar': 'Criar conta', '/privacidade': 'Privacidade',
     '/sugerir-servico': 'Sugerir um serviço', '/recuperar-senha': 'Recuperar senha', '/redefinir-senha': 'Nova senha',
     '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Banco de currículos', '/curriculo': 'Meu currículo', '/vagas/verificacao': 'Verificação de quem contrata', '/painel/pacotes': 'Pacotes que eu faço', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };

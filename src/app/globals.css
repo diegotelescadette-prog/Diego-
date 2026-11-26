@@ -424,3 +424,7 @@ h3 { font-family: var(--font-serif); font-weight: 600; }
 :root[data-theme="dark"] :is(.border-red-200) { border-color: #5a2a2a; }
 :root[data-theme="dark"] :is(.bg-red-50) { background-color: #3a1f22; }
 :root[data-theme="dark"] .story-ring > * { border-color: var(--color-paper); }
+
+/* Sino do topo: contador coral com texto escuro. */
+.bell-count { position: absolute; top: 4px; right: 2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--color-coral); color: #111014; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center; }
+.notif-unread { background: var(--color-brand-50); }

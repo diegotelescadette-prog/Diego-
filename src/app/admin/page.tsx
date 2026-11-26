@@ -13,7 +13,7 @@ import { adminStoryAction } from '@/app/momentos/actions';
 import { signPaths } from '@/lib/posts';
 import { KIND_LABEL, POST_REPORT_REASON, type PostKind } from '@/lib/posts-shared';
 import { VERIFICATION_LABEL, VERIFICATION_STYLE, type VerificationStatus } from '@/lib/verification';
-import { saveVerificationRule } from './actions';
+import { blockedWordAction, saveVerificationRule } from './actions';
 
 export const metadata: Metadata = { title: 'Administração' };
 export const dynamic = 'force-dynamic';
@@ -67,6 +67,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<SP
       {aba === 'perfis' && <Perfis sb={sb} sp={sp} city={city} cities={cities} />}
       {aba === 'publicacoes' && <Publicacoes sb={sb} />}
       {aba === 'vagas' && <Vagas sb={sb} />}
+      {aba === 'palavras' && <Palavras sb={sb} />}
       {aba === 'historico' && <Historico sb={sb} />}
       {aba === 'config' && <Config />}
     </div>
@@ -725,6 +726,36 @@ async function Publicacoes({ sb }: { sb: SB }) {
         </div>
       </section>
     </div>
+  );
+}
+
+async function Palavras({ sb }: { sb: SB }) {
+  const { data } = await sb.from('blocked_words').select('word').order('word');
+  const words = (data ?? []).map((w) => w.word as string);
+  return (
+    <section className="card max-w-3xl space-y-4 p-5" data-testid="blocked-words">
+      <p className="text-stone-700">Posts, comentários e frases de perfil com estas palavras não são publicados. A pessoa vê: “Quer reescrever com mais carinho?”. Acentos não importam.</p>
+      <form action={blockedWordAction} className="flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="bw" className="label">Nova palavra ou expressão</label>
+          <input id="bw" name="word" required maxLength={40} className="input" />
+        </div>
+        <SubmitButton className="btn-primary">Adicionar</SubmitButton>
+      </form>
+      {words.length > 0 && (
+        <ul className="flex flex-wrap gap-2" aria-label="Palavras bloqueadas">
+          {words.map((w) => (
+            <li key={w} className="flex items-center gap-1 rounded-full border border-line bg-paper py-1 pl-3 pr-1 text-sm">
+              <span data-testid="blocked-word">{w}</span>
+              <form action={blockedWordAction}>
+                <input type="hidden" name="op" value="remover" /><input type="hidden" name="word" value={w} />
+                <button type="submit" className="rounded-full px-2 py-1 text-stone-600 hover:bg-stone-200" aria-label={`Remover ${w}`}>✕</button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

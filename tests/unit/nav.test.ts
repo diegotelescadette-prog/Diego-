@@ -51,6 +51,8 @@ test('item ativo: exato, prefixo e seção do admin', () => {
   assert.equal(activeHref(a, '/admin', 'perfis'), '/admin?aba=perfis');
   assert.equal(adminSection('inexistente'), 'visao');
   assert.equal(screenTitle('/admin', 'denuncias'), 'Administração · Denúncias');
+  assert.equal(screenTitle('/admin', 'palavras'), 'Administração · Palavras bloqueadas');
+  assert.equal(screenTitle('/notificacoes'), 'Notificações');
   assert.equal(screenTitle('/painel/disponibilidade'), 'Disponibilidade');
   assert.equal(screenTitle('/comunidade/abc'), 'Publicação');
   assert.equal(screenTitle('/comunidade/abc/editar'), 'Editar publicação');

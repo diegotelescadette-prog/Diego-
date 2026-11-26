@@ -173,3 +173,11 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Quem contrata: primeira vaga fica guardada até a equipe conferir CNPJ/CPF e endereço (/admin/contratantes); depois entra na hora com o selo.
 - Painel da vaga: comparar 2 ou 3 currículos, abrir o candidato (vira "Visualizado"), convidar para entrevista (aparece na Agenda e em "Seu próximo encontro").
 - Prestador: "Pacotes que eu faço" (/painel/pacotes); pedidos de pacotes desmarcados não chegam a ele; comissão só em serviço concluído.
+
+## Rodada 13 (26/11/2026): fase 3, complemento (filtro de ofensas e notificações)
+
+- Pacote "Fase 3 partes 1 e 2" aplicado como veio, sobre a fase 2 publicada: e2e 116/116, integração 59/59, unidade 24/24 num banco refeito do zero.
+- Filtro de ofensas: post, comentário, legenda de Momento e nome público com palavra da lista não são salvos ("Quer reescrever com mais carinho?"). Acento, maiúscula e espaço duplo não enganam; palavra inteira, sem falso positivo ("mexerica" passa). O texto continua no campo.
+- Administração → Palavras bloqueadas: a equipe adiciona e remove; ninguém mais vê a lista.
+- Notificações (sino no topo e /notificacoes): reação, comentário, resposta e novo seguidor. Só a própria pessoa vê; ninguém cria aviso na mão; reagir de novo no mesmo post não repete o aviso; ao abrir a lista, tudo fica como lido.
+- As três atualizações do banco (`2026-11-26-rede-social.sql`, `2026-11-26-dia-a-dia-momentos.sql`, `2026-11-26-moderacao-notificacoes.sql`) aplicam sem erro, nessa ordem, num banco igual ao de produção.

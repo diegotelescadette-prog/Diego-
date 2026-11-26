@@ -23,6 +23,13 @@ export const viewport: Viewport = {
 /** No modo Automático, aplica o tema do aparelho antes de pintar (sem piscar) e acompanha a troca. */
 const AUTO_THEME = `(function(){try{var m=window.matchMedia('(prefers-color-scheme: dark)');var s=function(){document.documentElement.dataset.theme=m.matches?'dark':'light'};s();m.addEventListener('change',s)}catch(e){}})()`;
 
+async function unreadCount(userId: string | undefined) {
+  if (!userId) return 0;
+  const supabase = await createClient();
+  const { count } = await supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', userId).is('read_at', null);
+  return count ?? 0;
+}
+
 async function hasOwnProfile(userId: string | undefined) {
   if (!userId) return false;
   const supabase = await createClient();
@@ -32,7 +39,7 @@ async function hasOwnProfile(userId: string | undefined) {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser();
-  const [isAdmin, hasProfile, jar] = await Promise.all([getIsAdmin(), hasOwnProfile(user?.id), cookies()]);
+  const [isAdmin, hasProfile, unread, jar] = await Promise.all([getIsAdmin(), hasOwnProfile(user?.id), unreadCount(user?.id), cookies()]);
   const tema = jar.get('tema')?.value === 'escuro' ? 'escuro' : jar.get('tema')?.value === 'claro' ? 'claro' : 'auto';
   const footer = (
     <footer className="border-t border-line bg-paper">
@@ -53,7 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {tema === 'auto' && <head><script dangerouslySetInnerHTML={{ __html: AUTO_THEME }} /></head>}
       <body className="flex min-h-dvh flex-col">
         {tema === 'auto' && <AutoTheme />}
-        <AppShell viewer={{ loggedIn: !!user, hasProfile, isAdmin, email: user?.email ?? null }} footer={footer}>
+        <AppShell viewer={{ loggedIn: !!user, hasProfile, isAdmin, email: user?.email ?? null, unread }} footer={footer}>
           {children}
         </AppShell>
       </body>

@@ -51,6 +51,7 @@ async function saveName(supabase: Awaited<ReturnType<typeof createClient>>, user
   const n = name.trim();
   if (n.length < 2 || n.length > 60) return 'Informe seu nome público (2 a 60 letras).';
   const { error } = await supabase.from('member_names').upsert({ user_id: userId, name: n, updated_at: new Date().toISOString() });
+  if (error?.message.includes('carinho')) return error.message;
   return error ? 'Não foi possível salvar seu nome.' : null;
 }
 
@@ -255,7 +256,7 @@ export async function addComment(_: Result | undefined, form: FormData): Promise
   });
   if (error) {
     if (error.code === '54000') return { message: 'Muitos comentários em pouco tempo. Aguarde um pouco.' };
-    if (error.code === '23514') return { message: error.message.includes('nome') ? 'Informe seu nome para comentar.' : 'O perfil indicado não está disponível.' };
+    if (error.code === '23514') return { message: error.message.includes('carinho') ? error.message : error.message.includes('nome') ? 'Informe seu nome para comentar.' : 'O perfil indicado não está disponível.' };
     return { message: 'Não foi possível comentar.' };
   }
   refresh(postId.data);
