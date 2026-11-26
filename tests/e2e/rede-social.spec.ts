@@ -75,3 +75,65 @@ test('Feito pelo Próximo: do pedido concluído ao post com selo e nota', async 
   await page.goto('/painel/pedidos');
   await expect(page.getByText('Já está no feed com o selo Feito pelo Próximo')).toBeVisible();
 });
+
+const photo = () => sharp({ create: { width: 400, height: 600, channels: 3, background: '#ff6b4a' } }).png().toBuffer();
+
+test('dia a dia: cliente conta do dia com foto e aparece no filtro', async ({ page }) => {
+  await page.goto('/entrar');
+  await login(page, demoEmail('cliente'));
+  await expect(page).not.toHaveURL(/entrar/);
+  await page.goto('/publicar');
+  await page.getByRole('button', { name: /Contar do meu dia/ }).click();
+  await page.getByLabel('O que você quer contar?').fill('Primeiro dia no emprego novo! Obrigada a quem me indicou.');
+  await page.getByTestId('post-photos').setInputFiles([{ name: 'dia.png', mimeType: 'image/png', buffer: await photo() }]);
+  await page.getByRole('button', { name: 'Publicar' }).click();
+  await expect(page).toHaveURL(/\/comunidade\/[0-9a-f-]+\?nova=1$/);
+  await page.goto('/comunidade?tipo=dia_a_dia');
+  const post = page.getByTestId('post').filter({ hasText: 'Primeiro dia no emprego novo!' });
+  await expect(post).toHaveCount(1);
+  await expect(post).toContainText('Dia a dia');
+});
+
+test('momentos: publica uma foto, aparece na faixa e quem vê tira o anel de novidade', async ({ browser, page }) => {
+  await page.goto('/entrar');
+  await login(page, demoEmail('cliente'));
+  await expect(page).not.toHaveURL(/entrar/);
+  await page.goto('/comunidade');
+  await page.getByTestId('story-mine').click();
+  await expect(page).toHaveURL(/\/momentos\/novo/);
+  await page.getByTestId('story-photo').setInputFiles([{ name: 'momento.png', mimeType: 'image/png', buffer: await photo() }]);
+  await page.getByLabel('Legenda (opcional)').fill('Café antes de começar');
+  await page.getByRole('button', { name: 'Publicar momento' }).click();
+  await expect(page.getByTestId('story-viewer')).toBeVisible();
+  await expect(page.getByTestId('story-viewer')).toContainText('Café antes de começar');
+  await expect(page.getByTestId('story-views')).toHaveText('Visto por 0 pessoas');
+
+  const ctx = await browser.newContext();
+  const other = await ctx.newPage();
+  await other.goto('/entrar');
+  await login(other, demoEmail('prestador-carlos'));
+  await expect(other).not.toHaveURL(/entrar/);
+  await other.goto('/comunidade');
+  const ring = other.getByTestId('story-author').filter({ hasText: 'Ana' });
+  await expect(ring).toHaveAttribute('aria-label', /novos/);
+  await ring.click();
+  await expect(other.getByTestId('story-viewer')).toContainText('Café antes de começar');
+  await other.waitForLoadState('networkidle');
+  await other.goto('/comunidade');
+  await expect(other.getByTestId('story-author').filter({ hasText: 'Ana' })).not.toHaveAttribute('aria-label', /novos/);
+  await ctx.close();
+
+  await page.reload();
+  await expect(page.getByTestId('story-views')).toHaveText('Visto por 1 pessoa');
+});
+
+test('aparência: escolher Escuro e voltar para Automático', async ({ page }) => {
+  await page.goto('/comunidade');
+  await page.getByTestId('theme-picker').getByRole('button', { name: 'Escuro' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.getByTestId('theme-picker').getByRole('button', { name: 'Automático' }).click();
+  await expect(page.getByTestId('theme-picker').getByRole('button', { name: 'Automático' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light'); // navegador de teste usa tema claro
+});

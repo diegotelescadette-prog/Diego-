@@ -119,7 +119,7 @@ export function ResumeEditor({ initial, neighborhoods }: { initial: ResumeData; 
           <ul className="flex flex-wrap gap-2" aria-label="Suas habilidades">
             {r.skills.map((s) => (
               <li key={s} className="soft-tag mod-trabalho gap-1">{s}
-                <button type="button" className="-mr-2 grid h-8 w-8 place-items-center rounded-full hover:bg-white/60" aria-label={`Remover ${s}`} onClick={() => set('skills', r.skills.filter((x) => x !== s))}>✕</button>
+                <button type="button" className="-mr-2 grid h-8 w-8 place-items-center rounded-full hover:bg-surface/60" aria-label={`Remover ${s}`} onClick={() => set('skills', r.skills.filter((x) => x !== s))}>✕</button>
               </li>
             ))}
           </ul>

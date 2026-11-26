@@ -9,6 +9,8 @@ import { ADMIN_SECTIONS, adminSection } from '@/lib/nav';
 import { STATUS_LABEL, type City, type ProviderStatus } from '@/lib/types';
 import { JOB_REPORT_REASON, JOB_STATUS_LABEL, jobState } from '@/lib/jobs';
 import { adminPostAction } from '@/app/comunidade/actions';
+import { adminStoryAction } from '@/app/momentos/actions';
+import { signPaths } from '@/lib/posts';
 import { KIND_LABEL, POST_REPORT_REASON, type PostKind } from '@/lib/posts-shared';
 import { VERIFICATION_LABEL, VERIFICATION_STYLE, type VerificationStatus } from '@/lib/verification';
 import { saveVerificationRule } from './actions';
@@ -629,8 +631,42 @@ async function Publicacoes({ sb }: { sb: SB }) {
   ]);
   type P = { body: string; status: string; kind: string; author_name: string | null };
   const cut = (t: string) => (t.length > 180 ? `${t.slice(0, 180)}…` : t);
+  const { data: storyReports } = await sb.from('story_reports')
+    .select('id, reason, created_at, story_id, stories!inner(kind, path, caption, status, author_name)')
+    .eq('status', 'aberta').order('created_at', { ascending: false }).limit(100);
+  type S = { kind: 'foto' | 'video'; path: string; caption: string; status: string; author_name: string | null };
+  const storyUrls = await signPaths((storyReports ?? []).map((r) => (r.stories as unknown as S).path));
   return (
     <div className="space-y-6">
+      {(storyReports ?? []).length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-bold">Denúncias de momentos</h2>
+          {(storyReports ?? []).map((r) => {
+            const st = r.stories as unknown as S;
+            const url = storyUrls.get(st.path);
+            return (
+              <div key={r.id} className="card p-4" data-testid="denuncia-momento">
+                <p className="font-bold">#{r.id} · {POST_REPORT_REASON[r.reason] ?? r.reason} · Momento de {st.author_name ?? 'conta sem nome'}{st.status === 'removido' ? ' (já fora do ar)' : ''}</p>
+                {url && (st.kind === 'foto'
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={url} alt="Momento denunciado" className="mt-2 max-h-64 rounded-xl" />
+                  // eslint-disable-next-line jsx-a11y/media-has-caption
+                  : <video src={url} controls className="mt-2 max-h-64 rounded-xl" />)}
+                {st.caption && <blockquote className="mt-2 rounded-xl bg-stone-50 p-3 text-stone-800">{st.caption}</blockquote>}
+                <form action={adminStoryAction} className="mt-3 space-y-2">
+                  <input type="hidden" name="report_id" value={r.id} /><input type="hidden" name="story_id" value={r.story_id} />
+                  <label className="label" htmlFor={`sn-${r.id}`}>Motivo (aparece no histórico)</label>
+                  <input id={`sn-${r.id}`} name="note" className="input" />
+                  <div className="flex flex-wrap gap-2">
+                    <SubmitButton name="op" value="remover" className="btn-danger">Tirar do ar</SubmitButton>
+                    <SubmitButton name="op" value="improcedente" className="btn-outline">Improcedente</SubmitButton>
+                  </div>
+                </form>
+              </div>
+            );
+          })}
+        </section>
+      )}
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Denúncias de publicações e comentários</h2>
         {error && <p role="alert" className="card p-4 text-red-800">Não foi possível carregar as denúncias.</p>}

@@ -95,3 +95,73 @@ test('seguir: conta logada segue prestador publicado; contagem pública; lista p
   await cliente.from('provider_follows').delete().eq('follower_id', me).eq('provider_id', pantId);
   assert.equal((await anon().rpc('follower_count', { p_provider: pantId })).data, 0);
 });
+
+test('dia a dia: qualquer conta com nome público posta; sem serviço nem preço; aparece no feed e no filtro', async () => {
+  const cliente = await signIn('cliente');
+  const me = await uid(cliente);
+  assert.ok((await anon().from('posts').insert({ author_id: me, kind: 'dia_a_dia', body: 'Bom dia' })).error, 'visitante não posta');
+  const enc = await one('encanador', 'services');
+  const { data: p, error } = await cliente.from('posts')
+    .insert({ author_id: me, kind: 'dia_a_dia', body: 'Primeiro dia no emprego novo!', service_id: enc, price_label: 'R$ 10' })
+    .select('id, service_id, price_label, city_id').single();
+  assert.ok(!error, error?.message);
+  assert.equal(p!.service_id, null, 'serviço é ignorado');
+  assert.equal(p!.price_label, null, 'preço é ignorado');
+  assert.ok(p!.city_id, 'entra na cidade do piloto');
+  const row = (await feed(anon(), { p_kind: 'dia_a_dia' })).find((r) => r.id === p!.id);
+  assert.ok(row, 'visitante vê no filtro Dia a dia');
+  assert.equal((row as unknown as { is_provider: boolean }).is_provider, false);
+
+  // Prestador na comunidade: o post do dia a dia leva ao perfil dele.
+  const pant = await signIn('prestador-pantanal');
+  const { data: q } = await pant.from('posts').insert({ author_id: await uid(pant), kind: 'dia_a_dia', body: 'Café antes da obra' }).select('id').single();
+  const prow = (await feed(anon(), { p_post: q!.id }))[0] as unknown as { is_provider: boolean; slug: string | null };
+  assert.equal(prow.is_provider, true);
+  assert.equal(prow.slug, 'pantanal-demo');
+
+  // Conta sem nome público não posta.
+  const { data: u } = await admin.auth.admin.createUser({ email: `sem-nome-${Date.now()}@demo.resolveaqui.test`, password: 'demo-senha-123', email_confirm: true });
+  const semNome = anon();
+  await semNome.auth.signInWithPassword({ email: u.user!.email!, password: 'demo-senha-123' });
+  assert.match((await semNome.from('posts').insert({ author_id: u.user!.id, kind: 'dia_a_dia', body: 'Oi' })).error?.message ?? '', /nome público/);
+  await admin.auth.admin.deleteUser(u.user!.id);
+});
+
+test('momentos: publica na própria pasta, some em 24 h, "visto" por pessoa, denúncia e remoção pela moderação', async () => {
+  const cliente = await signIn('cliente');
+  const me = await uid(cliente);
+  const carlos = await signIn('prestador-carlos');
+  const carlosId = await uid(carlos);
+  assert.ok((await anon().from('stories').insert({ author_id: me, kind: 'foto', path: `${me}/m1.webp` })).error, 'visitante não publica');
+  assert.ok((await cliente.from('stories').insert({ author_id: me, kind: 'foto', path: `${carlosId}/m1.webp` })).error, 'arquivo de outra pasta');
+  const { data: s, error } = await cliente.from('stories').insert({ author_id: me, kind: 'foto', path: `${me}/m1.webp`, caption: ' Café ' }).select('id, caption, expires_at, created_at').single();
+  assert.ok(!error, error?.message);
+  assert.equal(s!.caption, 'Café');
+  assert.equal(Math.round((Date.parse(s!.expires_at) - Date.parse(s!.created_at)) / 3600000), 24);
+  await cliente.from('stories').update({ caption: 'outro' }).eq('id', s!.id); // sem permissão de alterar
+  assert.equal((await admin.from('stories').select('caption').eq('id', s!.id).single()).data!.caption, 'Café', 'não se edita');
+
+  type G = { author_id: string; is_mine: boolean; all_seen: boolean; items: { id: string; seen: boolean }[] };
+  const bar = async (c: SupabaseClient) => ((await c.rpc('stories_feed')).data ?? []) as G[];
+  assert.ok((await bar(anon())).some((g) => g.author_id === me), 'visitante vê a faixa');
+  assert.equal((await bar(carlos)).find((g) => g.author_id === me)!.all_seen, false);
+  assert.ok(!(await carlos.from('story_views').insert({ story_id: s!.id, viewer_id: carlosId })).error);
+  assert.equal((await bar(carlos)).find((g) => g.author_id === me)!.all_seen, true);
+  assert.equal(((await cliente.from('story_views').select('viewer_id').eq('story_id', s!.id)).data ?? []).length, 1, 'autor vê quem viu');
+  const bia = await signIn('prestador-bia');
+  assert.equal(((await bia.from('story_views').select('*').eq('story_id', s!.id)).data ?? []).length, 0, 'outros não veem');
+
+  assert.ok(!(await carlos.from('story_reports').insert({ reporter_id: carlosId, story_id: s!.id, reason: 'spam' })).error);
+  assert.ok((await carlos.from('story_reports').insert({ reporter_id: carlosId, story_id: s!.id, reason: 'spam' })).error, 'uma denúncia por pessoa');
+  assert.ok((await carlos.rpc('admin_remove_story', { p_story: s!.id, p_note: 'teste' })).error, 'só administrador remove');
+  const adm = await signIn('admin');
+  assert.ok(!(await adm.rpc('admin_remove_story', { p_story: s!.id, p_note: 'teste' })).error);
+  assert.equal((await bar(anon())).some((g) => g.author_id === me), false, 'removido some da faixa');
+  assert.equal((await admin.from('story_reports').select('status').eq('story_id', s!.id).single()).data!.status, 'procedente');
+
+  // Vencido: some para todos, mas o autor ainda enxerga para apagar o arquivo.
+  const { data: s2 } = await cliente.from('stories').insert({ author_id: me, kind: 'foto', path: `${me}/m2.webp` }).select('id').single();
+  await admin.from('stories').update({ expires_at: new Date(Date.now() - 1000).toISOString() }).eq('id', s2!.id);
+  assert.equal((await bar(carlos)).flatMap((g) => g.items).some((i) => i.id === s2!.id), false);
+  assert.equal(((await cliente.from('stories').select('id').eq('id', s2!.id)).data ?? []).length, 1);
+});

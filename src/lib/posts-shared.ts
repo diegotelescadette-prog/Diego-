@@ -1,6 +1,6 @@
 import type { Badges } from './verification';
 // Tipos e regras das publicações da comunidade, usados no servidor e no navegador.
-export type PostKind = 'trabalho' | 'divulgacao' | 'pedido';
+export type PostKind = 'dia_a_dia' | 'trabalho' | 'divulgacao' | 'pedido';
 export type MediaLabel = 'antes' | 'depois' | null;
 export type ReactionKind = 'valeu' | 'inspirou' | 'to_junto' | 'indico';
 /** Reações da comunidade (uma por pessoa; tocar de novo na mesma tira). */
@@ -39,12 +39,15 @@ export interface CommentView {
 }
 
 export const POST_KINDS: { key: PostKind; label: string; plural: string; cta: string; hint: string }[] = [
+  { key: 'dia_a_dia', label: 'Dia a dia', plural: 'Dia a dia', cta: 'Contar do meu dia', hint: 'Uma foto, um vídeo ou umas palavras sobre o seu dia' },
   { key: 'trabalho', label: 'Trabalho', plural: 'Trabalhos', cta: 'Mostrar um trabalho', hint: 'Fotos de um serviço que você fez, com antes e depois' },
   { key: 'divulgacao', label: 'Divulgação', plural: 'Divulgação', cta: 'Divulgar meu serviço', hint: 'Conte o que você faz, onde atende e o preço, se quiser' },
   { key: 'pedido', label: 'Pedido de indicação', plural: 'Pedidos de indicação', cta: 'Pedir uma indicação', hint: 'Peça à comunidade um bom profissional' },
 ];
-export const KIND_LABEL: Record<PostKind, string> = { trabalho: 'Trabalho', divulgacao: 'Divulgação', pedido: 'Pedido de indicação' };
-export const isKind = (k: unknown): k is PostKind => k === 'trabalho' || k === 'divulgacao' || k === 'pedido';
+export const KIND_LABEL: Record<PostKind, string> = { dia_a_dia: 'Dia a dia', trabalho: 'Trabalho', divulgacao: 'Divulgação', pedido: 'Pedido de indicação' };
+export const isKind = (k: unknown): k is PostKind => k === 'dia_a_dia' || k === 'trabalho' || k === 'divulgacao' || k === 'pedido';
+/** Tipos que qualquer conta com nome público pode usar. */
+export const MEMBER_KINDS: PostKind[] = ['dia_a_dia', 'pedido'];
 /** Tipos que só prestadores com perfil publicado e cobertura confirmada podem usar. */
 export const PROVIDER_KINDS: PostKind[] = ['trabalho', 'divulgacao'];
 

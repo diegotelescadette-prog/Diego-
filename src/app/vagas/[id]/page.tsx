@@ -64,7 +64,7 @@ export default async function Vaga({ params }: { params: Promise<{ id: string }>
           <h1 className="text-3xl leading-tight text-stone-900">{job.title}</h1>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-lg text-stone-700">{job.company_name}{verified && <VerifiedBadge label="Empresa verificada" />}</p>
           <ul className="mt-3 flex flex-wrap gap-2 text-sm" aria-label="Resumo da vaga" data-testid="job-chips">
-            {salary && <li className="soft-tag bg-white text-stone-900 ring-1 ring-line">{salary}</li>}
+            {salary && <li className="soft-tag bg-surface text-stone-900 ring-1 ring-line">{salary}</li>}
             <li className="soft-tag mod-servicos">{EMPLOYMENT_LABEL[job.employment_type as EmploymentType]}</li>
             {job.schedule_text && <li className="soft-tag mod-encontros">{job.schedule_text}</li>}
             <li className="soft-tag mod-eventos">{WORK_MODE_LABEL[job.work_mode as WorkMode]}</li>

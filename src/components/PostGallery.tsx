@@ -56,7 +56,7 @@ export function PostGallery({ photos, author, all = false }: { photos: PostMedia
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photos[open].url} alt={describe(open)} className="max-h-[78vh] w-auto max-w-full rounded-lg object-contain" />
             <figcaption className="text-sm font-semibold text-white" aria-live="polite">
-              {photos[open].label && <span className="mr-2 rounded-full bg-white px-2 py-0.5 text-stone-900">{LABEL[photos[open].label!]}</span>}
+              {photos[open].label && <span className="mr-2 rounded-full bg-surface px-2 py-0.5 text-stone-900">{LABEL[photos[open].label!]}</span>}
               {open + 1} de {photos.length}
             </figcaption>
           </figure>

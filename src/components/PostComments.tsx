@@ -32,7 +32,7 @@ function ProviderPicker({ value, onChange }: { value: Picked | null; onChange: (
       <label className="label" htmlFor="c-prov">Indicar um prestador do {APP_NAME} (opcional)</label>
       <input id="c-prov" className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nome ou serviço, ex.: eletricista" autoComplete="off" />
       {list.length > 0 && (
-        <ul className="mt-1 max-h-56 overflow-y-auto rounded-xl border border-stone-200 bg-white" aria-label="Prestadores encontrados">
+        <ul className="mt-1 max-h-56 overflow-y-auto rounded-xl border border-stone-200 bg-surface" aria-label="Prestadores encontrados">
           {list.map((p) => (
             <li key={p.id}><button type="button" className="w-full px-3 py-2 text-left hover:bg-stone-50" onClick={() => { onChange(p); setQ(''); }}>
               <span className="font-semibold">{p.name}</span>{p.service && <span className="text-stone-600"> · {p.service}</span>}
@@ -101,7 +101,7 @@ function CommentItem({ c, replies, ctx }: { c: CommentView; replies: CommentView
             </div>
           ) : <p className="whitespace-pre-line text-[15px] [overflow-wrap:anywhere]">{c.body}</p>}
           {c.provider && (
-            <Link href={`/p/${c.provider.slug}`} className="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm hover:border-brand-500" data-testid="recommended">
+            <Link href={`/p/${c.provider.slug}`} className="mt-2 flex items-center gap-2 rounded-xl border border-brand-200 bg-surface px-3 py-2 text-sm hover:border-brand-500" data-testid="recommended">
               <span className="text-hoje-700"><Glyph d="M5 12h14M13 6l6 6-6 6" size={18} /></span><span className="min-w-0"><span className="block font-semibold">Indicou {c.provider.name}</span>{c.provider.service && <span className="block text-stone-600">{c.provider.service} · ver perfil</span>}</span>
             </Link>
           )}
@@ -131,7 +131,7 @@ export function ReportBox({ postId, commentId }: { postId: string; commentId?: n
   const [state, action] = useActionState<Result | undefined, FormData>(reportPost, undefined);
   if (state?.ok) return <p role="status" className="rounded-xl bg-sage p-3 text-sm text-stone-900">{state.message}</p>;
   return (
-    <form action={action} className="space-y-2 rounded-xl border border-stone-200 bg-white p-3">
+    <form action={action} className="space-y-2 rounded-xl border border-stone-200 bg-surface p-3">
       <input type="hidden" name="post_id" value={postId} />
       {commentId && <input type="hidden" name="comment_id" value={commentId} />}
       <label className="label" htmlFor={`rr-${commentId ?? 'p'}`}>Motivo da denúncia</label>

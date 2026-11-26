@@ -20,7 +20,7 @@ type Row = {
 };
 
 /** Links assinados para os arquivos de publicações que a consulta (com RLS) já liberou. */
-async function signPaths(paths: string[]): Promise<Map<string, string>> {
+export async function signPaths(paths: string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   if (!paths.length) return out;
   try {

@@ -105,7 +105,7 @@ function AccountActions({ viewer }: { viewer: NavViewer & { email?: string | nul
   return (
     <details className="relative">
       <summary className="btn-ghost cursor-pointer list-none" aria-label="Abrir menu do perfil">Perfil ▾</summary>
-      <ul className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-stone-200 bg-white p-2 shadow-lg">
+      <ul className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-stone-200 bg-surface p-2 shadow-lg">
         {viewer.email && <li className="truncate px-3 py-1 text-sm text-stone-600">{viewer.email}</li>}
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/conta">Minha conta</Link></li>
         <li><Link className="block rounded-lg px-3 py-2 hover:bg-brand-50" href="/agenda">Minha agenda</Link></li>
@@ -163,7 +163,7 @@ function Drawer({ open, onClose, viewer, returnFocusTo }: {
     <div className="fixed inset-0 z-50 md:hidden" onKeyDown={onKeyDown}>
       <div className="absolute inset-0 bg-stone-900/50" aria-hidden="true" onClick={onClose} />
       <div ref={panel} role="dialog" aria-modal="true" aria-label="Menu" id="menu-gaveta"
-        className="absolute inset-y-0 left-0 flex w-[min(85vw,320px)] flex-col overflow-y-auto bg-white p-4 shadow-xl">
+        className="absolute inset-y-0 left-0 flex w-[min(85vw,320px)] flex-col overflow-y-auto bg-surface p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between">
           <Logo />
           <button type="button" className="btn-ghost min-h-11 px-3" onClick={onClose}>Fechar <span aria-hidden="true">✕</span></button>
@@ -193,7 +193,7 @@ export function AppShell({ viewer, children, footer }: {
 
   return (
     <>
-      <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:p-2">
+      <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-surface focus:p-2">
         Pular para o conteúdo
       </a>
       <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">

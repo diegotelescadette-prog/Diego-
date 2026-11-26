@@ -122,9 +122,10 @@ export function Composer(props: ComposerProps) {
     setErr(null);
     if (!kind) return;
     if (kind === 'trabalho' && !items.length) { setErr('Adicione de 1 a 6 fotos do trabalho (ou um vídeo).'); return; }
-    if (kind !== 'trabalho' && body.trim().length < 10) { setErr(kind === 'pedido' ? 'Descreva o que você precisa (pelo menos 10 letras).' : 'Escreva o texto da divulgação (pelo menos 10 letras).'); return; }
+    if (kind === 'dia_a_dia' && !body.trim() && !items.length) { setErr('Escreva algo ou adicione uma foto ou vídeo.'); return; }
+    if (kind !== 'trabalho' && kind !== 'dia_a_dia' && body.trim().length < 10) { setErr(kind === 'pedido' ? 'Descreva o que você precisa (pelo menos 10 letras).' : 'Escreva o texto da divulgação (pelo menos 10 letras).'); return; }
     if (kind === 'pedido' && !reqCategory && !reqService) { setErr('Escolha a categoria do serviço.'); return; }
-    if (kind === 'pedido' && !props.publicName && name.trim().length < 2) { setErr('Informe seu nome público.'); return; }
+    if ((kind === 'pedido' || kind === 'dia_a_dia') && !props.publicName && name.trim().length < 2) { setErr('Informe seu nome público.'); return; }
     // Envia só o que ainda não subiu: repetir depois de uma falha reaproveita os arquivos já enviados.
     const working = [...items];
     try {
@@ -156,7 +157,7 @@ export function Composer(props: ComposerProps) {
         categoryId: kind === 'pedido' ? reqCategory : null,
         neighborhoodId: hood, price: kind === 'divulgacao' ? price : null,
         media: working.map((m) => ({ kind: m.kind, path: m.path!, label: m.kind === 'foto' ? m.label : null })),
-        ...(kind === 'pedido' && !props.publicName ? { publicName: name } : {}),
+        ...((kind === 'pedido' || kind === 'dia_a_dia') && !props.publicName ? { publicName: name } : {}),
         ...(kind === 'trabalho' && booking && !edit ? { bookingId: booking } : {}),
       };
       const r = edit ? await updatePost(edit.id, input) : await createPost({ ...input, token: token.current });
@@ -175,7 +176,7 @@ export function Composer(props: ComposerProps) {
     return (
       <div className="post space-y-3 p-4" data-testid="composer-kinds">
         <h2 className="text-lg font-bold">O que você quer compartilhar?</h2>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2">
           {POST_KINDS.map((k) => (
             <button key={k.key} type="button" className="kind-opt" onClick={() => setKind(k.key)}>
               <span className="block font-bold">{k.cta}</span>
@@ -217,7 +218,7 @@ export function Composer(props: ComposerProps) {
           )}
 
           {kind === 'trabalho' && bookings.length > 0 && (
-            <div className="rounded-2xl border border-line bg-white p-3" data-testid="proof-picker">
+            <div className="rounded-2xl border border-line bg-surface p-3" data-testid="proof-picker">
               <label htmlFor="p-booking" className="label">Foi um pedido feito pelo Próximo?</label>
               <select id="p-booking" className="input" value={booking ?? ''}
                 onChange={(e) => {
@@ -264,10 +265,11 @@ export function Composer(props: ComposerProps) {
 
           <div>
             <label htmlFor="post-body" className="label">
-              {kind === 'trabalho' ? 'Conte o que foi feito (opcional)' : kind === 'divulgacao' ? 'Texto da divulgação' : 'Do que você precisa?'}
+              {kind === 'dia_a_dia' ? 'O que você quer contar?' : kind === 'trabalho' ? 'Conte o que foi feito (opcional)' : kind === 'divulgacao' ? 'Texto da divulgação' : 'Do que você precisa?'}
             </label>
             <textarea id="post-body" rows={4} maxLength={POST_LIMITS.body} className="input" value={body} onChange={(e) => setBody(e.target.value)}
-              placeholder={kind === 'trabalho' ? 'Ex.: Troquei toda a fiação da cozinha. Antes estava tudo exposto.'
+              placeholder={kind === 'dia_a_dia' ? 'Ex.: Primeiro dia no emprego novo! Obrigada a quem me indicou por aqui.'
+                : kind === 'trabalho' ? 'Ex.: Troquei toda a fiação da cozinha. Antes estava tudo exposto.'
                 : kind === 'divulgacao' ? 'Ex.: Faço instalação de ar-condicionado com garantia. Atendo a cidade toda, inclusive sábado.'
                 : 'Ex.: Procuro eletricista de confiança para trocar o quadro de luz ainda esta semana.'} />
           </div>
@@ -284,7 +286,7 @@ export function Composer(props: ComposerProps) {
           )}
 
           <div>
-            <label htmlFor="p-hood" className="label">{kind === 'pedido' ? 'Bairro' : kind === 'trabalho' ? 'Bairro do trabalho (opcional)' : 'Bairro em destaque (opcional)'}</label>
+            <label htmlFor="p-hood" className="label">{kind === 'pedido' ? 'Bairro' : kind === 'dia_a_dia' ? 'Bairro (opcional)' : kind === 'trabalho' ? 'Bairro do trabalho (opcional)' : 'Bairro em destaque (opcional)'}</label>
             <select id="p-hood" className="input" value={hood ?? ''} onChange={(e) => setHood(Number(e.target.value) || null)}>
               <option value="">{kind === 'pedido' ? 'Qualquer bairro de Campo Grande' : 'Não informar'}</option>
               {neighborhoods.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
@@ -292,11 +294,11 @@ export function Composer(props: ComposerProps) {
             {providerKind && <p className="hint">Nos filtros, a publicação aparece pelos bairros onde você atende.</p>}
           </div>
 
-          {kind === 'pedido' && !props.publicName && (
+          {(kind === 'pedido' || kind === 'dia_a_dia') && !props.publicName && (
             <div>
               <label htmlFor="p-name" className="label">Seu nome público</label>
               <input id="p-name" className="input" value={name} onChange={(e) => setName(e.target.value)} minLength={2} maxLength={60} autoComplete="given-name" placeholder="Ex.: Ana do Tiradentes" />
-              <p className="hint">Aparece no pedido e nos seus comentários. Seu e-mail nunca aparece.</p>
+              <p className="hint">Aparece {kind === 'pedido' ? 'no pedido' : 'na publicação'} e nos seus comentários. Seu e-mail nunca aparece.</p>
             </div>
           )}
 
@@ -317,11 +319,11 @@ export function Composer(props: ComposerProps) {
                   </div>
                   {it.kind === 'foto' && (
                     <div className="flex items-center gap-1 p-1.5">
-                      <button type="button" className="grid h-9 w-9 place-items-center rounded-lg border border-stone-300 bg-white disabled:opacity-40" aria-label={`Mover foto ${i + 1} para trás`} onClick={() => move(i, -1)} disabled={i === 0 || !!step}>←</button>
+                      <button type="button" className="grid h-9 w-9 place-items-center rounded-lg border border-stone-300 bg-surface disabled:opacity-40" aria-label={`Mover foto ${i + 1} para trás`} onClick={() => move(i, -1)} disabled={i === 0 || !!step}>←</button>
                       <select className="input min-h-9 min-w-0 flex-1 px-1 py-1 text-sm" aria-label={`Rótulo da foto ${i + 1}`} value={it.label ?? ''} onChange={(e) => setLabel(i, (e.target.value || null) as MediaLabel)}>
                         <option value="">Sem rótulo</option><option value="antes">Antes</option><option value="depois">Depois</option>
                       </select>
-                      <button type="button" className="grid h-9 w-9 place-items-center rounded-lg border border-stone-300 bg-white disabled:opacity-40" aria-label={`Mover foto ${i + 1} para frente`} onClick={() => move(i, 1)} disabled={i === items.length - 1 || !!step}>→</button>
+                      <button type="button" className="grid h-9 w-9 place-items-center rounded-lg border border-stone-300 bg-surface disabled:opacity-40" aria-label={`Mover foto ${i + 1} para frente`} onClick={() => move(i, 1)} disabled={i === items.length - 1 || !!step}>→</button>
                     </div>
                   )}
                 </li>

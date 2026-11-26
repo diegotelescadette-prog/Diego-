@@ -39,7 +39,7 @@ export function ServicePicker({ catalog, selected, main, error, mainError }: {
           ))}
         </ul>
       )}
-      <div className="mt-2 max-h-72 overflow-y-auto rounded-xl border border-stone-200 bg-white p-2">
+      <div className="mt-2 max-h-72 overflow-y-auto rounded-xl border border-stone-200 bg-surface p-2">
         {catalog.map((c) => {
           const items = c.services.filter((s) => !f || norm(s.name).includes(f) || norm(c.name).includes(f));
           if (!items.length) return null;

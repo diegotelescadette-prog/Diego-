@@ -14,6 +14,14 @@ npm run test:integration           # RLS, regras do banco e APIs (precisa do app
 npx playwright test                # E2E no navegador, computador e celular (Pixel 7)
 ```
 
+## Rodada 11 (26/11/2026): fase 3, parte 2 (dia a dia, Momentos e modo escuro) — passando
+
+Unitários (24), banco/API (59) e E2E (56 cenários × computador e celular = 112; 111 passaram, 1 falhou, a mesma instabilidade da busca registrada na rodada 10).
+
+- Dia a dia: qualquer conta com nome público conta do dia (texto, fotos ou vídeo); serviço e preço são ignorados; aparece na aba Dia a dia; se o autor é prestador na comunidade, o post leva ao perfil dele; conta sem nome público não posta.
+- Momentos: foto ou vídeo de até 30 s na pasta da própria conta; fica no ar 24 horas e não se edita; anel coral até a pessoa ver; o autor vê quantas pessoas viram e ninguém mais vê a lista; uma denúncia por pessoa; só a administração tira do ar (aparece em Publicações › Denúncias de momentos); vencido some para todos e o arquivo é apagado na próxima vez que o autor publica.
+- Modo escuro: Automático (segue o aparelho), Claro ou Escuro no rodapé, guardado num cookie; textos em índigo, vermelho e verde ganham tons claros no escuro; ícones de categoria clareados.
+
 ## Rodada 10 (26/11/2026): fase 3, parte 1 (rede social) — passando
 
 Unitários (24), banco/API (57) e E2E (51 cenários × computador e celular = 102; 100 passaram, 2 falharam, ver abaixo).

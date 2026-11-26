@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PostCard } from '@/components/PostCard';
+import { StoriesBar } from '@/components/StoriesBar';
+import { getStories } from '@/lib/stories';
 import { Glyph } from '@/components/CategoryIcon';
 import { getCatalog, getNeighborhoods, getPilotCity, getUser } from '@/lib/data';
 import { getPosts } from '@/lib/posts';
@@ -40,7 +42,7 @@ export default async function Comunidade({ searchParams }: { searchParams: Promi
     return { posts: out, more: false };
   }
 
-  const [catalog, hoods, { posts, more }] = await Promise.all([getCatalog(), getNeighborhoods(city.id), loadPosts()]);
+  const [catalog, hoods, { posts, more }, stories] = await Promise.all([getCatalog(), getNeighborhoods(city.id), loadPosts(), getStories()]);
   const catName = catalog.find((c) => c.slug === f.category)?.name;
   const hoodName = hoods.find((n) => n.id === f.neighborhood)?.name;
   const publishHref = (tipo: string) => `/publicar?tipo=${tipo}${f.category ? `&categoria=${f.category}` : ''}`;
@@ -51,10 +53,12 @@ export default async function Comunidade({ searchParams }: { searchParams: Promi
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-stone-800">Comunidade de {city.name}</h1>
-          <p className="text-stone-600">Trabalhos de profissionais da cidade, divulgações e pedidos de indicação.</p>
+          <p className="text-stone-600">O dia a dia da cidade, trabalhos de profissionais, divulgações e pedidos de indicação.</p>
         </div>
         <Link href={gated('/publicar')} className="btn-primary min-h-11 gap-2 px-4" data-testid="cta-publicar"><Glyph d={PLUS} size={18} /> Criar publicação</Link>
       </header>
+
+      {(stories.length > 0 || user) && <StoriesBar groups={stories} loggedIn={!!user} />}
 
       <nav aria-label="Tipo de publicação" className="chips-row" data-testid="feed-tabs">
         <Link href={feedHref(f, { kind: null })} className="qchip" aria-current={!f.kind ? 'page' : undefined} scroll={false}>Todos</Link>

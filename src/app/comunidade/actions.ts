@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { hitLimit } from '@/lib/rate-limit';
-import { isReaction, POST_LIMITS, POST_REPORT_REASON, PROVIDER_KINDS, type ReactionKind } from '@/lib/posts-shared';
+import { isReaction, MEMBER_KINDS, POST_LIMITS, POST_REPORT_REASON, PROVIDER_KINDS, type ReactionKind } from '@/lib/posts-shared';
 import { forbiddenPromise } from '@/lib/verification';
 
 export type Result = { ok?: boolean; message?: string; id?: string; login?: boolean };
@@ -12,7 +12,7 @@ const Media = z.object({ kind: z.enum(['foto', 'video']), path: z.string().max(2
 const MediaList = z.array(Media).max(POST_LIMITS.photos);
 
 const PostInput = z.object({
-  kind: z.enum(['trabalho', 'divulgacao', 'pedido']),
+  kind: z.enum(['dia_a_dia', 'trabalho', 'divulgacao', 'pedido']),
   body: z.string().max(POST_LIMITS.body),
   serviceId: z.number().int().positive().nullable(),
   categoryId: z.number().int().positive().nullable(),
@@ -75,10 +75,11 @@ export async function createPost(raw: PostInputT & { token: string }): Promise<R
   if (mErr) return { message: mErr };
   if (PROVIDER_KINDS.includes(p.kind) && !p.serviceId) return { message: 'Escolha o serviço.' };
   if (p.kind === 'pedido' && !p.serviceId && !p.categoryId) return { message: 'Escolha o serviço ou a categoria.' };
-  if (p.kind !== 'trabalho' && body.length < 10) return { message: p.kind === 'pedido' ? 'Descreva o que você precisa (pelo menos 10 letras).' : 'Escreva o texto da divulgação (pelo menos 10 letras).' };
+  if (p.kind === 'dia_a_dia' && !body && !p.media.length) return { message: 'Escreva algo ou adicione uma foto ou vídeo.' };
+  if (p.kind !== 'trabalho' && p.kind !== 'dia_a_dia' && body.length < 10) return { message: p.kind === 'pedido' ? 'Descreva o que você precisa (pelo menos 10 letras).' : 'Escreva o texto da divulgação (pelo menos 10 letras).' };
   const promise = forbiddenPromise(`${body} ${p.price ?? ''}`);
   if (promise) return { message: promise };
-  const nameErr = p.kind === 'pedido' ? await saveName(supabase, user.id, p.publicName) : null;
+  const nameErr = MEMBER_KINDS.includes(p.kind) ? await saveName(supabase, user.id, p.publicName) : null;
   if (nameErr) return { message: nameErr };
   if (!(await hitLimit('post', user.id, 20, 86400))) return { message: 'Muitas publicações hoje. Tente amanhã.' };
 
@@ -120,7 +121,8 @@ export async function updatePost(postId: string, raw: PostInputT): Promise<Resul
   const mErr = checkMedia(cur.kind, p.media, user.id);
   if (mErr) return { message: mErr };
   const body = p.body.trim();
-  if (cur.kind !== 'trabalho' && body.length < 10) return { message: 'Escreva pelo menos 10 letras.' };
+  if (cur.kind === 'dia_a_dia' && !body && !p.media.length) return { message: 'Escreva algo ou deixe uma foto ou vídeo.' };
+  if (cur.kind !== 'trabalho' && cur.kind !== 'dia_a_dia' && body.length < 10) return { message: 'Escreva pelo menos 10 letras.' };
   const promise = forbiddenPromise(`${body} ${p.price ?? ''}`);
   if (promise) return { message: promise };
 

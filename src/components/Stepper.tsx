@@ -13,7 +13,7 @@ export function Stepper({ current }: { current: number }) {
         {STEPS.map((s) => (
           <li key={s.n} className="flex-1">
             <Link href={s.href} aria-current={s.n === current ? 'step' : undefined}
-              className={`block rounded-xl border-2 px-2 py-2 text-center font-semibold ${s.n === current ? 'border-brand-700 bg-brand-700 text-white' : 'border-stone-200 bg-white text-stone-700'}`}>
+              className={`block rounded-xl border-2 px-2 py-2 text-center font-semibold ${s.n === current ? 'border-brand-700 bg-brand-700 text-white' : 'border-stone-200 bg-surface text-stone-700'}`}>
               <span className="block text-xs font-normal">{s.n === 3 ? 'Final' : `Etapa ${s.n}`}</span>{s.label}
             </Link>
           </li>

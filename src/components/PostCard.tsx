@@ -15,7 +15,7 @@ import { deletePost, setReaction, toggleFound, toggleSave } from '@/app/comunida
 import { KIND_LABEL, REACTIONS, reactionSummary, timeAgo, type PostView, type ReactionKind } from '@/lib/posts-shared';
 import { badgeTexts } from '@/lib/verification';
 
-const KIND_CLASS = { trabalho: 'kind-trabalho', divulgacao: 'kind-divulgacao', pedido: 'kind-pedido' } as const;
+const KIND_CLASS = { dia_a_dia: 'kind-dia', trabalho: 'kind-trabalho', divulgacao: 'kind-divulgacao', pedido: 'kind-pedido' } as const;
 
 /** Volta para a tela atual depois do login (mantém filtros e a publicação). */
 const here = () => (typeof window === 'undefined' ? '/' : window.location.pathname + window.location.search);
@@ -73,7 +73,7 @@ export function PostCard({ post, viewerId, message, detail = false }: {
   }
   async function share() {
     const url = `${window.location.origin}${page}`;
-    const title = pro ? `${KIND_LABEL[post.kind]} de ${post.author.name}` : `Pedido de indicação: ${subject ?? 'serviço'}`;
+    const title = pro || post.kind === 'dia_a_dia' ? `${KIND_LABEL[post.kind]} de ${post.author.name}` : `Pedido de indicação: ${subject ?? 'serviço'}`;
     try {
       if (navigator.share) { await navigator.share({ title, url }); return; }
       await navigator.clipboard.writeText(url);
@@ -110,7 +110,7 @@ export function PostCard({ post, viewerId, message, detail = false }: {
           <button type="button" className="grid h-11 w-11 place-items-center rounded-full text-xl text-stone-600 hover:bg-stone-100"
             aria-label="Mais opções da publicação" aria-expanded={menu} onClick={() => { setMenu(!menu); setConfirm(false); }}>⋯</button>
           {menu && (
-            <div className="absolute right-0 z-20 mt-1 w-60 rounded-xl border border-stone-200 bg-white p-1 shadow-lg">
+            <div className="absolute right-0 z-20 mt-1 w-60 rounded-xl border border-stone-200 bg-surface p-1 shadow-lg">
               {mine && <Link href={`${page}/editar`} className="block rounded-lg px-3 py-2 hover:bg-stone-50">Editar publicação</Link>}
               <button type="button" className="w-full rounded-lg px-3 py-2 text-left hover:bg-stone-50" onClick={() => { setMenu(false); void share(); }}>Copiar ou compartilhar link</button>
               {mine ? (
@@ -187,7 +187,7 @@ export function PostCard({ post, viewerId, message, detail = false }: {
           ))}
         </div>
       )}
-      {pro && !mine && (
+      {pro && !mine && post.kind !== 'dia_a_dia' && (
         <div className="grid grid-cols-2 gap-2 px-4 pb-3">
           {profile && <Link href={profile} className="btn-outline min-h-11 px-3 text-sm">Ver perfil</Link>}
           <button type="button" className="post-btn post-zap" onClick={whatsapp} disabled={busy}>

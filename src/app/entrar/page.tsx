@@ -13,6 +13,7 @@ const REASONS: Record<string, string> = {
   comentar: 'Entre para comentar a publicação.',
   util: 'Entre para reagir à publicação.',
   seguir: 'Entre para seguir o prestador.',
+  momento: 'Entre para publicar um momento.',
   publicar: 'Entre para publicar na comunidade.',
   salvar: 'Entre para salvar a publicação.',
   agendar: 'Entre ou crie sua conta para agendar. Você volta para o agendamento logo depois.',

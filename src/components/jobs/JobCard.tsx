@@ -40,7 +40,7 @@ export function JobCard({ job }: { job: JobCardData }) {
           {job.area && <span className="soft-tag mod-trabalho">{AREA_LABEL[job.area]}</span>}
           <span className="soft-tag mod-servicos">{EMPLOYMENT_LABEL[job.employment_type]}</span>
           <span className="soft-tag mod-eventos">{WORK_MODE_LABEL[job.work_mode]}</span>
-          {salary && <span className="soft-tag bg-white text-stone-800 ring-1 ring-line" data-testid="job-salary">{salary}</span>}
+          {salary && <span className="soft-tag bg-surface text-stone-800 ring-1 ring-line" data-testid="job-salary">{salary}</span>}
         </p>
         <p className="mt-2 text-sm text-stone-600">{job.place} · publicada {postedAgo(job.created_at)}</p>
       </Link>
