@@ -16,7 +16,7 @@ export function BottomNav({ accountHref }: { accountHref: string }) {
   const items = [
     { href: '/', label: 'Início', d: HOME, on: path === '/' },
     { href: '/servicos', label: 'Serviços', d: TAG, on: starts('/servicos', '/agendar', '/buscar', '/p/', '/hoje') },
-    { href: '/vagas', label: 'Trabalho', d: BAG, on: starts('/vagas', '/minhas-vagas', '/minhas-candidaturas') },
+    { href: '/vagas', label: 'Trabalho', d: BAG, on: starts('/vagas', '/minhas-vagas', '/minhas-candidaturas', '/curriculo') },
     { href: '/agenda', label: 'Agenda', d: CAL, on: starts('/agenda', '/pedidos') },
     { href: accountHref, label: 'Perfil', d: USER, on: starts('/painel', '/sou-prestador', '/conta', '/favoritos', '/entrar', '/comunidade', '/publicar', '/minhas-publicacoes') },
   ];

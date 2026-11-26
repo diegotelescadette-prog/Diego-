@@ -19,9 +19,9 @@ test('área pelo caminho e barra inferior só na busca', () => {
 
 test('menu por perfil: visitante, prestador e admin só veem a área permitida', () => {
   const labels = (a: Parameters<typeof navItems>[0], v: typeof visitor) => navItems(a, v).map((i) => i.label);
-  assert.deepEqual(labels('busca', visitor), ['Início', 'Catálogo de serviços', 'Preciso para hoje', 'Buscar profissional', 'Vagas de emprego', 'Quero contratar', 'Minha agenda', 'Salvos', 'Comunidade', 'Trabalhe com a gente']);
-  assert.deepEqual(labels('busca', provider), ['Início', 'Catálogo de serviços', 'Preciso para hoje', 'Buscar profissional', 'Vagas de emprego', 'Quero contratar', 'Minha agenda', 'Salvos', 'Comunidade', 'Painel do profissional']);
-  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Pedidos para mim', 'Meu perfil', 'Criar publicação', 'Minhas publicações', 'Serviços e fotos', 'Onde atendo', 'Disponibilidade', 'Verificação do perfil', 'Prévia do perfil', 'Minha conta', 'Voltar ao início']);
+  assert.deepEqual(labels('busca', visitor), ['Início', 'Catálogo de serviços', 'Preciso para hoje', 'Buscar profissional', 'Vagas de emprego', 'Meu currículo', 'Quero contratar', 'Minha agenda', 'Salvos', 'Comunidade', 'Trabalhe com a gente']);
+  assert.deepEqual(labels('busca', provider), ['Início', 'Catálogo de serviços', 'Preciso para hoje', 'Buscar profissional', 'Vagas de emprego', 'Meu currículo', 'Quero contratar', 'Minha agenda', 'Salvos', 'Comunidade', 'Painel do profissional']);
+  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Pedidos para mim', 'Meu perfil', 'Criar publicação', 'Minhas publicações', 'Serviços e fotos', 'Pacotes que eu faço', 'Onde atendo', 'Disponibilidade', 'Verificação do perfil', 'Prévia do perfil', 'Minha conta', 'Voltar ao início']);
   // sem permissão, a área administrativa mostra o menu da comunidade
   assert.equal(labels('admin', provider)[0], 'Início');
   assert.equal(labels('admin', adm)[0], 'Visão geral');

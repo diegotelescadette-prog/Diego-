@@ -204,7 +204,7 @@ export function Composer(props: ComposerProps) {
       ) : (
         <>
           {props.firstPost && !edit && (
-            <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-950" data-testid="first-post-notice">
+            <p className="rounded-xl bg-hoje-100 p-3 text-sm text-stone-900" data-testid="first-post-notice">
               <strong>Sua primeira publicação.</strong> Seu nome público, o texto e as fotos ficam visíveis para qualquer visitante.
               Não coloque telefone, e-mail ou endereço completo: informe só o bairro ou a cidade. Use fotos que você tem permissão para divulgar.
             </p>
@@ -287,7 +287,7 @@ export function Composer(props: ComposerProps) {
                       // eslint-disable-next-line jsx-a11y/media-has-caption
                       : <video src={it.preview} className="aspect-square w-full object-cover" muted />}
                     {i === 0 && it.kind === 'foto' && <span className="absolute left-1 top-1 rounded-full bg-brand-700 px-2 py-0.5 text-xs font-bold text-white">Capa</span>}
-                    {it.path && !it.existing && <span className="absolute bottom-1 left-1 rounded-full bg-green-700 px-2 py-0.5 text-xs font-bold text-white">Enviada</span>}
+                    {it.path && !it.existing && <span className="absolute bottom-1 left-1 rounded-full bg-brand-700 px-2 py-0.5 text-xs font-bold text-white">Enviada</span>}
                     <button type="button" className="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-full bg-black/60 text-white"
                       aria-label={`Tirar ${it.kind === 'foto' ? `foto ${i + 1}` : 'vídeo'}`} onClick={() => remove(i)} disabled={!!step}>✕</button>
                   </div>

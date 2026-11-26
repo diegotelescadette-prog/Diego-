@@ -18,7 +18,7 @@ export default async function EditarVaga({ params }: { params: Promise<{ id: str
   if (!job) notFound();
   const city = await getPilotCity();
   const neighborhoods = await getNeighborhoods(job.city_id);
-  const initial = Object.fromEntries(['title', 'company_name', 'description', 'requirements', 'employment_type', 'work_mode', 'neighborhood_id', 'salary_text', 'openings']
+  const initial = Object.fromEntries(['title', 'company_name', 'description', 'requirements', 'employment_type', 'work_mode', 'neighborhood_id', 'salary_text', 'openings', 'area', 'salary_min', 'salary_max', 'schedule_text']
     .map((k) => [k, job[k] == null ? '' : String(job[k])]));
   return (
     <div className="mx-auto max-w-2xl">

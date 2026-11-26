@@ -86,5 +86,5 @@ export function ContinueContact({ providerId, message, cleanUrl }: { providerId:
     openGeneral(providerId, message).then((r) => { if (r && r !== 'login') setErr(r); });
   }, [providerId, message, cleanUrl]);
   return err ? <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-red-900">{err}</p>
-    : <p role="status" className="mb-3 rounded-xl bg-green-50 p-3 text-green-900">Abrindo o WhatsApp…</p>;
+    : <p role="status" className="mb-3 rounded-xl bg-sage p-3 text-stone-900">Abrindo o WhatsApp…</p>;
 }

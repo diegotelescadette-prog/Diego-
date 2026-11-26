@@ -32,8 +32,8 @@ export default async function Previa({ searchParams }: { searchParams: Promise<{
     <div className="mx-auto max-w-3xl space-y-5">
       {p.status === 'draft' && <Stepper current={3} />}
       <h1 className="text-2xl font-extrabold">Prévia do seu perfil</h1>
-      {sp.hoje === 'ajustada' && <p role="status" className="rounded-xl bg-amber-50 p-3 text-amber-900">Área salva. O “Atendo hoje” foi ajustado para os bairros que continuam na sua área.</p>}
-      {sp.hoje === 'removida' && <p role="status" className="rounded-xl bg-amber-50 p-3 text-amber-900">Área salva. O “Atendo hoje” foi desativado porque a área de hoje saiu da sua cobertura. Ative de novo no painel.</p>}
+      {sp.hoje === 'ajustada' && <p role="status" className="rounded-xl bg-hoje-100 p-3 text-stone-900">Área salva. O “Atendo hoje” foi ajustado para os bairros que continuam na sua área.</p>}
+      {sp.hoje === 'removida' && <p role="status" className="rounded-xl bg-hoje-100 p-3 text-stone-900">Área salva. O “Atendo hoje” foi desativado porque a área de hoje saiu da sua cobertura. Ative de novo no painel.</p>}
       <p className="text-stone-700">Estado atual: <strong>{STATUS_LABEL[p.status]}</strong></p>
 
       <section aria-labelledby="busca-prev">
@@ -46,7 +46,7 @@ export default async function Previa({ searchParams }: { searchParams: Promise<{
       </section>
 
       {miss.length > 0 ? (
-        <div className="card border-amber-300 p-5" role="status">
+        <div className="card border-gold p-5" role="status">
           <p className="font-semibold">Falta pouco! Complete para publicar:</p>
           <ul className="mt-2 list-inside list-disc">
             {miss.map((m) => <li key={m}><Link className="underline" href={FIX_LINK[m] ?? '/painel/perfil'}>{MISSING_LABEL[m] ?? m}</Link></li>)}

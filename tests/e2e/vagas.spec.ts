@@ -25,8 +25,12 @@ test('empresa publica vaga: valida campos e cai no painel da vaga', async ({ pag
   await page.getByLabel('Cargo').fill(title);
   await page.getByLabel('Empresa ou contratante').fill('Padaria Teste');
   await page.getByLabel('Tipo de contratação').selectOption('clt');
+  await expect(page.getByText('Escolha a área da vaga')).toBeVisible();
+  await page.getByLabel('Área').selectOption('atendimento-vendas');
   await page.getByLabel(/Bairro/).selectOption({ label: 'Centro' });
-  await page.getByLabel(/Salário/).fill('R$ 1.800');
+  await page.getByLabel('De (R$)').fill('1.800');
+  await page.getByLabel('Até (R$)').fill('2.200');
+  await page.getByLabel(/Horário/).fill('Seg. a sáb., 6h às 14h');
   await page.getByLabel('Descrição da vaga').fill('Atendimento no balcão, caixa e reposição. Das 6h às 14h, segunda a sábado.');
   await page.getByRole('checkbox', { name: /não vou cobrar nada/ }).check();
   await page.getByRole('button', { name: 'Publicar vaga' }).click();
@@ -36,7 +40,10 @@ test('empresa publica vaga: valida campos e cai no painel da vaga', async ({ pag
   await expect(page.getByText('Ninguém se candidatou ainda.')).toBeVisible();
 
   await page.goto('/vagas?q=atendente');
-  await expect(page.getByTestId('job-card').filter({ hasText: title })).toContainText('Centro, Campo Grande–MS');
+  const card = page.getByTestId('job-card').filter({ hasText: title });
+  await expect(card).toContainText('Centro, Campo Grande–MS');
+  await expect(card).toContainText('R$ 1.800 a R$ 2.200');
+  await expect(card.getByTestId('verified')).toBeVisible();
 });
 
 test('candidato entra, envia currículo em PDF com consentimento e acompanha', async ({ page }) => {
@@ -46,6 +53,8 @@ test('candidato entra, envia currículo em PDF com consentimento e acompanha', a
   await page.getByRole('link', { name: 'Entrar para se candidatar' }).click();
   await login(page, demoEmail('cliente'));
   await expect(page).toHaveURL(/\/vagas\/[0-9a-f-]{36}$/);
+  await expect(page.getByTestId('no-resume')).toBeVisible();
+  await page.getByText('Prefiro enviar um PDF').click();
 
   await page.getByLabel('Nome completo').fill('Ana Teste da Silva');
   await page.getByRole('button', { name: 'Enviar candidatura' }).click();
@@ -63,7 +72,7 @@ test('candidato entra, envia currículo em PDF com consentimento e acompanha', a
   await expect(page.getByTestId('candidatura-ok')).toBeVisible();
 
   await page.reload();
-  await expect(page.getByTestId('ja-candidatou')).toContainText('Recebida');
+  await expect(page.getByTestId('ja-candidatou')).toContainText('Enviado');
   await page.goto('/minhas-candidaturas');
   await expect(page.getByTestId('minha-candidatura')).toContainText('Auxiliar de cozinha (demo)');
   await expect(page.getByTestId('minha-candidatura')).toContainText('Currículo Ana.pdf');
@@ -76,7 +85,7 @@ test('quem publicou vê o candidato, baixa o PDF e a situação muda; outra cont
   await row.click();
   const card = page.getByTestId('candidato');
   await expect(card).toContainText('Ana Teste da Silva');
-  await expect(card).toContainText('Recebida');
+  await expect(card).toContainText('Enviado');
   await expect(card.getByRole('link', { name: /WhatsApp \(67\) 99999-1234/ })).toHaveAttribute('href', /wa\.me\/5567999991234/);
   const href = await card.getByTestId('baixar-curriculo').getAttribute('href');
   const res = await page.request.get(href!);
@@ -85,7 +94,7 @@ test('quem publicou vê o candidato, baixa o PDF e a situação muda; outra cont
   expect(res.headers()['content-disposition']).toContain('attachment');
   expect((await res.body()).subarray(0, 5).toString()).toBe('%PDF-');
   await page.reload();
-  await expect(page.getByTestId('candidato')).toContainText('Currículo visto');
+  await expect(page.getByTestId('candidato')).toContainText('Visualizado');
 
   await page.getByLabel('Situação').selectOption('em_contato');
   await page.getByRole('button', { name: 'Atualizar' }).click();
@@ -104,7 +113,7 @@ test('candidato retira a candidatura e o currículo é apagado', async ({ page }
   await signInAs(page, 'cliente', '/minhas-candidaturas');
   const { data: before } = await admin.from('job_applications').select('id, resume_path');
   expect(before!.length).toBe(1);
-  await page.getByRole('button', { name: 'Retirar candidatura e apagar currículo' }).click();
+  await page.getByRole('button', { name: 'Retirar candidatura' }).click();
   await expect(page.getByRole('status')).toContainText('Candidatura retirada');
   await expect(page.getByText('Você ainda não se candidatou a nenhuma vaga.')).toBeVisible();
   const { data: after } = await admin.from('job_applications').select('id');

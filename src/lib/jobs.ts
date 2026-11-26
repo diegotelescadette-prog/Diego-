@@ -18,11 +18,52 @@ export const JOB_STATUS_LABEL: Record<string, string> = {
 };
 
 export const APPLICATION_STATUS_LABEL = {
-  recebida: 'Recebida',
-  vista: 'Currículo visto',
+  recebida: 'Enviado',
+  vista: 'Visualizado',
   em_contato: 'Em contato',
-  nao_selecionada: 'Não selecionada',
+  entrevista: 'Entrevista marcada',
+  aprovada: 'Aprovado',
+  nao_selecionada: 'Não selecionado',
 } as const;
+/** Etapas mostradas ao candidato. A última é "Aprovado" ou "Não selecionado". */
+export const APPLICATION_STEPS = ['recebida', 'vista', 'entrevista', 'final'] as const;
+export function applicationStep(status: ApplicationStatus): number {
+  return status === 'recebida' ? 0 : status === 'vista' || status === 'em_contato' ? 1 : status === 'entrevista' ? 2 : 3;
+}
+
+export const AREA_LABEL = {
+  'administrativo': 'Administrativo',
+  'atendimento-vendas': 'Atendimento e vendas',
+  'cozinha-alimentacao': 'Cozinha e alimentação',
+  'limpeza-conservacao': 'Limpeza e conservação',
+  'construcao-manutencao': 'Construção e manutenção',
+  'logistica-transporte': 'Logística e transporte',
+  'saude-cuidados': 'Saúde e cuidados',
+  'educacao': 'Educação',
+  'tecnologia': 'Tecnologia',
+  'beleza': 'Beleza',
+  'outros': 'Outros',
+} as const;
+export type JobArea = keyof typeof AREA_LABEL;
+
+/** Faixas do filtro de salário (reais por mês). Uma vaga entra se a faixa dela encosta na escolhida. */
+export const SALARY_RANGES = {
+  'ate-1500': { label: 'Até R$ 1.500', min: 0, max: 1500 },
+  '1500-3000': { label: 'R$ 1.500 a R$ 3.000', min: 1500, max: 3000 },
+  '3000-5000': { label: 'R$ 3.000 a R$ 5.000', min: 3000, max: 5000 },
+  'acima-5000': { label: 'Acima de R$ 5.000', min: 5000, max: 1_000_000 },
+} as const;
+export type SalaryRange = keyof typeof SALARY_RANGES;
+
+const brl = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`;
+/** "R$ 1.700 a R$ 2.500", "R$ 1.900", "A partir de R$ 2.000", ou o texto livre. */
+export function salaryLabel(j: { salary_min?: number | null; salary_max?: number | null; salary_text?: string | null }): string | null {
+  const { salary_min: lo, salary_max: hi } = j;
+  if (lo && hi) return lo === hi ? brl(lo) : `${brl(lo)} a ${brl(hi)}`;
+  if (lo) return `A partir de ${brl(lo)}`;
+  if (hi) return `Até ${brl(hi)}`;
+  return j.salary_text || null;
+}
 export type ApplicationStatus = keyof typeof APPLICATION_STATUS_LABEL;
 
 export const JOB_REPORT_REASON = {
@@ -36,6 +77,10 @@ export const JOB_REPORT_REASON = {
 export const MAX_RESUME_BYTES = 4 * 1024 * 1024;
 
 export interface JobInput {
+  area: JobArea;
+  salary_min: number | null;
+  salary_max: number | null;
+  schedule_text: string | null;
   title: string;
   company_name: string;
   description: string;
@@ -62,6 +107,11 @@ export function parseJob(values: Record<string, unknown>): { data?: JobInput; er
   const mode = clean(values.work_mode);
   const nb = clean(values.neighborhood_id);
   const openings = clean(values.openings) === '' ? 1 : Number(values.openings);
+  const area = clean(values.area);
+  const money = (v: unknown) => { const t = clean(v).replace(/[R$\s.]/g, '').replace(',', '.'); return t === '' ? null : Math.round(Number(t)); };
+  const smin = money(values.salary_min);
+  const smax = money(values.salary_max);
+  const schedule = oneLine(values.schedule_text);
 
   if (title.length < 3) errors.title = 'Informe o cargo, ex.: Auxiliar de cozinha';
   else if (title.length > 100) errors.title = 'Use até 100 caracteres';
@@ -75,10 +125,16 @@ export function parseJob(values: Record<string, unknown>): { data?: JobInput; er
   if (!(mode in WORK_MODE_LABEL)) errors.work_mode = 'Escolha o formato de trabalho';
   if (!Number.isInteger(openings) || openings < 1 || openings > 99) errors.openings = 'Informe de 1 a 99 vagas';
   if (nb && !/^\d+$/.test(nb)) errors.neighborhood_id = 'Bairro inválido';
+  if (!(area in AREA_LABEL)) errors.area = 'Escolha a área da vaga';
+  if (smin !== null && (!Number.isFinite(smin) || smin < 1 || smin > 1_000_000)) errors.salary_min = 'Informe um valor em reais, ex.: 1800';
+  if (smax !== null && (!Number.isFinite(smax) || smax < 1 || smax > 1_000_000)) errors.salary_max = 'Informe um valor em reais, ex.: 2500';
+  if (!errors.salary_min && !errors.salary_max && smin !== null && smax !== null && smin > smax) errors.salary_max = 'O máximo precisa ser maior ou igual ao mínimo';
+  if (schedule.length > 80) errors.schedule_text = 'Use até 80 caracteres';
   if (Object.keys(errors).length) return { errors };
   return {
     errors,
     data: {
+      area: area as JobArea, salary_min: smin, salary_max: smax, schedule_text: schedule || null,
       title, company_name: company, description, requirements: requirements || null,
       employment_type: type as EmploymentType, work_mode: mode as WorkMode,
       neighborhood_id: nb ? Number(nb) : null, salary_text: salary || null, openings,

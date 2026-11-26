@@ -22,7 +22,7 @@ const REASON: Record<string, string> = {
 };
 const REPORT_STATUS: Record<string, string> = { aberta: 'Em análise', procedente: 'Procedente', improcedente: 'Improcedente' };
 const COVERAGE_LABEL: Record<string, string> = { cidade: 'Cidade inteira', bairros: 'Bairros selecionados', online: 'Só online', pendente: 'Área pendente' };
-const STATUS_STYLE: Record<string, string> = { draft: 'bg-stone-200 text-stone-900', published: 'bg-green-100 text-green-900', paused: 'bg-amber-100 text-amber-900', suspended: 'bg-red-100 text-red-900' };
+const STATUS_STYLE: Record<string, string> = { draft: 'bg-stone-200 text-stone-900', published: 'bg-sage text-stone-900', paused: 'bg-hoje-100 text-stone-900', suspended: 'bg-red-100 text-red-900' };
 
 type SP = { aba?: string; msg?: string; q?: string; cidade?: string; status?: string; categoria?: string; cobertura?: string; hoje?: string; pendente?: string; pagina?: string;
   servico?: string; lancamento?: string; verificacao?: string; situacao?: string };
@@ -212,7 +212,7 @@ async function Lancamento({ sb, sp, city, cities }: { sb: SB; sp: SP; city: City
     <div className="space-y-4">
       <p className="max-w-3xl text-stone-700">Conta como <strong>apto</strong> o perfil publicado, com área de atendimento confirmada, WhatsApp conferido e verificação aprovada. Pausados, suspensos e pendentes ficam fora. Um perfil com quatro serviços conta nas quatro linhas e uma vez no total. O “Atende hoje” segue a confirmação do dia, não esta tabela.</p>
       {!rule?.enabled && (
-        <p className="max-w-3xl rounded-xl bg-amber-50 p-3 text-amber-950" data-testid="rule-off">A regra de verificação ainda está <strong>desligada</strong>: hoje a busca mostra todos os perfis publicados, aprovados ou não. Revise a fila e ligue a regra em <Link className="underline" href="/admin?aba=config">Configurações</Link> antes da divulgação.</p>
+        <p className="max-w-3xl rounded-xl bg-hoje-100 p-3 text-stone-900" data-testid="rule-off">A regra de verificação ainda está <strong>desligada</strong>: hoje a busca mostra todos os perfis publicados, aprovados ou não. Revise a fila e ligue a regra em <Link className="underline" href="/admin?aba=config">Configurações</Link> antes da divulgação.</p>
       )}
       <ul className="grid gap-3 sm:grid-cols-3" aria-label="Resumo do lançamento">
         <li><Link className="kpi" href={adminHref('perfis', { cidade, lancamento: 'apto' })} data-testid="launch-apt-total">
@@ -303,7 +303,7 @@ async function Catalogo({ sb }: { sb: SB }) {
             <span className="text-sm font-normal text-stone-600">{c.services.length} serviços</span>
           </summary>
           {c.official_channel && (
-            <p className="mt-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-950" data-testid="credit-gate">
+            <p className="mt-2 rounded-xl bg-hoje-100 p-3 text-sm text-stone-900" data-testid="credit-gate">
               Categoria com canal oficial. Habilite somente depois de conferir a instituição responsável e o vínculo declarado nas fontes oficiais do Banco Central e com a avaliação jurídica da publicidade financeira. Cada perfil só mostra estes serviços depois que a equipe confere o canal oficial dele. Fica fora do “Preciso para hoje”.
             </p>
           )}
@@ -317,9 +317,9 @@ async function Catalogo({ sb }: { sb: SB }) {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`font-semibold ${s.active ? '' : 'text-stone-400 line-through'}`}>{s.name}</span>
                   <span className="text-xs text-stone-500">{s.mode}</span>
-                  <span className={`tag text-xs ${s.active ? 'bg-green-100 text-green-900' : 'bg-stone-200 text-stone-700'}`}>{s.active ? 'Ativo' : 'Inativo'}</span>
+                  <span className={`tag text-xs ${s.active ? 'bg-sage text-stone-900' : 'bg-stone-200 text-stone-700'}`}>{s.active ? 'Ativo' : 'Inativo'}</span>
                   {s.mode !== 'online' && (
-                    <span className={`tag text-xs ${s.urgent_pilot ? 'bg-orange-100 text-orange-900' : 'bg-stone-100 text-stone-600'}`}>{s.urgent_pilot ? 'No “Preciso para hoje”' : 'Fora do “Preciso para hoje”'}</span>
+                    <span className={`tag text-xs ${s.urgent_pilot ? 'bg-hoje-100 text-hoje-700' : 'bg-stone-100 text-stone-600'}`}>{s.urgent_pilot ? 'No “Preciso para hoje”' : 'Fora do “Preciso para hoje”'}</span>
                   )}
                   <span className="ml-auto flex flex-wrap gap-1">
                     {s.mode !== 'online' && (
@@ -426,7 +426,7 @@ async function Denuncias({ sb, sp, city, cities }: { sb: SB; sp: SP; city: City 
         return (
           <div key={r.id} className="card p-4">
             <p className="flex flex-wrap items-center gap-2 font-bold">#{r.id} · {REASON[r.reason]}
-              <span className={`tag ${r.status === 'aberta' ? 'bg-amber-100 text-amber-900' : 'bg-stone-200 text-stone-800'}`}>{REPORT_STATUS[r.status] ?? r.status}</span></p>
+              <span className={`tag ${r.status === 'aberta' ? 'bg-hoje-100 text-stone-900' : 'bg-stone-200 text-stone-800'}`}>{REPORT_STATUS[r.status] ?? r.status}</span></p>
             <p className="mt-1">Perfil: <Link className="underline" href={`/p/${p?.slug}`}>{p?.display_name}</Link> ({STATUS_LABEL[p?.status]})</p>
             <p className="text-sm text-stone-600">Recebida em {new Date(r.created_at).toLocaleString('pt-BR', { timeZone: 'America/Campo_Grande' })}</p>
             {r.details && <p className="mt-1 text-stone-700">{r.details}</p>}
@@ -552,7 +552,7 @@ async function Perfis({ sb, sp, city, cities }: { sb: SB; sp: SP; city: City | n
                   <Link href={`/p/${p.slug}`} className="font-bold underline">{p.display_name || '(sem nome)'}</Link>
                   <span className={`tag ${STATUS_STYLE[p.status]}`}>{STATUS_LABEL[p.status]}</span>
                   {p.available_today && <span className="badge-hoje">● Atende hoje</span>}
-                  {p.area_pending && <span className="tag bg-amber-100 text-amber-900">Área pendente</span>}
+                  {p.area_pending && <span className="tag bg-hoje-100 text-stone-900">Área pendente</span>}
                   <span className={`tag ${VERIFICATION_STYLE[p.verification]}`} data-testid="verif-tag">Verificação: {VERIFICATION_LABEL[p.verification]}</span>
                   {p.apt && <span className="tag cov-ok">Apto</span>}
                 </p>

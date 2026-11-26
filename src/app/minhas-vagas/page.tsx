@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: 'Vagas que publiquei' };
 export const dynamic = 'force-dynamic';
 
 const STATE_STYLE: Record<string, string> = {
-  aberta: 'bg-green-100 text-green-900', encerrada: 'bg-stone-200 text-stone-800', vencida: 'bg-amber-100 text-amber-900', removida: 'bg-red-100 text-red-900',
+  aberta: 'bg-sage text-stone-900', encerrada: 'bg-stone-200 text-stone-800', vencida: 'bg-hoje-100 text-stone-900', removida: 'bg-red-100 text-red-900',
 };
 
 export default async function MinhasVagas({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
@@ -47,7 +47,7 @@ export default async function MinhasVagas({ searchParams }: { searchParams: Prom
                   <span className={`tag ${STATE_STYLE[st]}`}>{JOB_STATUS_LABEL[st]}</span>
                   <span className="text-sm font-semibold text-stone-800">
                     {Number(c?.total ?? 0) === 1 ? '1 candidato' : `${c?.total ?? 0} candidatos`}
-                    {Number(c?.novas ?? 0) > 0 && <span className="tag ml-2 bg-amber-100 text-amber-900">{c!.novas} {Number(c!.novas) === 1 ? 'novo' : 'novos'}</span>}
+                    {Number(c?.novas ?? 0) > 0 && <span className="tag ml-2 bg-hoje-100 text-stone-900">{c!.novas} {Number(c!.novas) === 1 ? 'novo' : 'novos'}</span>}
                   </span>
                 </Link>
               </li>

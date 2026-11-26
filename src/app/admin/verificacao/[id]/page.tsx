@@ -151,7 +151,7 @@ export default async function VerificacaoAdmin({ params, searchParams }: { param
 
       <section className="card space-y-3 p-5" aria-labelledby="a-dec">
         <h2 id="a-dec" className="text-lg font-bold">Decisão</h2>
-        {v?.pending_reason && status === 'pendencia' && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-950"><strong>Pendência atual:</strong> {v.pending_reason}</p>}
+        {v?.pending_reason && status === 'pendencia' && <p className="rounded-xl bg-hoje-100 p-3 text-sm text-stone-900"><strong>Pendência atual:</strong> {v.pending_reason}</p>}
         {v?.decided_at && <p className="text-sm text-stone-600">Última decisão em {when(v.decided_at)} por {v.decided_by ?? '—'}.</p>}
         <p className="text-sm">{d.ready ? 'Pronto para aprovar: identidade e WhatsApp conferidos e ao menos uma referência confirmada.' : 'Para aprovar: identidade e WhatsApp conferidos e ao menos uma referência confirmada.'}</p>
         {status !== 'aprovado' && <Act id={id} op="aprovar" label="Aprovar cadastro" back={back} cls="btn-primary" />}

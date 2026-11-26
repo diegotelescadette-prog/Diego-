@@ -16,7 +16,7 @@ export default async function Conta({ searchParams }: { searchParams: Promise<{ 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
       <h1 className="text-3xl text-stone-900">Perfil</h1>
-      {sp.senha && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900">Senha alterada.</p>}
+      {sp.senha && <p role="status" className="rounded-xl bg-sage p-3 text-stone-900">Senha alterada.</p>}
       <section className="card p-5">
         <p><span className="font-semibold">E-mail de acesso:</span> {user.email}</p>
         <p className="hint">Visível só para você.</p>
@@ -25,7 +25,7 @@ export default async function Conta({ searchParams }: { searchParams: Promise<{ 
       <nav aria-label="Meu espaço" className="card p-2" data-testid="perfil-links">
         <ul className="divide-y divide-line">
           {[
-            ['/agenda', 'Minha agenda'], ['/pedidos', 'Meus pedidos'], ['/vagas/meu-curriculo', 'Meu currículo'],
+            ['/agenda', 'Minha agenda'], ['/pedidos', 'Meus pedidos'], ['/curriculo', 'Meu currículo'],
             ['/minhas-candidaturas', 'Minhas candidaturas'], ['/minhas-vagas', 'Vagas que publiquei'], ['/favoritos', 'Salvos'],
             ['/minhas-publicacoes', 'Minhas publicações na comunidade'], ['/comunidade', 'Comunidade'],
           ].map(([href, label]) => (

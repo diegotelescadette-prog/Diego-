@@ -44,7 +44,7 @@ export function AreaForm({ initial, cities, neighborhoods, canOnline }: {
   return (
     <form action={action} className="space-y-6" noValidate>
       {state?.message && (
-        <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'}`}>{state.message}</p>
+        <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-sage text-stone-900' : 'bg-red-50 text-red-900'}`}>{state.message}</p>
       )}
       <section aria-labelledby="area-title" className="space-y-4">
         <div>
@@ -59,7 +59,7 @@ export function AreaForm({ initial, cities, neighborhoods, canOnline }: {
         <fieldset>
           <legend className="label text-base">Onde você atende?</legend>
           {needsConfirm && mode === '' && (
-            <p role="status" className="mb-2 rounded-xl bg-amber-50 p-3 font-medium text-amber-900">Confirme sua área de atendimento. Só assim seu perfil aparece na busca do bairro certo.</p>
+            <p role="status" className="mb-2 rounded-xl bg-hoje-100 p-3 font-medium text-stone-900">Confirme sua área de atendimento. Só assim seu perfil aparece na busca do bairro certo.</p>
           )}
           <div className="grid gap-2 sm:grid-cols-2">
             <label className="area-opt">

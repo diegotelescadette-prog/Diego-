@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
-import '@fontsource-variable/fraunces';
-import '@fontsource-variable/plus-jakarta-sans';
+import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource-variable/inter';
 import './globals.css';
 import { AppShell } from '@/components/AppShell';
 import { getIsAdmin, getUser } from '@/lib/data';
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
   description: PILOT_TAGLINE,
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#fff8ee' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#f6f5f1' };
 
 async function hasOwnProfile(userId: string | undefined) {
   if (!userId) return false;

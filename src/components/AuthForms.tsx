@@ -8,7 +8,7 @@ import { requestPasswordReset, resendConfirmation, signIn, signUp, updatePasswor
 function Msg({ state }: { state: AuthState }) {
   if (!state?.message) return null;
   return (
-    <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'}`}>
+    <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-sage text-stone-900' : 'bg-red-50 text-red-900'}`}>
       {state.message}
     </p>
   );

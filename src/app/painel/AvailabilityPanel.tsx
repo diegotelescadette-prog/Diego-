@@ -29,12 +29,12 @@ export function AvailabilityPanel({ active, services, areaNeighborhoods, servesW
     </p>
   );
   const feedback = state?.message && (
-    <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900'}`}>{state.message}</p>
+    <p role={state.ok ? 'status' : 'alert'} className={`rounded-xl p-3 ${state.ok ? 'bg-sage text-stone-900' : 'bg-red-50 text-red-900'}`}>{state.message}</p>
   );
 
   const summary = active && (
     <div className="space-y-3" data-testid="today-active">
-      <p className="text-lg font-bold text-amber-900"><span className="badge-hoje">● Atendo hoje</span> ativo até {active.until}</p>
+      <p className="text-lg font-bold text-stone-900"><span className="badge-hoje">● Atendo hoje</span> ativo até {active.until}</p>
       <div>
         <p className="font-semibold">Serviços de hoje</p>
         <ul className="mt-1 flex flex-wrap gap-2">

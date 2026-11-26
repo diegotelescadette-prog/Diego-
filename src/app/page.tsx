@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { Glyph } from '@/components/CategoryIcon';
 import { Guarantee, PackageCard } from '@/components/PackageCard';
-import { getPackages, getUpcoming } from '@/lib/booking';
-import { dayBox, SLOT_LABEL, STATUS_LABEL } from '@/lib/booking-shared';
+import { getPackages } from '@/lib/booking';
+import { getAgenda } from '@/lib/agenda';
+import { AgendaCard } from '@/components/AgendaCard';
 import { getPilotCity, getUser } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 
@@ -15,19 +16,20 @@ const MEGA = 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10';
 const SHIELD = 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5';
 const BOLT = 'M13 2 4 14h7l-1 8 9-12h-7z';
 
-/** Amanhecer em ilustração plana: faixas de céu, sol âmbar com brilho e montanhas em silhueta (sem gradiente). */
+/** Luz da manhã em ilustração plana: faixa índigo, sol lima com brilho suave e colinas em índigo escuro (sem gradiente). */
 function Dawn() {
   return (
     <>
       <span className="dawn-band" aria-hidden="true" />
       <svg className="dawn-sun" viewBox="0 0 140 140" aria-hidden="true">
-        <circle cx="70" cy="70" r="70" fill="#ffe9a8" />
-        <circle cx="70" cy="70" r="50" fill="#ef9614" />
+        <circle cx="70" cy="70" r="70" fill="#6a5af5" />
+        <circle cx="70" cy="70" r="48" fill="#d4f25a" />
       </svg>
       <svg className="dawn-hills" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 52 L70 18 L120 40 L190 4 L262 44 L320 26 L400 50 V90 H0z" fill="#2b1809" />
-        <path d="M0 76 L90 50 L160 68 L240 44 L330 72 L400 58 V90 H0z" fill="#14100c" />
+        <path d="M0 52 L70 18 L120 40 L190 4 L262 44 L320 26 L400 50 V90 H0z" fill="#2a2290" />
+        <path d="M0 76 L90 50 L160 68 L240 44 L330 72 L400 58 V90 H0z" fill="#1c1666" />
       </svg>
+      <span className="dawn-dot" aria-hidden="true" />
     </>
   );
 }
@@ -56,10 +58,9 @@ async function firstName(userId: string | undefined) {
 export default async function Home() {
   const city = await getPilotCity();
   const user = await getUser();
-  const [pkgs, name, upcoming] = await Promise.all([getPackages(), firstName(user?.id), user ? getUpcoming(user.id, 1) : Promise.resolve([])]);
+  const [pkgs, name, upcoming] = await Promise.all([getPackages(), firstName(user?.id), user ? getAgenda(user.id, 1) : Promise.resolve([])]);
   const featured = [...pkgs.filter((p) => p.featured), ...pkgs.filter((p) => !p.featured)].slice(0, 4);
   const next = upcoming[0];
-  const nextBox = next ? dayBox(next.scheduled_date) : null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -99,18 +100,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {next && nextBox && (
+      {next && (
         <section aria-labelledby="enc-t" data-testid="next-meeting">
           <h2 id="enc-t" className="mb-3 text-xl text-stone-900">Seu próximo encontro</h2>
-          <Link href={next.client_id === user?.id ? `/pedidos/${next.id}` : '/painel/pedidos'} className="card flex items-center gap-4 p-4 hover:border-brand-300">
-            <span className="date-box" aria-hidden="true"><small>{nextBox.weekday}</small><strong>{nextBox.day}</strong><small>{nextBox.month}</small></span>
-            <span className="min-w-0 flex-1">
-              <span className="soft-tag mod-servicos text-xs">Serviço</span>
-              <span className="mt-1 block font-bold text-stone-900">{next.items[0]?.name ?? next.service}</span>
-              <span className="block text-sm text-stone-600">{nextBox.weekday}, {nextBox.day} de {nextBox.month} · {SLOT_LABEL[next.time_slot].toLowerCase()} · {next.neighborhood}</span>
-              <span className="block text-sm font-semibold text-stone-700">{STATUS_LABEL[next.status]}</span>
-            </span>
-          </Link>
+          <AgendaCard item={next} />
         </section>
       )}
 

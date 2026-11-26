@@ -25,7 +25,7 @@ export function GeneralContactButton({ providerId, defaultMessage }: { providerI
 
   if (!open) return <button type="button" className="btn-zap" disabled={!ready} onClick={() => setOpen(true)}>Chamar no WhatsApp</button>;
   return (
-    <div className="w-full rounded-2xl border border-zap-600/40 bg-green-50 p-4" role="group" aria-label="Mensagem para o WhatsApp">
+    <div className="w-full rounded-2xl border border-zap-600/40 bg-sage p-4" role="group" aria-label="Mensagem para o WhatsApp">
       <label htmlFor="wa-msg" className="label">Mensagem (você pode editar antes de enviar)</label>
       <textarea id="wa-msg" rows={4} maxLength={600} className="input" value={msg} onChange={(e) => setMsg(e.target.value)} />
       <p className="hint">O WhatsApp abre com o texto pronto. Você decide se envia.</p>
@@ -55,7 +55,7 @@ export function UrgentContactButton({ providerId, serviceId, neighborhoodId, cit
   }
   if (state === 'changed') {
     return (
-      <p role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-amber-900">
+      <p role="status" className="rounded-xl border border-gold bg-hoje-100 p-3 text-stone-900">
         A disponibilidade deste profissional mudou. <a className="font-semibold underline" href={backHref}>Ver quem atende hoje</a>
       </p>
     );
@@ -70,7 +70,7 @@ export function UrgentContactButton({ providerId, serviceId, neighborhoodId, cit
 
 export function ReportForm({ providerId }: { providerId: string }) {
   const [state, action] = useActionState(createReport, undefined);
-  if (state?.ok) return <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900">{state.message}</p>;
+  if (state?.ok) return <p role="status" className="rounded-xl bg-sage p-3 text-stone-900">{state.message}</p>;
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="provider_id" value={providerId} />

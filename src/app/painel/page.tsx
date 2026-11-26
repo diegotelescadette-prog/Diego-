@@ -16,7 +16,7 @@ import { VERIFICATION_LABEL, VERIFICATION_STYLE, verificationNext, type Verifica
 export const metadata: Metadata = { title: 'Painel do prestador' };
 export const dynamic = 'force-dynamic';
 
-const STATUS_STYLE = { draft: 'bg-stone-200 text-stone-900', published: 'bg-green-100 text-green-900', paused: 'bg-amber-100 text-amber-900', suspended: 'bg-red-100 text-red-900' };
+const STATUS_STYLE = { draft: 'bg-stone-200 text-stone-900', published: 'bg-sage text-stone-900', paused: 'bg-hoje-100 text-stone-900', suspended: 'bg-red-100 text-red-900' };
 
 export default async function Painel({ searchParams }: { searchParams: Promise<{ publicado?: string; erro?: string }> }) {
   const sp = await searchParams;
@@ -45,14 +45,14 @@ export default async function Painel({ searchParams }: { searchParams: Promise<{
         <h1 className="text-2xl font-extrabold">Visão geral</h1>
         <p className="text-stone-700">{p.display_name || 'Seu perfil profissional'}</p>
       </div>
-      {sp.publicado && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-900">Perfil publicado! Agora você aparece na busca.</p>}
+      {sp.publicado && <p role="status" className="rounded-xl bg-sage p-3 text-stone-900">Perfil publicado! Agora você aparece na busca.</p>}
       {sp.erro && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-900">{sp.erro}</p>}
 
       {step && (
-        <section aria-labelledby="proximo" className="card border-2 border-amber-300 bg-amber-50/60 p-5" data-testid={coverage === 'pendente' && p.status !== 'draft' ? 'confirm-area' : 'next-step'}>
-          <h2 id="proximo" className="text-sm font-bold uppercase tracking-wide text-amber-900">Próximo passo</h2>
-          {coverage === 'pendente' && p.status !== 'draft' && <p className="mt-1 text-lg font-semibold text-amber-950">Confirme sua área de atendimento.</p>}
-          <p className="mt-1 text-amber-950">{step.text}</p>
+        <section aria-labelledby="proximo" className="card border-2 border-gold bg-hoje-100/60 p-5" data-testid={coverage === 'pendente' && p.status !== 'draft' ? 'confirm-area' : 'next-step'}>
+          <h2 id="proximo" className="text-sm font-bold uppercase tracking-wide text-stone-900">Próximo passo</h2>
+          {coverage === 'pendente' && p.status !== 'draft' && <p className="mt-1 text-lg font-semibold text-stone-900">Confirme sua área de atendimento.</p>}
+          <p className="mt-1 text-stone-900">{step.text}</p>
           <Link className="btn-primary mt-3" href={step.href}>{step.cta}</Link>
         </section>
       )}

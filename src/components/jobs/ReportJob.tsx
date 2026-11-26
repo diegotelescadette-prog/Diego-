@@ -9,7 +9,7 @@ export function ReportJob({ jobId }: { jobId: string }) {
   return (
     <details className="card p-4">
       <summary className="cursor-pointer font-semibold text-stone-700">Denunciar esta vaga</summary>
-      {state?.ok ? <p role="status" className="mt-3 rounded-xl bg-green-50 p-3 text-green-900">{state.message}</p> : (
+      {state?.ok ? <p role="status" className="mt-3 rounded-xl bg-sage p-3 text-stone-900">{state.message}</p> : (
         <form action={action} className="mt-3 space-y-3">
           <input type="hidden" name="job_id" value={jobId} />
           {state?.message && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-900">{state.message}</p>}

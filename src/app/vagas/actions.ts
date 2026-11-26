@@ -10,7 +10,7 @@ import { APPLICATION_STATUS_LABEL, JOB_REPORT_REASON, parseJob } from '@/lib/job
 export type JobFormState = { errors?: Record<string, string>; message?: string; values?: Record<string, string> } | undefined;
 export type SimpleState = { ok?: boolean; message?: string; errors?: Record<string, string> } | undefined;
 
-const FIELDS = ['title', 'company_name', 'description', 'requirements', 'employment_type', 'work_mode', 'neighborhood_id', 'salary_text', 'openings'];
+const FIELDS = ['title', 'company_name', 'description', 'requirements', 'employment_type', 'work_mode', 'neighborhood_id', 'salary_text', 'openings', 'area', 'salary_min', 'salary_max', 'schedule_text'];
 const keep = (form: FormData) => Object.fromEntries(FIELDS.map((k) => [k, String(form.get(k) ?? '')]));
 const uuid = z.string().uuid();
 
@@ -32,9 +32,10 @@ export async function createJob(_: JobFormState, form: FormData): Promise<JobFor
   if (!data) return { errors, values: keep(form) };
   if (form.get('aceite') !== 'on') return { errors: { aceite: 'Confirme as regras para publicar' }, values: keep(form) };
   const city = await getPilotCity();
-  const { data: row, error } = await supabase.from('jobs').insert({ ...data, poster_id: user.id, city_id: city.id }).select('id').single();
+  const { data: row, error } = await supabase.from('jobs').insert({ ...data, poster_id: user.id, city_id: city.id }).select('id, held').single();
   if (error || !row) return { message: dbMessage(error?.code, 'Não foi possível publicar a vaga. Tente de novo.', error?.message), values: keep(form) };
   revalidatePath('/vagas');
+  if (row.held) redirect(`/vagas/verificacao?vaga=${row.id}`);
   redirect(`/minhas-vagas/${row.id}?msg=${encodeURIComponent('Vaga publicada. Ela fica no ar por 30 dias.')}`);
 }
 
@@ -68,7 +69,7 @@ export async function manageJob(form: FormData) {
     if (!job) redirect('/minhas-vagas');
     const admin = createAdminClient();
     const { data: apps } = await admin.from('job_applications').select('resume_path').eq('job_id', id.data);
-    const paths = (apps ?? []).map((a) => a.resume_path);
+    const paths = (apps ?? []).map((a) => a.resume_path).filter((p): p is string => !!p);
     if (paths.length) await admin.storage.from('curriculos').remove(paths);
     await supabase.from('jobs').delete().eq('id', id.data);
     revalidatePath('/vagas');
@@ -97,7 +98,7 @@ export async function withdrawApplication(form: FormData) {
   const { supabase, user } = await requireUser('/minhas-candidaturas');
   const { data: app } = await supabase.from('job_applications').select('resume_path').eq('id', id.data).eq('applicant_id', user.id).maybeSingle();
   if (app) {
-    await supabase.storage.from('curriculos').remove([app.resume_path]);
+    if (app.resume_path) await supabase.storage.from('curriculos').remove([app.resume_path]);
     await supabase.from('job_applications').delete().eq('id', id.data).eq('applicant_id', user.id);
   }
   revalidatePath('/minhas-candidaturas');
@@ -142,4 +143,28 @@ export async function manageTalent(form: FormData) {
   }
   revalidatePath('/vagas/meu-curriculo');
   redirect(`/vagas/meu-curriculo?msg=${encodeURIComponent(msg)}`);
+}
+
+export type ApplyState = { ok?: boolean; message?: string } | undefined;
+const APPLY_ERR: Record<string, string> = {
+  resume_missing: 'Monte seu currículo antes de se candidatar.',
+  resume_incomplete: 'Complete o currículo: conte o trabalho que você procura.',
+  already_applied: 'Você já se candidatou a esta vaga.',
+  invalid_message: 'A mensagem pode ter até 1.500 caracteres.',
+};
+
+/** Candidatura com o currículo do app, em um toque. O telefone só vai se a pessoa marcar. */
+export async function applyWithResume(_: ApplyState, form: FormData): Promise<ApplyState> {
+  const id = uuid.safeParse(form.get('job_id'));
+  if (!id.success) return { message: 'Vaga inválida.' };
+  const { supabase } = await requireUser(`/vagas/${id.data}`);
+  const { error } = await supabase.rpc('apply_with_resume', {
+    p_job: id.data, p_message: String(form.get('message') ?? ''), p_share_phone: form.get('share_phone') === 'on',
+  });
+  if (error) {
+    const key = Object.keys(APPLY_ERR).find((k) => error.message.includes(k));
+    return { message: key ? APPLY_ERR[key] : error.code === '23514' || error.code === '54000' ? error.message : 'Não foi possível enviar agora. Tente de novo.' };
+  }
+  revalidatePath('/minhas-candidaturas');
+  return { ok: true };
 }
