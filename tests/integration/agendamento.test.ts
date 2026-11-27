@@ -19,15 +19,25 @@ const args = async (over: Record<string, unknown> = {}) => ({
   p_neighborhood: await hood('centro'), p_address: 'Rua Teste, 10', p_phone: '(67) 98888-7777', p_notes: null, p_payment: 'dinheiro_na_entrega', ...over,
 });
 
-test('o total é calculado no banco (quantidade e adicionais); dados inválidos são recusados', async () => {
+test('sem preço fixo: o pedido nasce sem valor e só o profissional do pedido informa o valor; dados inválidos são recusados', async () => {
   const c = await signIn('cliente');
   const addon = (await admin.from('package_addons').select('id, price_cents').eq('package_id', await pkg('diaria-4-horas')).single()).data!;
   const { data: id, error } = await c.rpc('create_booking', await args({ p_addons: [addon.id] }));
   assert.equal(error, null);
   const { data: b } = await c.from('bookings').select('total_cents, status').eq('id', id).single();
-  assert.equal(b!.total_cents, (12000 + addon.price_cents) * 2);
+  assert.equal(b!.total_cents, 0);
   const { data: pay } = await c.from('payments').select('method, status, amount_cents').eq('booking_id', id).single();
-  assert.deepEqual(pay, { method: 'dinheiro_na_entrega', status: 'pendente', amount_cents: (12000 + addon.price_cents) * 2 });
+  assert.deepEqual(pay, { method: 'dinheiro_na_entrega', status: 'pendente', amount_cents: 0 });
+  // só o profissional do pedido informa o valor
+  assert.match((await c.rpc('set_booking_quote', { p_booking: id, p_cents: 15000 })).error?.message ?? '', /not_allowed/);
+  assert.match((await (await signIn('prestador-marcos')).rpc('set_booking_quote', { p_booking: id, p_cents: 15000 })).error?.message ?? '', /not_allowed/);
+  const pro = await signIn('prestador-bia');
+  for (const v of [0, 50, 20000000]) assert.match((await pro.rpc('set_booking_quote', { p_booking: id, p_cents: v })).error?.message ?? '', /invalid_value/);
+  assert.equal((await pro.rpc('set_booking_quote', { p_booking: id, p_cents: 15000 })).error, null);
+  const q = (await admin.from('bookings').select('total_cents, quoted_at').eq('id', id).single()).data!;
+  assert.equal(q.total_cents, 15000);
+  assert.ok(q.quoted_at);
+  assert.equal((await c.from('payments').select('amount_cents').eq('booking_id', id).single()).data!.amount_cents, 15000);
   for (const [over, code] of [
     [{ p_slot: 'madrugada' }, 'invalid_slot'], [{ p_date: '2020-01-01' }, 'invalid_slot'], [{ p_qty: 11 }, 'invalid_qty'],
     [{ p_phone: '123' }, 'invalid_phone'], [{ p_addons: [999999] }, 'invalid_addons'], [{ p_payment: 'cartao' }, 'invalid_payment'],
@@ -78,9 +88,13 @@ test('comissão configurável é gravada ao concluir; equipe registra "não comp
   const pro = await signIn('prestador-bia');
   const { data: id, error: ce } = await c.rpc('create_booking', await args({ p_qty: 1, p_slot: 'tarde' }));
   assert.equal(ce, null);
-  for (const s of ['confirmado', 'a_caminho', 'em_andamento', 'concluido']) {
+  for (const s of ['confirmado', 'a_caminho', 'em_andamento']) {
     assert.equal((await pro.rpc('booking_action', { p_booking: id, p_action: s })).data, s);
   }
+  // não conclui sem informar o valor
+  assert.match((await pro.rpc('booking_action', { p_booking: id, p_action: 'concluido' })).error?.message ?? '', /quote_required/);
+  assert.equal((await pro.rpc('set_booking_quote', { p_booking: id, p_cents: 12000 })).error, null);
+  assert.equal((await pro.rpc('booking_action', { p_booking: id, p_action: 'concluido' })).data, 'concluido');
   const { data: b } = await admin.from('bookings').select('commission_pct, commission_cents').eq('id', id).single();
   assert.equal(Number(b!.commission_pct), 15);
   assert.equal(b!.commission_cents, 1800);

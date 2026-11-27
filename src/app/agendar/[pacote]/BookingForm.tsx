@@ -1,7 +1,7 @@
 'use client';
 import { useActionState, useMemo, useState } from 'react';
 import { createBooking, type BookState } from './actions';
-import { bookingDays, bookingTotal, formatPrice, PAYMENT_LABEL, SLOT_LABEL, type PackageAddon, type PaymentMethod, type TimeSlot } from '@/lib/booking-shared';
+import { bookingDays, PAYMENT_LABEL, SLOT_LABEL, type PackageAddon, type PaymentMethod, type TimeSlot } from '@/lib/booking-shared';
 
 interface Props {
   pkg: { id: number; slug: string; name: string; price_cents: number; price_from: boolean; addons: PackageAddon[] };
@@ -24,7 +24,6 @@ export function BookingForm({ pkg, neighborhoods, todayAvailable, initial }: Pro
   const [phone, setPhone] = useState(initial.phone);
   const [notes, setNotes] = useState('');
   const [payment, setPayment] = useState<PaymentMethod>('pix_na_entrega');
-  const total = bookingTotal(pkg.price_cents, pkg.addons, addons, qty);
   const hoodName = neighborhoods.find((n) => String(n.id) === hood)?.name;
 
   function pickDay(d: string) {
@@ -56,7 +55,7 @@ export function BookingForm({ pkg, neighborhoods, todayAvailable, initial }: Pro
               <label key={a.id} className="choice">
                 <input type="checkbox" name="addon" value={a.id} checked={addons.includes(a.id)}
                   onChange={(e) => setAddons((s) => e.target.checked ? [...s, a.id] : s.filter((x) => x !== a.id))} />
-                <span className="flex-1">{a.name}</span><span className="font-bold">+ {formatPrice(a.price_cents)}</span>
+                <span className="flex-1">{a.name}</span>
               </label>
             ))}
           </fieldset>
@@ -126,22 +125,22 @@ export function BookingForm({ pkg, neighborhoods, todayAvailable, initial }: Pro
       <section className="card p-4 sm:p-5" aria-labelledby="b5" data-testid="summary">
         <h2 id="b5" className="font-bold text-stone-800">Resumo</h2>
         <div className="mt-2 divide-y divide-line text-stone-700">
-          <div className="summary-row"><span>{pkg.name} × {qty}</span><span>{formatPrice(pkg.price_cents * qty)}</span></div>
+          <div className="summary-row"><span>{pkg.name} × {qty}</span></div>
           {pkg.addons.filter((a) => addons.includes(a.id)).map((a) => (
-            <div key={a.id} className="summary-row"><span>{a.name} × {qty}</span><span>{formatPrice(a.price_cents * qty)}</span></div>
+            <div key={a.id} className="summary-row" data-testid="summary-addon"><span>+ {a.name} × {qty}</span></div>
           ))}
           <div className="summary-row"><span>Quando</span><span className="text-right">{day?.today ? 'Hoje' : day?.label}{slot ? `, ${SLOT_LABEL[slot].split(' (')[0].toLowerCase()}` : ''}</span></div>
           <div className="summary-row"><span>Onde</span><span className="text-right">{hoodName ?? '—'}</span></div>
           <div className="summary-row"><span>Pagamento</span><span>{PAYMENT_LABEL[payment]}</span></div>
           <div className="summary-row items-baseline pt-3">
-            <span className="font-bold text-stone-900">Total{pkg.price_from ? ' (a partir de)' : ''}</span>
-            <span className="price-lg" data-testid="total">{formatPrice(total)}</span>
+            <span className="font-bold text-stone-900">Valor</span>
+            <span className="text-right text-stone-700" data-testid="total">Combinado com o profissional</span>
           </div>
         </div>
-        {pkg.price_from && <p className="mt-1 text-sm text-stone-600">O profissional confirma o valor final antes de começar. Se for mais caro, você pode desistir sem pagar nada.</p>}
+        <p className="mt-1 text-sm text-stone-600" data-testid="valor-explica">Cada profissional define o próprio valor. Ele informa no pedido antes de ir, e você só paga depois do serviço pronto. Se não servir, você cancela sem pagar nada.</p>
         {state?.error && <p role="alert" className="field-error mt-3 rounded-xl bg-red-50 p-3" data-testid="booking-error">{state.error}</p>}
         <button type="submit" className="btn-hoje mt-4 min-h-12 w-full text-lg" disabled={pending || !slot || !date}>
-          {pending ? 'Agendando…' : `Confirmar agendamento · ${formatPrice(total)}`}
+          {pending ? 'Agendando…' : 'Confirmar agendamento'}
         </button>
       </section>
     </form>

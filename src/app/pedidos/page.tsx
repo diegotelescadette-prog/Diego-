@@ -28,7 +28,7 @@ export default async function Pedidos({ searchParams }: { searchParams: Promise<
                 </span>
                 <span className="text-right">
                   <span className={`st-tag st-${b.status}`}>{STATUS_LABEL[b.status]}</span>
-                  <span className="mt-1 block font-bold">{formatPrice(b.total_cents)}</span>
+                  <span className="mt-1 block font-bold">{b.total_cents > 0 ? formatPrice(b.total_cents) : 'Valor a informar'}</span>
                 </span>
               </Link>
             </li>
@@ -37,7 +37,7 @@ export default async function Pedidos({ searchParams }: { searchParams: Promise<
       ) : (
         <div className="card p-5 text-stone-700">
           <p>Você ainda não fez nenhum pedido.</p>
-          <Link href="/servicos" className="btn-hoje mt-3 min-h-11 px-4">Ver serviços com preço fixo</Link>
+          <Link href="/servicos" className="btn-hoje mt-3 min-h-11 px-4">Ver serviços</Link>
         </div>
       )}
     </div>

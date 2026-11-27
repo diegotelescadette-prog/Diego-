@@ -140,6 +140,8 @@ export function bookingError(code: string | undefined): string {
     invalid_provider: 'Este profissional não está mais disponível para o pedido.',
     not_allowed: 'Você não tem acesso a este pedido.',
     no_provider: 'Escolha um profissional primeiro.',
+    invalid_value: 'Informe um valor entre R$ 1 e R$ 100.000.',
+    quote_required: 'Informe o valor do serviço antes de concluir.',
   };
   const key = Object.keys(map).find((k) => code?.includes(k));
   return key ? map[key] : 'Não foi possível concluir. Tente de novo.';

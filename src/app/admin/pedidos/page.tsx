@@ -26,7 +26,7 @@ export default async function AdminPedidos({ searchParams }: { searchParams: Pro
           <h1 className="text-2xl font-bold text-stone-800">Pedidos</h1>
           <p className="text-stone-600">{list.length} {list.length === 1 ? 'pedido' : 'pedidos'}{noProvider ? ` · ${noProvider} sem profissional` : ''}</p>
         </div>
-        <Link href="/admin/pacotes" className="btn-outline min-h-11 px-4">Pacotes e preços</Link>
+        <Link href="/admin/pacotes" className="btn-outline min-h-11 px-4">Pacotes</Link>
       </header>
       {sp.msg && <p role="status" className="rounded-xl bg-brand-50 p-3 text-brand-900">{sp.msg}</p>}
       <form method="get" className="card grid gap-2 p-3 sm:grid-cols-5" aria-label="Filtrar pedidos">
@@ -57,7 +57,7 @@ export default async function AdminPedidos({ searchParams }: { searchParams: Pro
                   <td className="p-3">{dateLabel(b.scheduled_date)}, {SLOT_LABEL[b.time_slot].split(' (')[0].toLowerCase()}</td>
                   <td className="p-3">{b.neighborhood}</td>
                   <td className="p-3"><span className={`st-tag st-${b.status}`}>{STATUS_LABEL[b.status]}</span>{b.status === 'solicitado' && !b.provider_id && <span className="ml-1 text-xs font-bold text-hoje-700">sem profissional</span>}</td>
-                  <td className="p-3 text-right font-semibold">{formatPrice(b.total_cents)}</td>
+                  <td className="p-3 text-right font-semibold">{b.total_cents > 0 ? formatPrice(b.total_cents) : 'A informar'}</td>
                 </tr>
               ))}
             </tbody>

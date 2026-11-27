@@ -7,17 +7,19 @@ const CHECK = 'M5 12.5l4.5 4.5L19 7.5';
 const CLOCK = 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2';
 const SHIELD = 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5';
 
-/** Preço sempre em destaque: "a partir de" pequeno em cima, valor grande. */
-export function Price({ cents, from, size = 'md' }: { cents: number; from?: boolean; size?: 'md' | 'lg' }) {
+/** O valor é do profissional (sem preço fixo no app): o cartão avisa que ele informa depois de aceitar o pedido. */
+export function PriceNote({ size = 'md' }: { size?: 'md' | 'lg' }) {
   return (
-    <span className="price" data-testid="price">
-      {from && <span className="price-from">a partir de</span>}
-      <span className={size === 'lg' ? 'price-lg' : 'price-md'}>{formatPrice(cents)}</span>
-    </span>
+    <span className={`price-note ${size === 'lg' ? 'text-base' : 'text-sm'}`} data-testid="price-note">Valor com o profissional</span>
   );
 }
 
-/** Card de pacote: nome, preço, o que está incluso e o botão Agendar. */
+/** Valor informado pelo profissional num pedido. */
+export function QuotedPrice({ cents }: { cents: number }) {
+  return <span className="price-md" data-testid="quoted-price">{formatPrice(cents)}</span>;
+}
+
+/** Card de pacote: nome, o que está incluso e o botão Agendar. O valor é combinado com o profissional. */
 export function PackageCard({ p, compact = false }: { p: ServicePackage; compact?: boolean }) {
   return (
     <article className="pkg" data-testid="package-card" data-slug={p.slug}>
@@ -27,7 +29,7 @@ export function PackageCard({ p, compact = false }: { p: ServicePackage; compact
           <h3 className="font-bold leading-snug text-stone-900">{p.name}</h3>
           <p className="flex flex-wrap items-center gap-x-1 text-sm text-stone-500">{p.service.name} ·<span className="inline-flex items-center gap-1"><Glyph d={CLOCK} size={13} />{durationLabel(p.duration_min)}</span></p>
         </div>
-        <Price cents={p.price_cents} from={p.price_from} />
+        <PriceNote />
       </div>
       {!compact && p.includes.length > 0 && (
         <ul className="mt-3 space-y-1 text-sm text-stone-700" aria-label="O que está incluso">
@@ -45,7 +47,7 @@ export function PackageCard({ p, compact = false }: { p: ServicePackage; compact
 /** Bloco "Garantia": aparece na tela inicial e no agendamento. */
 export function Guarantee({ compact = false }: { compact?: boolean }) {
   const items = [
-    ['Preço combinado é preço pago', 'O valor do pacote não muda na hora.'],
+    ['Valor combinado é valor pago', 'O profissional informa o valor antes de ir, e ele não muda na hora.'],
     ['O profissional não apareceu?', 'Reagendamos com prioridade.'],
     ['Problema no serviço?', 'Nossa equipe responde em até 24 horas.'],
   ];
@@ -68,7 +70,8 @@ export function Guarantee({ compact = false }: { compact?: boolean }) {
 
 export function HowItWorks() {
   const steps = [
-    ['Escolha o serviço', 'Veja o preço e o que está incluso antes de agendar.'],
+    ['Escolha o serviço', 'Veja o que está incluso e agende o dia e o horário.'],
+    ['O profissional informa o valor', 'Cada profissional define o seu. Se não servir, você cancela sem pagar nada.'],
     ['Profissional verificado vai até você', 'No dia e na faixa de horário que você escolher.'],
     ['Pague só depois de pronto', 'Pix ou dinheiro, na entrega.'],
   ];

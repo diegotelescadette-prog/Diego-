@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { saveAddon, saveBookingRules, savePackage } from './actions';
 import { Restricted } from '@/components/Restricted';
-import { formatPrice } from '@/lib/booking-shared';
 import { getCatalog, getIsAdmin, getSetting } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
 
@@ -13,19 +12,16 @@ type Pkg = { id: number; service_id: number; slug: string; name: string; descrip
   duration_min: number; price_cents: number; price_from: boolean; featured: boolean; active: boolean;
   package_addons: { id: number; name: string; price_cents: number; active: boolean }[] };
 
-const reais = (c: number) => (c / 100).toLocaleString('pt-BR', { minimumFractionDigits: c % 100 ? 2 : 0 });
 
 function PackageFields({ p }: { p?: Pkg }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       <div className="sm:col-span-2"><label className="label" htmlFor={`n-${p?.id ?? 'novo'}`}>Nome</label><input id={`n-${p?.id ?? 'novo'}`} name="name" className="input" defaultValue={p?.name} maxLength={80} required /></div>
-      <div><label className="label" htmlFor={`pr-${p?.id ?? 'novo'}`}>Preço (R$)</label><input id={`pr-${p?.id ?? 'novo'}`} name="price" className="input" inputMode="decimal" defaultValue={p ? reais(p.price_cents) : ''} required /></div>
       <div><label className="label" htmlFor={`du-${p?.id ?? 'novo'}`}>Duração (minutos)</label><input id={`du-${p?.id ?? 'novo'}`} name="duration_min" type="number" min={10} max={720} className="input" defaultValue={p?.duration_min ?? 60} required /></div>
       <div className="sm:col-span-2"><label className="label" htmlFor={`de-${p?.id ?? 'novo'}`}>Descrição</label><textarea id={`de-${p?.id ?? 'novo'}`} name="description" rows={2} className="input" defaultValue={p?.description} maxLength={400} /></div>
       <div><label className="label" htmlFor={`in-${p?.id ?? 'novo'}`}>Está incluso (um por linha)</label><textarea id={`in-${p?.id ?? 'novo'}`} name="includes" rows={3} className="input" defaultValue={p?.includes.join('\n')} /></div>
       <div><label className="label" htmlFor={`ex-${p?.id ?? 'novo'}`}>Não está incluso (um por linha)</label><textarea id={`ex-${p?.id ?? 'novo'}`} name="excludes" rows={3} className="input" defaultValue={p?.excludes.join('\n')} /></div>
       <div className="flex flex-wrap gap-4 sm:col-span-2">
-        <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="price_from" value="1" defaultChecked={p?.price_from} className="h-5 w-5" /> Preço “a partir de”</label>
         <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="featured" value="1" defaultChecked={p?.featured} className="h-5 w-5" /> Mostrar em “Mais pedidos”</label>
         <label className="flex min-h-11 items-center gap-2"><input type="checkbox" name="active" value="1" defaultChecked={p ? p.active : true} className="h-5 w-5" /> Ativo</label>
       </div>
@@ -35,7 +31,7 @@ function PackageFields({ p }: { p?: Pkg }) {
 
 /** Catálogo de pacotes com preço fixo e as regras dos pedidos (comissão e prazo para aceitar). */
 export default async function AdminPacotes({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
-  if (!(await getIsAdmin())) return <Restricted what="Preços e regras dos pedidos" />;
+  if (!(await getIsAdmin())) return <Restricted what="Pacotes e regras dos pedidos" />;
   const { msg } = await searchParams;
   const supabase = await createClient();
   const [cats, { data }, pct, prazo] = await Promise.all([
@@ -82,7 +78,7 @@ export default async function AdminPacotes({ searchParams }: { searchParams: Pro
             <details key={p.id} className="card p-4" data-testid="admin-package" data-slug={p.slug}>
               <summary className="flex cursor-pointer flex-wrap items-center gap-2">
                 <span className="font-semibold">{p.name}</span><span className="text-sm text-stone-500">{s.name}</span>
-                <span className="ml-auto font-bold">{p.price_from ? 'a partir de ' : ''}{formatPrice(p.price_cents)}</span>
+                <span className="ml-auto" />
                 {!p.active && <span className="st-tag st-cancelado">inativo</span>}{p.featured && <span className="st-tag st-concluido">mais pedidos</span>}
               </summary>
               <form action={savePackage} className="mt-3 space-y-3">
@@ -97,7 +93,6 @@ export default async function AdminPacotes({ searchParams }: { searchParams: Pro
                     <li key={a.id}><form action={saveAddon} className="flex flex-wrap items-end gap-2">
                       <input type="hidden" name="id" value={a.id} />
                       <input name="name" aria-label="Nome do adicional" className="input min-w-0 flex-1" defaultValue={a.name} />
-                      <input name="price" aria-label="Preço do adicional" className="input w-28" defaultValue={reais(a.price_cents)} />
                       <label className="flex min-h-11 items-center gap-1 text-sm"><input type="checkbox" name="active" value="1" defaultChecked={a.active} /> ativo</label>
                       <button type="submit" className="btn-outline min-h-11 px-3">Salvar</button>
                     </form></li>
@@ -105,7 +100,6 @@ export default async function AdminPacotes({ searchParams }: { searchParams: Pro
                   <li><form action={saveAddon} className="flex flex-wrap items-end gap-2">
                     <input type="hidden" name="package_id" value={p.id} />
                     <input name="name" aria-label="Novo adicional" placeholder="Novo adicional" className="input min-w-0 flex-1" />
-                    <input name="price" aria-label="Preço do novo adicional" placeholder="R$" className="input w-28" />
                     <button type="submit" className="btn-outline min-h-11 px-3">Adicionar</button>
                   </form></li>
                 </ul>

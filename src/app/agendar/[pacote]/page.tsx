@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { BookingForm } from './BookingForm';
 import { CategoryIcon, Glyph } from '@/components/CategoryIcon';
-import { Guarantee, Price } from '@/components/PackageCard';
+import { Guarantee, PriceNote } from '@/components/PackageCard';
 import { getPackage, packageToday } from '@/lib/booking';
 import { durationLabel } from '@/lib/booking-shared';
 import { getNeighborhoods, getPilotCity, getUser } from '@/lib/data';
@@ -47,7 +47,7 @@ export default async function Agendar({ params }: { params: Promise<{ pacote: st
             <h1 id="pk-t" className="text-xl font-bold text-stone-900 sm:text-2xl">{p.name}</h1>
             <p className="text-sm text-stone-500">{p.service.name} · {durationLabel(p.duration_min)}</p>
           </div>
-          <Price cents={p.price_cents} from={p.price_from} size="lg" />
+          <PriceNote size="lg" />
         </div>
         {p.description && <p className="mt-3 text-stone-700">{p.description}</p>}
         <div className="mt-3 grid gap-3 sm:grid-cols-2">

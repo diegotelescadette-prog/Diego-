@@ -68,7 +68,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ v
             <span className="home-main-ic"><Glyph d={TOOL} size={24} /></span>
             <div className="min-w-0 flex-1">
               <h2 className="text-2xl text-white"><Link href="/servicos" className="hover:underline">Preciso de um serviço</Link></h2>
-              <p className="mt-0.5 text-[15px] text-brand-100">Preço fechado e profissional verificado. Você paga depois de pronto.</p>
+              <p className="mt-0.5 text-[15px] text-brand-100">Profissional verificado, com o valor combinado com ele. Você paga depois de pronto.</p>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">

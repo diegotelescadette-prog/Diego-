@@ -25,8 +25,9 @@ test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem lin
   await expect(page.getByTestId('home-trabalho')).toContainText('Procuro trabalho');
   await expect(page.getByTestId('home-contratar')).toHaveAttribute('href', '/vagas/nova');
   const most = page.getByTestId('most-requested');
-  await expect(most.getByTestId('package-card').filter({ hasText: 'Trocar chuveiro' })).toContainText('R$ 90');
-  await expect(page.getByTestId('guarantee')).toContainText('Preço combinado é preço pago');
+  await expect(most.getByTestId('package-card').filter({ hasText: 'Trocar chuveiro' }).getByTestId('price-note')).toHaveText('Valor com o profissional');
+  await expect(most).not.toContainText('R$');
+  await expect(page.getByTestId('guarantee')).toContainText('Valor combinado é valor pago');
   await expect(page.getByTestId('home-quote')).toHaveText('Servir bem é a nossa forma de cuidar do próximo.');
   // sem compromisso marcado não há agenda; seções sem dados não aparecem
   await expect(page.getByTestId('next-meeting')).toHaveCount(0);
@@ -42,30 +43,31 @@ test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem lin
   expect(new Set(hrefs).size).toBe(hrefs.length);
 });
 
-test('cliente agenda "Trocar chuveiro" pelo preço fixo e acompanha até concluir', async ({ page, browser }) => {
+test('cliente agenda "Trocar chuveiro" sem preço fixo; o profissional informa o valor e conclui', async ({ page, browser }) => {
   await enter(page, '/', 'cliente');
   await page.getByTestId('most-requested').getByTestId('package-card').filter({ hasText: 'Trocar chuveiro' }).getByTestId('agendar').click();
   await expect(page).toHaveURL(/\/agendar\/trocar-chuveiro$/);
-  await expect(page.getByTestId('price').first()).toHaveText('R$ 90');
+  await expect(page.getByTestId('price-note').first()).toHaveText('Valor com o profissional');
   await expect(page.getByTestId('includes')).toContainText('Instalação e teste do novo');
   await expect(page.getByTestId('excludes')).toContainText('Chuveiro novo');
 
   // o primeiro dia livre já vem escolhido (hoje, enquanto houver faixa)
   const hour = Number(new Intl.DateTimeFormat('pt-BR', { hour: 'numeric', hourCycle: 'h23', timeZone: 'America/Campo_Grande' }).format(new Date()));
   if (hour < 20) await expect(page.getByLabel(/Hoje/)).toBeChecked();
-  await page.getByLabel('Trocar a resistência do chuveiro antigo também').check();
-  await expect(page.getByTestId('total')).toHaveText('R$ 110');
-  await page.getByLabel('Trocar a resistência do chuveiro antigo também').uncheck();
+  await page.getByLabel(/Trocar a resistência do chuveiro antigo também/).check();
+  await expect(page.getByTestId('total')).toHaveText('Combinado com o profissional');
+  await page.getByLabel(/Trocar a resistência do chuveiro antigo também/).uncheck();
   await fillWhere(page);
   await expect(page.getByTestId('summary')).toContainText('Centro');
-  await expect(page.getByTestId('total')).toHaveText('R$ 90');
-  await page.getByRole('button', { name: /Confirmar agendamento · R\$ 90/ }).click();
+  await expect(page.getByTestId('valor-explica')).toBeVisible();
+  await expect(page.getByTestId('summary')).not.toContainText('R$');
+  await page.getByRole('button', { name: 'Confirmar agendamento' }).click();
 
   await expect(page).toHaveURL(/\/pedidos\/[0-9a-f-]+\?novo=1$/);
   const bookingUrl = new URL(page.url()).pathname;
   await expect(page.getByTestId('booking-created')).toBeVisible();
   await expect(page.getByTestId('status-now')).toContainText('Solicitado');
-  await expect(page.getByTestId('booking-total')).toHaveText('R$ 90');
+  await expect(page.getByTestId('booking-total')).toHaveText('O profissional informa o valor');
   // só um eletricista atende: já vem escolhido; o contato aparece só depois da confirmação
   await expect(page.getByTestId('booking-provider')).toContainText('Elétrica Pantanal (demo)');
   await expect(page.getByRole('link', { name: 'Falar no WhatsApp' })).toHaveCount(0);
@@ -96,10 +98,19 @@ test('cliente agenda "Trocar chuveiro" pelo preço fixo e acompanha até conclui
 
   await card.getByRole('button', { name: 'Comecei o serviço' }).click();
   await expect(card).toHaveAttribute('data-status', 'em_andamento');
+  // sem valor informado não conclui
+  await card.getByRole('button', { name: 'Terminei o serviço' }).click();
+  await expect(pro.getByTestId('provider-msg')).toContainText('valor');
+  await expect(card).toHaveAttribute('data-status', 'em_andamento');
+  await card.getByTestId('quote-form').getByLabel('Valor em reais').fill('150');
+  await card.getByTestId('quote-form').getByRole('button', { name: 'Informar valor' }).click();
+  await expect(pro.getByTestId('provider-msg')).toContainText('Valor informado ao cliente');
+  await page.reload();
+  await expect(page.getByTestId('booking-total')).toHaveText('R$ 150');
   await card.getByRole('button', { name: 'Terminei o serviço' }).click();
   await expect(card).toHaveAttribute('data-status', 'concluido');
-  await expect(card).toContainText('Comissão da plataforma: R$ 10,80');
-  await card.getByRole('button', { name: 'Recebi R$ 90' }).click();
+  await expect(card).toContainText('Comissão da plataforma: R$ 18');
+  await card.getByRole('button', { name: 'Recebi R$ 150' }).click();
   await expect(pro.getByTestId('provider-msg')).toContainText('Pagamento registrado');
 
   await page.reload();
@@ -158,15 +169,19 @@ test('com mais de um profissional, o cliente escolhe entre os melhores; a equipe
   await expect(page.getByTestId('status-now')).toContainText('Cancelado');
 });
 
-test('equipe muda o preço do pacote e o cliente vê o novo valor', async ({ page }) => {
+test('equipe edita o pacote sem campo de preço e o cliente vê o que está incluso', async ({ page }) => {
   await page.goto('/entrar?next=%2Fadmin%2Fpacotes');
   await login(page, demoEmail('admin'));
   const pkg = page.locator('[data-testid="admin-package"][data-slug="copia-de-chave"]');
   await pkg.locator('summary').click();
-  await pkg.getByLabel('Preço (R$)').fill('18');
+  await expect(pkg.getByLabel(/Preço/)).toHaveCount(0);
+  const old = (await admin.from('service_packages').select('includes').eq('slug', 'copia-de-chave').single()).data!.includes;
+  await pkg.getByLabel('Está incluso (um por linha)', { exact: true }).fill('Cópia feita na hora');
   await pkg.getByRole('button', { name: 'Salvar', exact: true }).click();
   await expect(page.getByTestId('pkg-msg')).toContainText('“Cópia de chave” salvo.');
   await page.goto('/servicos/portas-janelas-e-seguranca');
-  await expect(page.getByTestId('package-card').filter({ hasText: 'Cópia de chave' }).getByTestId('price')).toHaveText('R$ 18');
-  await admin.from('service_packages').update({ price_cents: 1500 }).eq('slug', 'copia-de-chave');
+  const card = page.getByTestId('package-card').filter({ hasText: 'Cópia de chave' });
+  await expect(card).toContainText('feita na hora');
+  await expect(card.getByTestId('price-note')).toHaveText('Valor com o profissional');
+  await admin.from('service_packages').update({ includes: old }).eq('slug', 'copia-de-chave');
 });

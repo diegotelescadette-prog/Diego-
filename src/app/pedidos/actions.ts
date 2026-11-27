@@ -37,6 +37,18 @@ export async function bookingAction(form: FormData) {
   back(form, error ? bookingError(error.message) : DONE[String(data)] ?? 'Pedido atualizado.');
 }
 
+/** O profissional informa (ou corrige) o valor que cobra pelo pedido. Aceita "150", "150,00" ou "R$ 1.250,50". */
+export async function setBookingQuote(form: FormData) {
+  const raw = String(form.get('valor') ?? '').replace(/[^\d,.]/g, '');
+  const normalized = raw.includes(',') ? raw.replace(/\./g, '').replace(',', '.') : raw;
+  const cents = Math.round(Number(normalized) * 100);
+  const supabase = await createClient();
+  const { error } = Number.isFinite(cents) && cents > 0
+    ? await supabase.rpc('set_booking_quote', { p_booking: String(form.get('id')), p_cents: cents })
+    : { error: { message: 'invalid_value' } };
+  back(form, error ? bookingError(error.message) : 'Valor informado ao cliente.');
+}
+
 export async function reviewBooking(form: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.rpc('review_booking', {

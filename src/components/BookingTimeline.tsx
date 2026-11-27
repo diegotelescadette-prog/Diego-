@@ -46,13 +46,15 @@ export function BookingItems({ b }: { b: BookingView }) {
     <div className="divide-y divide-line text-stone-700" data-testid="booking-items">
       {b.items.map((it, i) => (
         <div key={i}>
-          <div className="summary-row"><span>{it.name} × {it.qty}</span><span>{formatPrice(it.unit_cents * it.qty - it.addons.reduce((n, a) => n + a.price_cents, 0) * it.qty)}</span></div>
-          {it.addons.map((a) => <div key={a.name} className="summary-row text-sm"><span>+ {a.name} × {it.qty}</span><span>{formatPrice(a.price_cents * it.qty)}</span></div>)}
+          <div className="summary-row"><span>{it.name} × {it.qty}</span></div>
+          {it.addons.map((a) => <div key={a.name} className="summary-row text-sm"><span>+ {a.name} × {it.qty}</span></div>)}
         </div>
       ))}
       <div className="summary-row items-baseline pt-3">
-        <span className="font-bold text-stone-900">Total{b.price_from ? ' (a partir de)' : ''}</span>
-        <span className="price-md" data-testid="booking-total">{formatPrice(b.total_cents)}</span>
+        <span className="font-bold text-stone-900">Valor</span>
+        {b.total_cents > 0
+          ? <span className="price-md" data-testid="booking-total">{formatPrice(b.total_cents)}</span>
+          : <span className="text-right text-stone-600" data-testid="booking-total">O profissional informa o valor</span>}
       </div>
       <div className="summary-row text-sm"><span>Pagamento</span><span>{PAYMENT_LABEL[b.payment_method]}{b.payment?.status === 'pago' ? ' · pago' : ' · depois do serviço'}</span></div>
     </div>
