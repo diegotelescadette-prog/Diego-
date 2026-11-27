@@ -4,7 +4,7 @@ import { saveMyPackages } from './actions';
 import { SubmitButton } from '@/components/SubmitButton';
 import { createClient } from '@/lib/supabase/server';
 import { getSetting, getUser } from '@/lib/data';
-import { durationLabel, formatPrice, priceLabel } from '@/lib/booking-shared';
+import { durationLabel } from '@/lib/booking-shared';
 
 export const metadata: Metadata = { title: 'Pacotes que eu faço' };
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,7 @@ export default async function PacotesQueEuFaco({ searchParams }: { searchParams:
   ]);
   const serviceIds = (mine ?? []).map((s) => s.service_id);
   const { data: pkgs } = serviceIds.length
-    ? await supabase.from('service_packages').select('id, service_id, name, duration_min, price_cents, price_from')
+    ? await supabase.from('service_packages').select('id, service_id, name, duration_min')
       .in('service_id', serviceIds).eq('active', true).order('sort').order('name')
     : { data: [] };
   const offSet = new Set((off ?? []).map((o) => o.package_id));
@@ -34,7 +34,7 @@ export default async function PacotesQueEuFaco({ searchParams }: { searchParams:
     <div className="mx-auto max-w-2xl space-y-4">
       <div>
         <h1 className="text-2xl font-extrabold">Pacotes que eu faço</h1>
-        <p className="text-stone-700">Marque os pacotes de preço fechado que você executa. Você só recebe pedidos dos pacotes marcados.</p>
+        <p className="text-stone-700">Marque os serviços que você executa. Você só recebe pedidos dos marcados e informa o seu valor em cada pedido.</p>
       </div>
       {msg && <p role="status" className="rounded-xl bg-sage p-3 text-stone-900" data-testid="pkg-msg">{msg}</p>}
       <p className="rounded-2xl bg-sand p-3 text-sm text-stone-800" data-testid="pkg-commission">
@@ -57,7 +57,7 @@ export default async function PacotesQueEuFaco({ searchParams }: { searchParams:
                   <span className="min-w-0 flex-1">
                     <span className="block font-semibold text-stone-900">{p.name}</span>
                     <span className="block text-sm text-stone-600">
-                      {priceLabel(p)} · {durationLabel(p.duration_min)} · você recebe {p.price_from ? 'a partir de ' : ''}{formatPrice(Math.round(p.price_cents * (1 - percent / 100)))}
+                      {durationLabel(p.duration_min)} · valor definido por você no pedido
                     </span>
                   </span>
                 </label>

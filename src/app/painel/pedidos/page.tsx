@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { bookingAction } from '@/app/pedidos/actions';
+import { bookingAction, setBookingQuote } from '@/app/pedidos/actions';
 import { BookingItems } from '@/components/BookingTimeline';
 import { getContacts, listBookings, type BookingView } from '@/lib/booking';
 import { dateLabel, formatPrice, SLOT_LABEL, STATUS_LABEL } from '@/lib/booking-shared';
@@ -50,6 +50,20 @@ async function Card({ b, shown }: { b: BookingView; shown: boolean }) {
         )}
         {b.notes && <p className="mt-1"><strong>Observações:</strong> {b.notes}</p>}
       </div>
+      {['solicitado', 'confirmado', 'a_caminho', 'em_andamento'].includes(b.status) && (
+        <form action={setBookingQuote} className="rounded-xl border border-line p-3" data-testid="quote-form">
+          <input type="hidden" name="id" value={b.id} /><input type="hidden" name="back" value="/painel/pedidos" />
+          <label className="block">
+            <span className="mb-1 block font-semibold">{b.total_cents > 0 ? 'Corrigir o valor' : 'Quanto você cobra por este serviço?'}</span>
+            <span className="flex gap-2">
+              <input name="valor" inputMode="decimal" placeholder="Ex.: 150,00" aria-label="Valor em reais" className="input min-w-0 flex-1"
+                defaultValue={b.total_cents > 0 ? (b.total_cents / 100).toFixed(2).replace('.', ',') : ''} />
+              <button type="submit" className="btn-outline min-h-11 px-4">Informar valor</button>
+            </span>
+          </label>
+          <p className="mt-1 text-sm text-stone-600">O valor é seu. O cliente vê no pedido antes de você ir e paga só depois do serviço pronto.</p>
+        </form>
+      )}
       {b.status === 'solicitado' && (
         <div className="grid grid-cols-2 gap-2">
           <Act b={b} action="confirmado" label="Confirmar" />

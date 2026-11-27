@@ -103,7 +103,7 @@ export function profileLinks(v: NavViewer): (NavItem & { testid: string })[] {
  * Os mesmos para todas as contas; a escolha só define o destino.
  */
 export const FIRST_GOALS = [
-  { key: 'servico', label: 'Preciso de um serviço', hint: 'Preço fechado e profissional verificado', href: '/servicos', icon: 'search' },
+  { key: 'servico', label: 'Preciso de um serviço', hint: 'Profissional verificado perto de você', href: '/servicos', icon: 'search' },
   { key: 'prestar', label: 'Ofereço meus serviços', hint: 'Mostre seus trabalhos e receba pedidos', href: '/sou-prestador', icon: 'tool' },
   { key: 'emprego', label: 'Procuro emprego', hint: 'Vagas de Campo Grande, sem pagar nada', href: '/vagas', icon: 'briefcase' },
   { key: 'vaga', label: 'Ofereço uma vaga', hint: 'Anuncie grátis e receba currículos', href: '/vagas/nova', icon: 'megaphone' },
@@ -148,7 +148,7 @@ export function adminSection(aba: string | null | undefined): AdminSection {
 export const ADMIN_ITEMS: NavItem[] = [
   ...ADMIN_SECTIONS.slice(0, 2).map((s) => ({ href: `/admin?aba=${s.key}`, label: s.label, icon: s.icon })),
   { href: '/admin/pedidos', label: 'Pedidos', icon: 'clipboard', match: ['/admin/pedidos/'] },
-  { href: '/admin/pacotes', label: 'Pacotes e preços', icon: 'tag' },
+  { href: '/admin/pacotes', label: 'Pacotes', icon: 'tag' },
   { href: '/admin/contratantes', label: 'Contratantes', icon: 'shield' },
   ...ADMIN_SECTIONS.slice(2).map((s) => ({ href: `/admin?aba=${s.key}`, label: s.label, icon: s.icon })),
 ];
@@ -180,13 +180,13 @@ export function activeHref(items: NavItem[], pathname: string, section?: string 
 export function screenTitle(pathname: string, section?: string | null): string {
   if (pathname.startsWith('/admin/verificacao')) return 'Administração · Verificação do perfil';
   if (pathname.startsWith('/admin/pedidos')) return 'Administração · Pedidos';
-  if (pathname.startsWith('/admin/pacotes')) return 'Administração · Pacotes e preços';
+  if (pathname.startsWith('/admin/pacotes')) return 'Administração · Pacotes';
   if (pathname.startsWith('/admin/contratantes')) return 'Administração · Contratantes';
   if (pathname.startsWith('/admin')) {
     return `Administração · ${ADMIN_SECTIONS.find((s) => s.key === adminSection(section))!.label}`;
   }
   const exact: Record<string, string> = {
-    '/': '', '/agenda': 'Minha agenda', '/servicos': 'Serviços com preço fechado', '/pedidos': 'Meus pedidos', '/painel/pedidos': 'Pedidos para mim', '/comunidade': 'Comunidade', '/buscar': 'Buscar profissional', '/hoje': 'Preciso para hoje', '/favoritos': 'Salvos', '/minhas-publicacoes': 'Minhas publicações',
+    '/': '', '/agenda': 'Minha agenda', '/servicos': 'Serviços', '/pedidos': 'Meus pedidos', '/painel/pedidos': 'Pedidos para mim', '/comunidade': 'Comunidade', '/buscar': 'Buscar profissional', '/hoje': 'Preciso para hoje', '/favoritos': 'Salvos', '/minhas-publicacoes': 'Minhas publicações',
     '/painel': 'Painel do prestador', '/painel/perfil': 'Meu perfil', '/painel/servicos': 'Serviços e fotos',
     '/painel/atendimento': 'Onde atendo', '/painel/disponibilidade': 'Disponibilidade', '/painel/previa': 'Prévia do perfil',
     '/painel/verificacao': 'Verificação do perfil',
@@ -195,7 +195,7 @@ export function screenTitle(pathname: string, section?: string | null): string {
     '/publicar': 'Criar publicação', '/vagas': 'Vagas de emprego', '/vagas/nova': 'Anunciar vaga', '/vagas/meu-curriculo': 'Banco de currículos', '/curriculo': 'Meu currículo', '/vagas/verificacao': 'Verificação de quem contrata', '/painel/pacotes': 'Pacotes que eu faço', '/vagas/banco': 'Banco de currículos', '/minhas-vagas': 'Vagas que publiquei', '/minhas-candidaturas': 'Minhas candidaturas',
   };
   if (pathname in exact) return exact[pathname];
-  if (pathname.startsWith('/servicos/')) return 'Serviços com preço fechado';
+  if (pathname.startsWith('/servicos/')) return 'Serviços';
   if (pathname.startsWith('/agendar/')) return 'Agendar';
   if (pathname.startsWith('/pedidos/')) return 'Pedido';
   if (pathname.startsWith('/p/')) return 'Perfil';

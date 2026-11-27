@@ -217,3 +217,12 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Vitrine de vagas: "Qual vaga você procura?" mostra quantas vagas abertas combinam e até 5 (cargo, bairro e tipo). Empresa, salário e contato nunca aparecem; a consulta é uma função do banco que só devolve esses campos.
 - Números de confiança só quando não são zero (hoje: profissionais verificados e vagas abertas). Bloco "Como mantemos você seguro".
 - Atualização do banco `2026-11-26-pagina-entrada.sql` aplica sem erro depois de `2026-11-26-cadastro-obrigatorio.sql`.
+
+## Rodada 18 (27/11/2026): valor do serviço a critério do prestador (sem preços fixos)
+
+- Unidade 26/26, integração 66/66, e2e 130/130 (computador e celular).
+- Pacotes, agendamento, painel do profissional e equipe não mostram mais preço fixo: o cartão diz "Valor com o profissional" e a garantia diz "Valor combinado é valor pago".
+- O pedido nasce sem valor. Só o profissional do pedido informa o valor ("Informar valor"), de R$ 1 a R$ 100.000; cliente e outros profissionais são recusados. O pagamento pendente acompanha o valor.
+- "Terminei o serviço" é recusado enquanto o valor não foi informado; depois, a comissão sai sobre o valor informado (ex.: R$ 150 com 12% = R$ 18).
+- A equipe edita os pacotes sem campo de preço.
+- Atualização do banco `2026-11-26-valor-do-prestador.sql` aplica sem erro depois de `2026-11-26-pagina-entrada.sql`.
