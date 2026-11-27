@@ -10,9 +10,10 @@ export default function Privacidade() {
         <h2 className="text-lg font-bold">O que coletamos e por quê</h2>
         <ul className="list-inside list-disc space-y-1">
           <li><strong>E-mail e senha</strong>: para entrar na conta, confirmar o e-mail e recuperar a senha. O e-mail não aparece em perfis.</li>
+          <li><strong>Cadastro (todas as contas)</strong>: nome completo, nome público, celular com WhatsApp e bairro de Campo Grande. Usamos para identificar quem está do outro lado, mostrar o que está perto de você, evitar golpes e saber quem contratou quem. O nome completo e o celular não aparecem no app; o celular só é mostrado para outra pessoa depois que vocês dois aceitarem o contato. Guardamos a data em que você aceitou os Termos e este aviso.</li>
           <li><strong>Prestadores — dados públicos</strong>: nome profissional, foto, serviços, descrição, fotos de trabalhos e região atendida.</li>
           <li><strong>Prestadores — dados privados</strong>: telefone/WhatsApp (usado só para gerar o link “Chamar no WhatsApp”, sem exibir o número), endereço de referência (não exibido) e, quando a coleta estiver habilitada pela operação, CPF guardado cifrado, usado apenas para a finalidade informada no formulário.</li>
-          <li><strong>Vagas de emprego</strong>: cargo, empresa ou nome de quem contrata e a descrição da vaga ficam públicos enquanto a vaga está aberta (30 dias, renováveis).</li>
+          <li><strong>Vagas de emprego</strong>: cargo, empresa ou nome de quem contrata e a descrição da vaga ficam visíveis para quem tem conta enquanto a vaga está aberta (30 dias, renováveis). Sem conta, aparecem só o cargo e a quantidade de vagas.</li>
           <li><strong>Denúncias</strong>: motivo e detalhes, para moderação.</li>
           <li><strong>Segurança</strong>: um código derivado do IP (não o IP em si) para limitar abusos no contato.</li>
         </ul>

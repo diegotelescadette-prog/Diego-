@@ -1,7 +1,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { admin, anon, ids, profileId, signIn, urgentContact, APP } from './helpers.ts';
+import { admin, anon, ids, profileId, signIn, urgentContact, APP, viewer } from './helpers.ts';
 
 before(async () => {
   // Recria os dados fictícios para cada execução (disponibilidades vigentes etc.)
@@ -11,12 +11,12 @@ before(async () => {
   for (const u of data.users.filter((x) => x.email?.endsWith('@teste.resolveaqui.test'))) await admin.auth.admin.deleteUser(u.id);
 });
 
-test('visitante só enxerga perfis publicados (pausado/suspenso ficam de fora)', async () => {
-  const { data } = await anon().from('provider_profiles').select('slug, status');
+test('quem tem conta só enxerga perfis publicados (pausado/suspenso ficam de fora)', async () => {
+  const { data } = await (await viewer()).from('provider_profiles').select('slug, status');
   const statuses = new Set(data!.map((p) => p.status));
   assert.deepEqual([...statuses], ['published']);
   assert.ok(!data!.some((p) => p.slug === 'paulo-demo' || p.slug === 'sergio-demo'));
-  const { data: search } = await anon().rpc('search_providers', { p_q: 'encanador' });
+  const { data: search } = await (await viewer()).rpc('search_providers', { p_q: 'encanador' });
   assert.ok(!search!.some((p: { slug: string }) => ['paulo-demo', 'sergio-demo'].includes(p.slug)));
 });
 
@@ -28,7 +28,7 @@ test('dados privados: visitante e outro prestador não leem telefone/CPF/endere�
   assert.equal(data!.length, 1, 'só o próprio registro');
   assert.equal(data![0].provider_id, await profileId('carlos'));
   // telefone fora da busca/perfil público
-  const { data: pub } = await anon().from('provider_profiles').select('*').limit(1);
+  const { data: pub } = await (await viewer()).from('provider_profiles').select('*').limit(1);
   assert.ok(!('phone' in pub![0]) && !('whatsapp' in pub![0]));
   // funções que devolvem o número: só service_role
   const r = await anon().rpc('contact_target_general', { p_provider: await profileId('carlos') });
@@ -112,7 +112,7 @@ test('Atendo hoje: padrão, restrição e validação no servidor', async () => 
 
 test('busca urgente: bairro opcional, cidade inteira, fora do bairro e serviço fora do "Preciso para hoje"', async () => {
   const { nb } = await ids();
-  const slugs = async (svc: string, b: string | null) => ((await anon().rpc('urgent_search', { p_service_slug: svc, p_neighborhood_id: b ? nb(b) : null })).data ?? []).map((r: { slug: string }) => r.slug).sort();
+  const slugs = async (svc: string, b: string | null) => ((await (await viewer()).rpc('urgent_search', { p_service_slug: svc, p_neighborhood_id: b ? nb(b) : null })).data ?? []).map((r: { slug: string }) => r.slug).sort();
   assert.deepEqual(await slugs('encanador', 'centro'), ['carlos-demo', 'hidro-demo']);
   assert.deepEqual(await slugs('encanador', 'caranda-bosque'), ['hidro-demo', 'marcos-demo'], 'Marcos só no Carandá Bosque; Hidro na cidade toda');
   assert.deepEqual(await slugs('encanador', 'carlota'), ['hidro-demo'], 'Carlos atende Carlota, mas hoje só Centro/Amambaí');
@@ -132,7 +132,7 @@ test('busca urgente: bairro opcional, cidade inteira, fora do bairro e serviço 
 });
 
 test('busca geral: bairro x área declarada, cidade inteira, sinônimos e sem acento', async () => {
-  const s = async (args: object) => ((await anon().rpc('search_providers', args)).data ?? []).map((r: { slug: string }) => r.slug);
+  const s = async (args: object) => ((await (await viewer()).rpc('search_providers', args)).data ?? []).map((r: { slug: string }) => r.slug);
   assert.deepEqual(await s({ p_service_slug: 'piscineiro', p_city_slug: 'campo-grande-ms', p_neighborhood_slug: 'caranda-bosque' }), ['rafa-demo']);
   assert.ok((await s({ p_service_slug: 'eletricista', p_city_slug: 'campo-grande-ms', p_neighborhood_slug: 'nova-lima' })).includes('pantanal-demo'));
   assert.deepEqual((await s({ p_q: 'vazamento' })).sort(), ['carlos-demo', 'hidro-demo', 'marcos-demo']);
@@ -158,6 +158,7 @@ test('busca geral: bairro x área declarada, cidade inteira, sinônimos e sem ac
 test('contato urgente (API): válido, desativado, vencido, fora do bairro, fora do piloto', async () => {
   const { svc, nb } = await ids();
   const carlos = await profileId('carlos');
+  assert.equal((await urgentContact({ providerId: carlos, serviceId: svc('encanador'), neighborhoodId: nb('centro') }, undefined, null)).status, 401, 'sem conta não chama');
   const ok = await urgentContact({ providerId: carlos, serviceId: svc('encanador'), neighborhoodId: nb('centro') });
   assert.equal(ok.status, 200);
   const u = new URL(ok.body.url);
@@ -179,7 +180,7 @@ test('contato urgente (API): válido, desativado, vencido, fora do bairro, fora 
   // vencido: expiração no passado
   await admin.from('availability_today').update({ expires_at: new Date(Date.now() - 1000).toISOString() }).eq('provider_id', carlos);
   assert.equal((await urgentContact({ providerId: carlos, serviceId: svc('encanador'), neighborhoodId: nb('centro') })).status, 409, 'vencido');
-  const { data: list } = await anon().rpc('urgent_search', { p_service_slug: 'encanador', p_neighborhood_id: nb('centro') });
+  const { data: list } = await (await viewer()).rpc('urgent_search', { p_service_slug: 'encanador', p_neighborhood_id: nb('centro') });
   assert.ok(!list!.some((r: { slug: string }) => r.slug === 'carlos-demo'), 'vencido some da lista');
 
   // desativação manual pelo prestador

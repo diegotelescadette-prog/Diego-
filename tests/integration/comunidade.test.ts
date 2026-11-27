@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { admin, anon, signIn } from './helpers.ts';
+import { admin, anon, signIn, viewer } from './helpers.ts';
 
 const reseed = () => execSync('npm run -s seed:demo', { stdio: 'ignore' });
 before(reseed);
@@ -17,8 +17,8 @@ const feed = async (c: SupabaseClient, extra: Record<string, unknown> = {}) =>
 const svc = async (slug: string) => (await admin.from('services').select('id').eq('slug', slug).single()).data!.id as number;
 const hood = async (slug: string) => (await admin.from('neighborhoods').select('id').eq('slug', slug).single()).data!.id as number;
 
-test('feed: visitante vê publicações de perfis publicados com mídia, contagens e último comentário', async () => {
-  const rows = await feed(anon());
+test('feed: quem tem conta vê publicações de perfis publicados com mídia, contagens e último comentário', async () => {
+  const rows = await feed(await viewer());
   assert.ok(rows.length >= 3);
   const pant = rows.find((r) => r.display_name === 'Elétrica Pantanal (demo)')!;
   assert.equal(pant.reactions, 1);
@@ -50,7 +50,7 @@ test('trabalho e divulgação: só prestador publicado com cobertura e serviço 
   assert.equal(error, null);
   assert.equal(post!.body, 'Teste de publicação');
   assert.ok((await carlos.from('posts').update({ status: 'removido' }).eq('id', post!.id)).error, 'não muda o estado direto');
-  assert.ok((await feed(anon())).some((r) => r.id === post!.id));
+  assert.ok((await feed(await viewer())).some((r) => r.id === post!.id));
   // outro prestador não edita nem apaga
   const bia = await signIn('prestador-bia');
   assert.equal(((await bia.from('posts').delete().eq('id', post!.id).select('id')).data ?? []).length, 0);
@@ -85,7 +85,7 @@ test('mídia: arquivo na própria pasta; um vídeo OU até 6 fotos; storage barr
 });
 
 test('comentários: nome vem do perfil ou do cadastro, nunca do cliente; autor oculta; denúncia sem duplicar', async () => {
-  const [pant] = (await feed(anon())).filter((r) => r.display_name === 'Elétrica Pantanal (demo)');
+  const [pant] = (await feed(await viewer())).filter((r) => r.display_name === 'Elétrica Pantanal (demo)');
   const cliente = await signIn('cliente');
   const me = await uid(cliente);
   assert.ok((await anon().from('post_comments').insert({ post_id: pant.id, author_id: me, body: 'oi' })).error, 'visitante não comenta');
@@ -96,14 +96,15 @@ test('comentários: nome vem do perfil ou do cadastro, nunca do cliente; autor o
   assert.equal(ok.data!.author_name, 'Ana Cliente (demo)');
   assert.equal(ok.data!.status, 'visivel');
   void c;
-  // quem não tem nome precisa informar
+  // quem não tem nome (conta antiga) precisa informar
   const cand = await signIn('candidata');
+  await admin.from('member_names').delete().eq('user_id', await uid(cand));
   assert.ok((await cand.from('post_comments').insert({ post_id: pant.id, author_id: await uid(cand), body: 'oi' })).error);
   // autor da publicação oculta; o comentário some para os outros e continua para o autor do comentário
   const pantanal = await signIn('prestador-pantanal');
   assert.equal((await pantanal.rpc('hide_comment', { p_comment: ok.data!.id, p_hide: true })).error, null);
   assert.ok((await cliente.rpc('hide_comment', { p_comment: ok.data!.id, p_hide: false })).error, 'só o autor da publicação');
-  const pub = await anon().from('post_comments').select('id').eq('id', ok.data!.id);
+  const pub = await (await viewer()).from('post_comments').select('id').eq('id', ok.data!.id);
   assert.equal(pub.data!.length, 0);
   assert.equal((await cliente.from('post_comments').select('id').eq('id', ok.data!.id)).data!.length, 1);
   // denúncia: uma aberta por pessoa e item; visitante não denuncia
@@ -115,34 +116,35 @@ test('comentários: nome vem do perfil ou do cadastro, nunca do cliente; autor o
 });
 
 test('moderação: só admin remove; publicação removida some do feed e o autor não a reativa', async () => {
-  const [ze] = (await feed(anon())).filter((r) => r.display_name === 'Elétrica Pantanal (demo)');
+  const [ze] = (await feed(await viewer())).filter((r) => r.display_name === 'Elétrica Pantanal (demo)');
   const cliente = await signIn('cliente');
   assert.ok((await cliente.rpc('admin_remove_post', { p_post: ze.id, p_note: 'x' })).error);
   const adm = await signIn('admin');
   assert.ok((await adm.rpc('admin_remove_post', { p_post: ze.id, p_note: '' })).error, 'motivo obrigatório');
   assert.equal((await adm.rpc('admin_remove_post', { p_post: ze.id, p_note: 'Teste de moderação' })).error, null);
-  assert.ok(!(await feed(anon())).some((r) => r.id === ze.id));
+  assert.ok(!(await feed(await viewer())).some((r) => r.id === ze.id));
   const zeC = await signIn('prestador-pantanal');
   assert.ok((await zeC.from('posts').update({ body: 'voltei' }).eq('id', ze.id)).error, 'removida não é editada');
   const { data: log } = await admin.from('moderation_log').select('action').eq('target_id', ze.id);
   assert.deepEqual(log!.map((l) => l.action), ['remover_publicacao']);
   // a mídia também deixa de ser servida: a página não recebe mais o caminho
-  assert.equal((await anon().from('post_media').select('path').eq('post_id', ze.id)).data!.length, 0);
+  assert.equal((await (await viewer()).from('post_media').select('path').eq('post_id', ze.id)).data!.length, 0);
   await admin.from('posts').update({ status: 'publicado', removed_note: null }).eq('id', ze.id); // devolve para os próximos testes
 });
 
 test('perfil pausado ou suspenso: publicações saem do feed', async () => {
-  const [bia] = (await feed(anon())).filter((r) => r.display_name === 'Bia Faxina (demo)');
+  const [bia] = (await feed(await viewer())).filter((r) => r.display_name === 'Bia Faxina (demo)');
   const { data: me } = await admin.from('posts').select('author_id').eq('id', bia.id).single();
   await admin.from('provider_profiles').update({ status: 'paused' }).eq('id', me!.author_id);
-  assert.ok(!(await feed(anon())).some((r) => r.id === bia.id));
-  assert.equal((await anon().from('posts').select('id').eq('id', bia.id)).data!.length, 0);
+  assert.ok(!(await feed(await viewer())).some((r) => r.id === bia.id));
+  assert.equal((await (await viewer()).from('posts').select('id').eq('id', bia.id)).data!.length, 0);
   await admin.from('provider_profiles').update({ status: 'published' }).eq('id', me!.author_id);
 });
 
 test('pedido de indicação: qualquer conta com nome público; categoria ou serviço; "Indicação encontrada" só pelo autor', async () => {
-  const cand = await signIn('candidata'); // sem nome público
+  const cand = await signIn('candidata');
   const candId = await uid(cand);
+  await admin.from('member_names').delete().eq('user_id', candId); // conta antiga, sem nome público
   const P = { kind: 'pedido', category_id: (await admin.from('service_categories').select('id').eq('slug', 'eletrica-e-climatizacao').single()).data!.id };
   assert.equal((await cand.from('posts').insert({ author_id: candId, body: 'Preciso de eletricista', ...P })).error?.code, '23514', 'sem nome público');
   await cand.from('member_names').upsert({ user_id: candId, name: 'Carla Teste' });
@@ -152,12 +154,12 @@ test('pedido de indicação: qualquer conta com nome público; categoria ou serv
   assert.equal(error, null);
   assert.equal(post!.price_label, null, 'pedido não tem preço');
   assert.ok(post!.city_id, 'cidade do piloto por padrão');
-  const row = (await feed(anon(), { p_kind: 'pedido' })).find((r) => r.id === post!.id)!;
+  const row = (await feed(await viewer(), { p_kind: 'pedido' })).find((r) => r.id === post!.id)!;
   assert.equal(row.display_name, 'Carla Teste');
   const cliente = await signIn('cliente');
   assert.equal(((await cliente.from('posts').update({ found: true }).eq('id', post!.id).select('id')).data ?? []).length, 0, 'outra conta não marca');
   assert.equal((await cand.from('posts').update({ found: true }).eq('id', post!.id)).error, null);
-  assert.equal((await feed(anon(), { p_post: post!.id }))[0].found, true);
+  assert.equal((await feed(await viewer(), { p_post: post!.id }))[0].found, true);
   // comentário indicando um perfil público; perfil pausado não pode ser indicado
   const pantId = (await admin.from('provider_profiles').select('id').eq('slug', (await admin.from('provider_profiles').select('slug').ilike('display_name', 'Elétrica Pantanal%').single()).data!.slug).single()).data!.id;
   const pauloId = (await admin.from('provider_profiles').select('id').eq('status', 'paused').limit(1).single()).data!.id;
@@ -168,7 +170,7 @@ test('pedido de indicação: qualquer conta com nome público; categoria ou serv
 });
 
 test('filtros: tipo, categoria e bairro pela área de atendimento; cidade inteira entra em qualquer bairro', async () => {
-  const names = async (extra: Record<string, unknown>) => (await feed(anon(), extra)).map((r) => `${r.kind}:${r.display_name}`).sort();
+  const names = async (extra: Record<string, unknown>) => (await feed(await viewer(), extra)).map((r) => `${r.kind}:${r.display_name}`).sort();
   const tira = await hood('tiradentes');
   assert.deepEqual(await names({ p_neighborhood: tira }), ['pedido:Ana Cliente (demo)', 'trabalho:Elétrica Pantanal (demo)']);
   assert.deepEqual(await names({ p_neighborhood: await hood('amambai') }), ['trabalho:Carlos Hidráulica (demo)', 'trabalho:Elétrica Pantanal (demo)']);
@@ -177,20 +179,20 @@ test('filtros: tipo, categoria e bairro pela área de atendimento; cidade inteir
   // pedido para a cidade toda aparece em qualquer bairro
   const cliente = await signIn('cliente');
   const { data: geral } = await cliente.from('posts').insert({ author_id: await uid(cliente), body: 'Procuro pintor para a cidade toda', kind: 'pedido', service_id: await svc('pintor-residencial') }).select('id').single();
-  assert.ok((await feed(anon(), { p_neighborhood: await hood('amambai') })).some((r) => r.id === geral!.id));
+  assert.ok((await feed(await viewer(), { p_neighborhood: await hood('amambai') })).some((r) => r.id === geral!.id));
   await admin.from('posts').delete().eq('id', geral!.id);
 });
 
 test('paginação estável: data + id, sem repetir nem pular', async () => {
-  const all = await feed(anon(), { p_limit: 50 });
-  const first = await feed(anon(), { p_limit: 2 });
+  const all = await feed(await viewer(), { p_limit: 50 });
+  const first = await feed(await viewer(), { p_limit: 2 });
   const last = first[first.length - 1];
-  const rest = await feed(anon(), { p_limit: 50, p_before: last.created_at, p_before_id: last.id });
+  const rest = await feed(await viewer(), { p_limit: 50, p_before: last.created_at, p_before_id: last.id });
   assert.deepEqual([...first, ...rest].map((r) => r.id), all.map((r) => r.id));
 });
 
 test('salvos: só a própria conta vê; visitante não salva; aparece com p_saved', async () => {
-  const [bia] = (await feed(anon())).filter((r) => r.display_name === 'Bia Faxina (demo)');
+  const [bia] = (await feed(await viewer())).filter((r) => r.display_name === 'Bia Faxina (demo)');
   const cliente = await signIn('cliente');
   const me = await uid(cliente);
   assert.ok((await anon().from('post_saves').insert({ user_id: me, post_id: bia.id })).error);
@@ -204,7 +206,7 @@ test('salvos: só a própria conta vê; visitante não salva; aparece com p_save
 });
 
 test('comentários: respostas de um nível; só o autor edita; ocultar pelo autor do post fica no histórico', async () => {
-  const [pant] = (await feed(anon())).filter((r) => r.display_name === 'Elétrica Pantanal (demo)');
+  const [pant] = (await feed(await viewer())).filter((r) => r.display_name === 'Elétrica Pantanal (demo)');
   const cliente = await signIn('cliente');
   const carlos = await signIn('prestador-carlos');
   const { data: c1 } = await cliente.from('post_comments').insert({ post_id: pant.id, author_id: await uid(cliente), body: 'Pergunta' }).select('id').single();
@@ -223,7 +225,7 @@ test('comentários: respostas de um nível; só o autor edita; ocultar pelo auto
 });
 
 test('mídia privada: links assinados só para publicações visíveis; endereço público não serve', async () => {
-  const [carlosPost] = (await feed(anon())).filter((r) => r.display_name === 'Carlos Hidráulica (demo)');
+  const [carlosPost] = (await feed(await viewer())).filter((r) => r.display_name === 'Carlos Hidráulica (demo)');
   assert.deepEqual(carlosPost.media.map((m) => m.label), ['antes', 'depois', null], 'ordem e rótulos');
   const path = carlosPost.media[0].path;
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://localhost:54321';
@@ -233,9 +235,9 @@ test('mídia privada: links assinados só para publicações visíveis; endereç
   // perfil suspenso: post e mídia somem para visitantes
   const { data: me } = await admin.from('posts').select('author_id').eq('id', carlosPost.id).single();
   await admin.from('provider_profiles').update({ status: 'suspended' }).eq('id', me!.author_id);
-  assert.equal((await anon().from('post_media').select('path').eq('post_id', carlosPost.id)).data!.length, 0);
+  assert.equal((await (await viewer()).from('post_media').select('path').eq('post_id', carlosPost.id)).data!.length, 0);
   await admin.from('provider_profiles').update({ status: 'published' }).eq('id', me!.author_id);
-  assert.equal((await anon().from('post_media').select('path').eq('post_id', carlosPost.id)).data!.length, 3, 'volta quando o perfil volta');
+  assert.equal((await (await viewer()).from('post_media').select('path').eq('post_id', carlosPost.id)).data!.length, 3, 'volta quando o perfil volta');
 });
 
 test('envio repetido com o mesmo token não duplica', async () => {

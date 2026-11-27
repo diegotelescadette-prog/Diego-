@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Glyph } from '@/components/CategoryIcon';
 import { Guarantee, PackageCard } from '@/components/PackageCard';
@@ -6,6 +7,8 @@ import { getAgenda } from '@/lib/agenda';
 import { AgendaCard } from '@/components/AgendaCard';
 import { getPilotCity, getUser } from '@/lib/data';
 import { createClient } from '@/lib/supabase/server';
+import { SKY, hourIn, skyPeriod } from '@/lib/sky';
+import { Entrada } from '@/components/Entrada';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,26 +19,7 @@ const MEGA = 'M3 10v4h3l7 4V6L6 10zM16 9a3 3 0 0 1 0 6M19 7a6 6 0 0 1 0 10';
 const SHIELD = 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5';
 const BOLT = 'M13 2 4 14h7l-1 8 9-12h-7z';
 
-/** Luz da manhã em ilustração plana: faixa índigo, sol lima com brilho suave e colinas em índigo escuro (sem gradiente). */
-function Dawn() {
-  return (
-    <>
-      <span className="dawn-band" aria-hidden="true" />
-      <svg className="dawn-sun" viewBox="0 0 140 140" aria-hidden="true">
-        <circle cx="70" cy="70" r="70" fill="#6a5af5" />
-        <circle cx="70" cy="70" r="48" fill="#d4f25a" />
-      </svg>
-      <svg className="dawn-hills" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 52 L70 18 L120 40 L190 4 L262 44 L320 26 L400 50 V90 H0z" fill="#2a2290" />
-        <path d="M0 76 L90 50 L160 68 L240 44 L330 72 L400 58 V90 H0z" fill="#1c1666" />
-      </svg>
-      <span className="dawn-dot" aria-hidden="true" />
-    </>
-  );
-}
-
-function greeting(timeZone: string) {
-  const h = Number(new Intl.DateTimeFormat('pt-BR', { hour: 'numeric', hourCycle: 'h23', timeZone }).format(new Date()));
+function greeting(h: number) {
   return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 }
 
@@ -55,21 +39,27 @@ async function firstName(userId: string | undefined) {
  * os serviços mais pedidos e a garantia. Cada seção só aparece quando tem conteúdo.
  * "Indicados pela sua rede" e "Palestras esta semana" entram quando esses módulos existirem (fases 4 e 5).
  */
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ vaga?: string }> }) {
   const city = await getPilotCity();
   const user = await getUser();
+  // Sem conta: a página de entrada, que explica cada área e convida a entrar ou criar a conta.
+  if (!user) return <Entrada vaga={(await searchParams).vaga ?? ''} timezone={city.timezone || 'America/Campo_Grande'} />;
   const [pkgs, name, upcoming] = await Promise.all([getPackages(), firstName(user?.id), user ? getAgenda(user.id, 1) : Promise.resolve([])]);
   const featured = [...pkgs.filter((p) => p.featured), ...pkgs.filter((p) => !p.featured)].slice(0, 4);
   const next = upcoming[0];
+  const hour = hourIn(city.timezone || 'America/Campo_Grande');
+  const period = skyPeriod(hour);
+  const sky = SKY[period];
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <header className="dawn" data-testid="home-dawn">
-        <Dawn />
+      <header className="dawn" data-testid="home-dawn" data-periodo={period}>
+        <Image src={sky.src} alt={sky.alt} fill priority sizes="(min-width: 1024px) 896px, 100vw" className="dawn-photo" style={{ objectPosition: sky.pos }} />
         <div className="dawn-text">
-          <h1 className="text-[32px] leading-tight text-white sm:text-[42px]">{greeting(city.timezone || 'America/Campo_Grande')}{name ? `, ${name}` : ''}.</h1>
-          <p className="mt-1 inline-block rounded-lg bg-ember-dark px-2 py-0.5 text-[17px] font-semibold text-white">Gente de confiança, perto de você.</p>
+          <h1 className="text-[32px] leading-tight text-white sm:text-[42px]">{greeting(hour)}{name ? `, ${name}` : ''}.</h1>
+          <p className="mt-1 inline-block rounded-lg bg-[#1c1a17] px-2 py-0.5 text-[17px] font-semibold text-white">Gente de confiança, perto de você.</p>
         </div>
+        <a className="dawn-credit" href={sky.href} target="_blank" rel="noopener noreferrer" data-testid="foto-credito">Foto: {sky.credit}</a>
       </header>
 
       <section aria-label="O que você procura" className="space-y-3">

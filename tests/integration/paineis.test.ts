@@ -1,7 +1,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { admin, anon, ids, profileId, signIn } from './helpers.ts';
+import { admin, anon, ids, profileId, signIn, viewer } from './helpers.ts';
 
 const reseed = () => execSync('npm run -s seed:demo', { stdio: 'ignore' });
 before(reseed);
@@ -87,7 +87,7 @@ test('mudança na área habitual revalida o "Atendo hoje": ajusta e depois remov
 });
 
 test('"Preciso para hoje" pela cidade inteira exige cobertura confirmada; bairro e serviço fora dos quatro iniciais', async () => {
-  const sb = anon();
+  const sb = await viewer();
   const names = async (svc: string, nbId: number | null) =>
     ((await sb.rpc('urgent_search', { p_service_slug: svc, p_neighborhood_id: nbId })).data as { slug: string }[]).map((r) => r.slug);
   const { nb } = await ids();

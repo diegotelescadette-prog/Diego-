@@ -8,6 +8,9 @@
   "clients": [
     {
       "email": "cliente"
+    },
+    {
+      "email": "leitor"
     }
   ],
   "jobs": [
@@ -385,6 +388,7 @@
     }
   ],
   "memberNames": {
-    "cliente": "Ana Cliente (demo)"
+    "cliente": "Ana Cliente (demo)",
+    "leitor": "Léo Leitor (demo)"
   }
 }

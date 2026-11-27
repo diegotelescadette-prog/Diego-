@@ -2,7 +2,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { admin, anon, signIn } from './helpers.ts';
+import { admin, anon, signIn, viewer } from './helpers.ts';
 
 const reseed = () => execSync('npm run -s seed:demo', { stdio: 'ignore' });
 before(reseed);
@@ -111,7 +111,7 @@ test('verificação: envio exige dados, aprovação exige identidade, WhatsApp e
   const ok = await adm.rpc('admin_verification_action', { p_provider: me, p_action: 'aprovar' });
   assert.equal(ok.error, null);
   assert.equal(ok.data, 'aprovado');
-  const badges = (await anon().rpc('provider_badges', { p_ids: [me] })).data as { identity_checked: boolean; refs_confirmed: number; experience_years: number }[];
+  const badges = (await (await viewer()).rpc('provider_badges', { p_ids: [me] })).data as { identity_checked: boolean; refs_confirmed: number; experience_years: number }[];
   assert.deepEqual([badges[0].identity_checked, badges[0].refs_confirmed, badges[0].experience_years], [true, 1, 4]);
   // histórico registra a ação sem contatos
   const log = (await admin.from('moderation_log').select('action, note').eq('target_id', me).order('id')).data!;
@@ -137,30 +137,30 @@ test('verificação: envio exige dados, aprovação exige identidade, WhatsApp e
 test('regra do piloto ligada: só aprovados aparecem na busca, no feed e recebem contato', async () => {
   const biaId = await profileId('bia-demo');
   const carlosId = await profileId('carlos-demo');
-  assert.ok((await search(anon(), { p_service_slug: 'diarista' })).some((r) => r.slug === 'bia-demo'), 'regra desligada: todos os publicados');
+  assert.ok((await search(await viewer(), { p_service_slug: 'diarista' })).some((r) => r.slug === 'bia-demo'), 'regra desligada: todos os publicados');
   await setRule(true);
   try {
-    assert.ok(!(await search(anon(), { p_service_slug: 'diarista' })).some((r) => r.slug === 'bia-demo'), 'em análise sai da busca');
-    assert.ok((await search(anon(), { p_service_slug: 'encanador' })).some((r) => r.slug === 'carlos-demo'), 'aprovado continua');
+    assert.ok(!(await search(await viewer(), { p_service_slug: 'diarista' })).some((r) => r.slug === 'bia-demo'), 'em análise sai da busca');
+    assert.ok((await search(await viewer(), { p_service_slug: 'encanador' })).some((r) => r.slug === 'carlos-demo'), 'aprovado continua');
     assert.equal(((await admin.rpc('contact_target_general', { p_provider: biaId })).data ?? []).length, 0, 'sem contato');
     assert.equal(((await admin.rpc('contact_target_general', { p_provider: carlosId })).data ?? []).length, 1);
-    const feed = ((await anon().rpc('feed_posts', { p_city_slug: 'campo-grande-ms' })).data ?? []) as { display_name: string }[];
+    const feed = ((await (await viewer()).rpc('feed_posts', { p_city_slug: 'campo-grande-ms' })).data ?? []) as { display_name: string }[];
     assert.ok(!feed.some((p) => p.display_name === 'Bia Faxina (demo)'), 'post de quem não foi aprovado sai do feed');
     assert.ok(feed.some((p) => p.display_name === 'Carlos Hidráulica (demo)'));
-    assert.equal(((await anon().from('provider_profiles').select('id').eq('slug', 'bia-demo')).data ?? []).length, 0, 'perfil público fechado');
+    assert.equal(((await (await viewer()).from('provider_profiles').select('id').eq('slug', 'bia-demo')).data ?? []).length, 0, 'perfil público fechado');
     const bia = await signIn('prestador-bia');
     assert.equal(((await bia.from('provider_profiles').select('id').eq('id', biaId)).data ?? []).length, 1, 'dono continua vendo');
   } finally {
     await setRule(false);
   }
-  assert.ok((await search(anon(), { p_service_slug: 'diarista' })).some((r) => r.slug === 'bia-demo'), 'nada foi apagado');
+  assert.ok((await search(await viewer(), { p_service_slug: 'diarista' })).some((r) => r.slug === 'bia-demo'), 'nada foi apagado');
 });
 
 test('crédito imobiliário: oculto até a aprovação; depois aparece com canal oficial conferido', async () => {
   const anaId = await profileId('ana-demo');
-  assert.equal((await search(anon(), { p_q: 'financiamento' })).length, 0, 'categoria desligada não aparece na busca');
-  assert.ok(!(await search(anon(), {})).some((r) => r.slug === 'ana-demo'), 'perfil só de crédito fica fora');
-  assert.equal(((await anon().rpc('provider_public_channel', { p_provider: anaId })).data ?? []).length, 0);
+  assert.equal((await search(await viewer(), { p_q: 'financiamento' })).length, 0, 'categoria desligada não aparece na busca');
+  assert.ok(!(await search(await viewer(), {})).some((r) => r.slug === 'ana-demo'), 'perfil só de crédito fica fora');
+  assert.equal(((await (await viewer()).rpc('provider_public_channel', { p_provider: anaId })).data ?? []).length, 0);
   const svcs = (await admin.from('services').select('slug, urgent_pilot').in('slug', ['financiamento-imobiliario', 'emprestimo-com-garantia-de-imovel'])).data!;
   assert.equal(svcs.length, 2);
   assert.ok(svcs.every((s) => !s.urgent_pilot), 'fora do Preciso para hoje');
@@ -168,15 +168,15 @@ test('crédito imobiliário: oculto até a aprovação; depois aparece com canal
   assert.equal((await admin.from('services').select('urgent_pilot').eq('slug', 'financiamento-imobiliario').single()).data!.urgent_pilot, false, 'não entra nem forçando');
   await setCredit(true);
   try {
-    const found = await search(anon(), { p_service_slug: 'financiamento-imobiliario' });
+    const found = await search(await viewer(), { p_service_slug: 'financiamento-imobiliario' });
     assert.deepEqual(found.map((r) => r.slug), ['ana-demo']);
-    const ch = ((await anon().rpc('provider_public_channel', { p_provider: anaId })).data ?? []) as { official_url: string; linked_institution: string }[];
+    const ch = ((await (await viewer()).rpc('provider_public_channel', { p_provider: anaId })).data ?? []) as { official_url: string; linked_institution: string }[];
     assert.equal(ch[0].official_url, 'https://www.bcb.gov.br/meubc/encontreinstituicao');
     assert.equal(ch[0].linked_institution, 'Banco Exemplo S.A. (demo)');
     // canal desfeito: o serviço some de novo
     const adm = await signIn('admin');
     await adm.rpc('admin_verification_action', { p_provider: anaId, p_action: 'canal_desfazer' });
-    assert.equal((await search(anon(), { p_service_slug: 'financiamento-imobiliario' })).length, 0);
+    assert.equal((await search(await viewer(), { p_service_slug: 'financiamento-imobiliario' })).length, 0);
     await adm.rpc('admin_verification_action', { p_provider: anaId, p_action: 'canal_ok' });
   } finally {
     await setCredit(false);

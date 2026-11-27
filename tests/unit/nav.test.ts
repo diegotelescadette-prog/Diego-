@@ -1,48 +1,59 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { activeHref, adminSection, areaFor, navItems, screenTitle, showBottomNav } from '../../src/lib/nav.ts';
+import { activeHref, adminSection, areaFor, mainItems, navItems, profileLinks, screenTitle, showBottomNav } from '../../src/lib/nav.ts';
 
 const visitor = { loggedIn: false, hasProfile: false, isAdmin: false };
 const provider = { loggedIn: true, hasProfile: true, isAdmin: false };
 const adm = { loggedIn: true, hasProfile: false, isAdmin: true };
 
-test('área pelo caminho e barra inferior só na busca', () => {
+test('área pelo caminho e barra principal em todas as telas', () => {
   assert.equal(areaFor('/'), 'busca');
   assert.equal(areaFor('/p/carlos-demo'), 'busca');
   assert.equal(areaFor('/painel/atendimento'), 'prestador');
   assert.equal(areaFor('/admin'), 'admin');
   assert.equal(areaFor('/painelx'), 'busca');
   assert.equal(showBottomNav('/buscar'), true);
-  assert.equal(showBottomNav('/painel'), false);
-  assert.equal(showBottomNav('/admin'), false);
+  assert.equal(showBottomNav('/painel'), true);
+  assert.equal(showBottomNav('/admin'), true);
 });
 
-test('menu por perfil: visitante, prestador e admin só veem a área permitida', () => {
+test('barra principal: cinco itens, sem repetição, Perfil leva ao login para visitante', () => {
+  assert.deepEqual(mainItems(visitor).map((i) => i.label), ['Início', 'Comunidade', 'Criar', 'Agenda', 'Perfil']);
+  assert.equal(mainItems(visitor).at(-1)!.href, '/entrar');
+  assert.equal(mainItems(provider).at(-1)!.href, '/perfil');
+  assert.equal(new Set(mainItems(provider).map((i) => i.href)).size, 5);
+});
+
+test('Perfil reúne os atalhos; painel e administração conforme a conta', () => {
+  const ids = (v: typeof visitor) => profileLinks(v).map((i) => i.testid);
+  const client = { loggedIn: true, hasProfile: false, isAdmin: false };
+  assert.ok(!ids(client).includes('perfil-admin'));
+  assert.equal(profileLinks(client).find((i) => i.testid === 'perfil-painel')!.href, '/sou-prestador');
+  assert.equal(profileLinks(provider).find((i) => i.testid === 'perfil-painel')!.href, '/painel');
+  assert.ok(ids(adm).includes('perfil-admin'));
+  assert.equal(new Set(profileLinks(adm).map((i) => i.href)).size, profileLinks(adm).length);
+});
+
+test('abas por área: prestador e admin só para quem tem permissão; sem atalhos repetidos da barra', () => {
   const labels = (a: Parameters<typeof navItems>[0], v: typeof visitor) => navItems(a, v).map((i) => i.label);
-  assert.deepEqual(labels('busca', visitor), ['Início', 'Catálogo de serviços', 'Preciso para hoje', 'Buscar profissional', 'Vagas de emprego', 'Meu currículo', 'Quero contratar', 'Minha agenda', 'Salvos', 'Comunidade', 'Trabalhe com a gente']);
-  assert.deepEqual(labels('busca', provider), ['Início', 'Catálogo de serviços', 'Preciso para hoje', 'Buscar profissional', 'Vagas de emprego', 'Meu currículo', 'Quero contratar', 'Minha agenda', 'Salvos', 'Comunidade', 'Painel do profissional']);
-  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Pedidos para mim', 'Meu perfil', 'Criar publicação', 'Minhas publicações', 'Serviços e fotos', 'Pacotes que eu faço', 'Onde atendo', 'Disponibilidade', 'Verificação do perfil', 'Prévia do perfil', 'Minha conta', 'Voltar ao início']);
-  // sem permissão, a área administrativa mostra o menu da comunidade
-  assert.equal(labels('admin', provider)[0], 'Início');
+  assert.deepEqual(labels('busca', provider), []);
+  assert.deepEqual(labels('prestador', provider), ['Visão geral', 'Pedidos para mim', 'Meu perfil', 'Serviços e fotos', 'Pacotes que eu faço', 'Onde atendo', 'Disponibilidade', 'Verificação do perfil', 'Prévia do perfil']);
+  assert.deepEqual(labels('prestador', visitor), []);
+  assert.deepEqual(labels('admin', provider), []);
   assert.equal(labels('admin', adm)[0], 'Visão geral');
-  assert.equal(labels('prestador', visitor)[0], 'Início');
+  assert.ok(!labels('admin', adm).includes('Voltar ao início'));
 });
 
 test('item ativo: exato, prefixo e seção do admin', () => {
-  const busca = navItems('busca', visitor);
-  assert.equal(activeHref(busca, '/'), '/');
-  assert.equal(activeHref(busca, '/hoje'), '/hoje');
-  assert.equal(activeHref(busca, '/comunidade/abc'), '/comunidade');
-  assert.equal(activeHref(busca, '/agendar/trocar-chuveiro'), '/servicos');
-  assert.equal(activeHref(busca, '/pedidos/abc'), '/agenda');
-  assert.equal(activeHref(busca, '/vagas/nova'), '/vagas/nova');
-  assert.equal(activeHref(busca, '/minhas-vagas'), '/vagas/nova');
-  assert.equal(activeHref(busca, '/p/carlos-demo'), '/buscar');
-  assert.equal(activeHref(busca, '/favoritos'), '/favoritos');
-  assert.equal(activeHref(busca, '/minhas-publicacoes'), '/comunidade');
-  assert.equal(new Set(busca.map((i) => i.href)).size, busca.length);
-  assert.equal(activeHref(busca, '/vagas/123'), '/vagas');
-  assert.equal(activeHref(busca, '/minhas-candidaturas'), '/vagas');
+  const main = mainItems(provider);
+  assert.equal(activeHref(main, '/'), '/');
+  assert.equal(activeHref(main, '/hoje'), '/');
+  assert.equal(activeHref(main, '/agendar/trocar-chuveiro'), '/');
+  assert.equal(activeHref(main, '/p/carlos-demo'), '/');
+  assert.equal(activeHref(main, '/comunidade/abc'), '/comunidade');
+  assert.equal(activeHref(main, '/publicar'), '/criar');
+  assert.equal(activeHref(main, '/pedidos/abc'), '/agenda');
+  assert.equal(activeHref(main, '/perfil'), '/perfil');
   const pro = navItems('prestador', provider);
   assert.equal(activeHref(pro, '/painel'), '/painel');
   assert.equal(activeHref(pro, '/painel/servicos'), '/painel/servicos');

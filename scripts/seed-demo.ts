@@ -44,15 +44,23 @@ async function main() {
   const { data: list } = await sb.auth.admin.listUsers({ perPage: 1000 });
   for (const u of list.users.filter((u) => u.email?.endsWith(`@${demo.emailDomain}`))) await sb.auth.admin.deleteUser(u.id);
 
-  const create = async (local: string) =>
-    (await must(sb.auth.admin.createUser({ email: email(local), password: demo.password, email_confirm: true }), `criar ${local}`)).user!;
+  const city = await must(sb.from('cities').select('id, timezone').eq('slug', 'campo-grande-ms').single(), 'cidade');
+  const nbs = await must(sb.from('neighborhoods').select('id, slug').eq('city_id', city.id), 'bairros');
+  // Cadastro completo (nome, celular, bairro e aceites), como no formulário de criar conta.
+  let seq = 0;
+  const create = async (local: string) => {
+    seq++;
+    const pub = demo.memberNames?.[local] ?? demo.providers.find((x: { key: string }) => `prestador-${x.key}` === local)?.name ?? `Pessoa ${local}`;
+    const cadastro = { nome_completo: `${pub} Demonstração`.slice(0, 100), nome_publico: pub.slice(0, 60), celular: `6798${String(seq).padStart(7, '0')}`, bairro: nbs[seq % nbs.length].id };
+    const u = (await must(sb.auth.admin.createUser({ email: email(local), password: demo.password, email_confirm: true }), `criar ${local}`)).user!;
+    await must(sb.rpc('save_signup', { p_user: u.id, p_full_name: cadastro.nome_completo, p_public_name: cadastro.nome_publico, p_phone: cadastro.celular, p_neighborhood: cadastro.bairro, p_terms: true, p_goal: null }), `cadastro ${local}`);
+    return u;
+  };
 
   const adminUser = await create(demo.admin.email);
   await must(sb.from('user_roles').insert({ user_id: adminUser.id, role: 'admin' }), 'papel admin');
   for (const c of demo.clients) await create(c.email);
 
-  const city = await must(sb.from('cities').select('id, timezone').eq('slug', 'campo-grande-ms').single(), 'cidade');
-  const nbs = await must(sb.from('neighborhoods').select('id, slug').eq('city_id', city.id), 'bairros');
   const svcs = await must(sb.from('services').select('id, slug'), 'serviços');
   const nb = (s: string) => { const r = nbs.find((n) => n.slug === s); if (!r) throw new Error(`bairro ${s}`); return r.id; };
   const sv = (s: string) => { const r = svcs.find((n) => n.slug === s); if (!r) throw new Error(`serviço ${s}`); return r.id; };

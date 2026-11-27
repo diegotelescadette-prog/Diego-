@@ -1,13 +1,13 @@
 import { test } from '@playwright/test';
 import sharp from 'sharp';
-import { admin, captureWhatsApp, demoEmail, expect, lastMailLink, login, profileId, reseed } from './helpers';
+import { admin, captureWhatsApp, demoEmail, expect, lastMailLink, login, profileId, reseed, enter, fillSignup } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
 
-test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => {
+test('Preciso para hoje: do início ao WhatsApp', async ({ page }) => {
   const wa = await captureWhatsApp(page);
-  await page.goto('/');
+  await enter(page, '/');
   await page.getByTestId('cta-hoje').click(); // botão de destaque no topo da tela inicial
   await expect(page).toHaveURL(/\/hoje$/);
   await expect(page.getByRole('heading', { name: 'Preciso para hoje' })).toBeVisible();
@@ -39,9 +39,9 @@ test('visitante: Preciso para hoje → WhatsApp sem conta', async ({ page }) => 
   expect(u.searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador hoje no bairro Centro, em Campo Grande. Qual horário você consegue atender?');
 });
 
-test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só com a cidade', async ({ page }) => {
+test('Todos os bairros: sem informar bairro, abre o WhatsApp só com a cidade', async ({ page }) => {
   const wa = await captureWhatsApp(page);
-  await page.goto('/hoje');
+  await enter(page, '/hoje');
   await page.getByLabel('Filtrar serviços').fill('encan');
   await page.getByText('Encanador', { exact: true }).click();
   await expect(page.getByLabel('2. Em qual bairro?')).toHaveValue(''); // padrão: Todos os bairros
@@ -55,33 +55,27 @@ test('Todos os bairros: sem informar bairro nem criar conta, abre o WhatsApp só
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador hoje em Campo Grande. Qual horário você consegue atender?');
 });
 
-test('busca: perfis pausados e suspensos não aparecem; WhatsApp do perfil pede login uma vez e volta ao contexto', async ({ page }) => {
+test('busca: perfis pausados e suspensos não aparecem; WhatsApp direto do perfil; link sem conta pede login', async ({ page }) => {
   const wa = await captureWhatsApp(page);
-  await page.goto('/buscar?q=encanador');
+  await enter(page, '/buscar?q=encanador', 'cliente');
   await expect(page.getByTestId('provider-card').first()).toBeVisible();
   await expect(page.getByText('Paulo Pausado')).toHaveCount(0);
   await expect(page.getByText('Sérgio Suspenso')).toHaveCount(0);
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Hidro Cidade' })).toBeVisible();
   await page.goto('/p/hidro-demo');
-  // sem conta: o WhatsApp leva ao login e volta para o perfil
-  await page.getByRole('link', { name: 'Chamar no WhatsApp' }).click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fp%2Fhidro-demo/);
-  await login(page, demoEmail('cliente'));
-  await expect(page).toHaveURL(/\/p\/hidro-demo$/);
   // com conta: direto do perfil para o WhatsApp
   await page.getByRole('button', { name: 'Chamar no WhatsApp' }).click();
   await page.getByRole('button', { name: 'Abrir WhatsApp' }).click();
   await expect.poll(() => wa.length).toBe(1);
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador em Campo Grande. Você tem disponibilidade?');
-  // publicação profissional: sem conta, o WhatsApp volta para a publicação
+  // sem conta, o link compartilhado leva ao login e guarda o destino
   await page.context().clearCookies();
   await page.goto('/comunidade?tipo=trabalho');
-  await page.getByTestId('post').filter({ hasText: 'Carlos Hidráulica' }).getByRole('button', { name: /Chamar no WhatsApp/ }).click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=%2Fcomunidade%2F/);
+  await expect(page).toHaveURL(/\/entrar\?next=%2Fcomunidade%3Ftipo%3Dtrabalho$/);
 });
 
 test('cidade inteira aparece em qualquer bairro; bairro do dia; serviço fora do "Preciso para hoje"', async ({ page }) => {
-  await page.goto('/hoje?servico=eletricista&bairro=nova-lima');
+  await enter(page, '/hoje?servico=eletricista&bairro=nova-lima');
   await expect(page.getByTestId('urgent-result').filter({ hasText: 'Elétrica Pantanal (demo)' })).toBeVisible();
   await expect(page.getByTestId('urgent-result').first()).toContainText('Atende toda Campo Grande');
   // Marcos atende só o Carandá Bosque: aparece lá e fica fora do Centro
@@ -98,7 +92,7 @@ test('cidade inteira aparece em qualquer bairro; bairro do dia; serviço fora do
 
 test('clique com disponibilidade vencida: avisa, atualiza e mantém serviço e bairro', async ({ page }) => {
   const wa = await captureWhatsApp(page);
-  await page.goto('/hoje?servico=chaveiro&bairro=tiradentes');
+  await enter(page, '/hoje?servico=chaveiro&bairro=tiradentes');
   await expect(page.getByTestId('urgent-result')).toHaveCount(1);
   // vence entre a busca e o clique (meia-noite simulada)
   await admin.from('availability_today').update({ expires_at: new Date(Date.now() - 1000).toISOString() }).eq('provider_id', await profileId('joana-demo'));
@@ -114,9 +108,9 @@ test('clique com disponibilidade vencida: avisa, atualiza e mantém serviço e b
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Joana Chaves' })).toBeVisible();
 });
 
-test('busca geral: sinônimo, login antes do contato, retorno ao mesmo perfil, favoritos', async ({ page, isMobile }) => {
+test('busca geral: sinônimo, filtro de bairro, contato pelo perfil e favoritos', async ({ page, isMobile }) => {
   const wa = await captureWhatsApp(page);
-  await page.goto('/');
+  await enter(page, '/', 'cliente');
   // busca do cabeçalho (computador) ou do topo da comunidade (celular)
   await page.locator('input[name="q"]:visible').fill('limpar piscina');
   await page.keyboard.press('Enter');
@@ -130,11 +124,6 @@ test('busca geral: sinônimo, login antes do contato, retorno ao mesmo perfil, f
   await page.getByTestId('provider-card').filter({ hasText: 'Rafa Piscinas' }).getByRole('link', { name: 'Ver perfil' }).click();
   await page.waitForURL(/\/p\/rafa-demo/);
   const profileUrl = page.url();
-  await page.getByRole('link', { name: 'Chamar no WhatsApp' }).click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=/);
-  await expect(page.getByText('Entre para chamar o prestador no WhatsApp.')).toBeVisible();
-  await login(page, demoEmail('cliente'));
-  await expect(page).toHaveURL(profileUrl);
   await page.getByRole('button', { name: 'Chamar no WhatsApp' }).click();
   const box = page.getByLabel('Mensagem (você pode editar antes de enviar)');
   await expect(box).toHaveValue('Olá! Encontrei seu perfil no Próximo. Preciso de piscineiro em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
@@ -153,19 +142,16 @@ test('busca geral: sinônimo, login antes do contato, retorno ao mesmo perfil, f
   await expect(page.getByRole('button', { name: 'Salvar', exact: true })).toBeVisible();
 });
 
-test('busca geral: tocar no card pede login uma vez e depois abre o WhatsApp direto', async ({ page }) => {
+test('busca geral: tocar no card abre o WhatsApp direto', async ({ page }) => {
   const wa = await captureWhatsApp(page);
-  await page.goto('/buscar?servico=encanador&bairro=caranda-bosque');
+  await enter(page, '/buscar?servico=encanador&bairro=caranda-bosque', 'cliente');
   await expect(page.getByLabel('Cidade', { exact: true })).toHaveValue('campo-grande-ms'); // Campo Grande já selecionada
   const cards = page.getByTestId('provider-card');
   await expect(cards).toHaveCount(2);
   await expect(cards.filter({ hasText: 'Hidro Cidade' })).toContainText('Atende toda Campo Grande');
   await cards.filter({ hasText: 'Marcos Encanador' }).getByRole('button').click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=contato&next=/);
-  await login(page, demoEmail('cliente'));
   await expect.poll(() => wa.length).toBe(1);
   expect(new URL(wa[0]).searchParams.get('text')).toBe('Olá! Encontrei seu perfil no Próximo. Preciso de encanador em Carandá Bosque, Campo Grande. Você tem disponibilidade?');
-  // já logado: direto, sem pedir login de novo
   await page.goto('/buscar?servico=encanador');
   await expect(page.getByTestId('provider-card')).toHaveCount(3);
   await page.getByTestId('provider-card').filter({ hasText: 'Hidro Cidade' }).getByRole('button').click();
@@ -188,16 +174,17 @@ test('perfil antigo só com endereço pede confirmação da área', async ({ pag
   await expect(page.getByTestId('provider-card').filter({ hasText: 'Zé Reformas' })).toContainText('Atende toda Campo Grande');
 });
 
-test('favorito como visitante pede login e volta ao perfil', async ({ page }) => {
+test('perfil compartilhado sem conta pede login e volta ao perfil', async ({ page }) => {
   await page.goto('/p/leo-demo');
-  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=favorito&next=%2Fp%2Fleo-demo/);
+  await expect(page).toHaveURL(/\/entrar\?next=%2Fp%2Fleo-demo$/);
   await login(page, demoEmail('cliente'));
   await expect(page).toHaveURL(/\/p\/leo-demo$/);
+  await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Salvo', exact: true })).toBeVisible();
 });
 
 test('busca sem resultados sugere retirar filtro e manter a consulta', async ({ page }) => {
-  await page.goto('/buscar?q=piscina&cidade=campo-grande-ms&bairro=aero-rancho');
+  await enter(page, '/buscar?q=piscina&cidade=campo-grande-ms&bairro=aero-rancho');
   await expect(page.getByTestId('empty-search')).toContainText('Nenhum prestador encontrado para “piscina”');
   await page.getByRole('link', { name: 'Buscar em toda Campo Grande' }).click();
   // navegação no cliente: aguarda a URL sem depender do evento "load" (era instável)
@@ -215,10 +202,10 @@ test('prestador: cria conta, confirma e-mail, publica e ativa/desativa Atendo ho
 
   await page.goto('/sou-prestador');
   await expect(page).toHaveURL(/\/cadastrar\?next=%2Fpainel%2Fperfil/);
+  await fillSignup(page, { nome: 'Teste Encanamentos Silva', publico: 'Teste Encanamentos' });
   await page.getByLabel('E-mail').fill(email);
   await page.getByLabel('Senha').fill('senha-forte-123');
-  await page.getByLabel(/Li e concordo/).check();
-  await page.getByRole('button', { name: 'Criar conta' }).click();
+  await page.getByRole('button', { name: 'Criar conta grátis' }).click();
   await expect(page).toHaveURL(/verifique-email/);
   expect(page.url()).not.toContain(encodeURIComponent(email));
   await page.goto(await lastMailLink(email, 'signup'));
@@ -280,7 +267,7 @@ test('prestador: cria conta, confirma e-mail, publica e ativa/desativa Atendo ho
   await expect(page.getByTestId('today-active')).toContainText('Mata do Jacinto');
 
   const visitor = await page.context().browser()!.newPage();
-  await visitor.goto('/hoje?servico=encanador&bairro=mata-do-jacinto');
+  await enter(visitor, '/hoje?servico=encanador&bairro=mata-do-jacinto');
   await expect(visitor.getByTestId('urgent-result').filter({ hasText: 'Teste Encanamentos' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Desativar “Atendo hoje”' }).click();
@@ -329,7 +316,7 @@ test('admin suspende e reativa perfil com histórico; suspenso sai da busca', as
   await expect(page.getByText('Perfil suspenso: Frio Bom Climatização (demo)')).toBeVisible();
   await expect(page).toHaveURL(/q=Frio/); // volta para a mesma lista filtrada
   const visitor = await page.context().browser()!.newPage();
-  await visitor.goto('/buscar?q=frio bom');
+  await enter(visitor, '/buscar?q=frio bom');
   await expect(visitor.getByTestId('empty-search')).toBeVisible();
   await page.goto('/admin?aba=historico');
   const log = page.locator('tr').filter({ hasText: /Teste automatizado \(de published para suspended\)/ }).first();

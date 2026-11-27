@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getUser } from '@/lib/data';
 import { clientKey, hitLimit } from '@/lib/rate-limit';
 import { urgentMessage, waLink } from '@/lib/whatsapp';
 import { track } from '@/lib/usage';
@@ -12,9 +13,10 @@ const Body = z.object({
   cityId: z.number().int().positive().nullish(),
 });
 
-/** Contato urgente (visitante, sem login): só para perfil publicado com "Atendo hoje" válido
+/** Contato urgente (exige conta, como todo o app desde o v3): só para perfil publicado com "Atendo hoje" válido
  *  para o serviço e a cidade pesquisados (e o bairro, quando escolhido). Revalida tudo no servidor. */
 export async function POST(req: Request) {
+  if (!(await getUser())) return NextResponse.json({ error: 'login_required' }, { status: 401 });
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
   const { providerId, serviceId, neighborhoodId, cityId } = parsed.data;

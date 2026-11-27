@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/AuthForms';
 import { getUser } from '@/lib/data';
@@ -29,6 +30,7 @@ export default async function Entrar({ searchParams }: { searchParams: Promise<{
       {sp.motivo && REASONS[sp.motivo] && <p className="mt-2 rounded-xl bg-brand-50 p-3 text-brand-900">{REASONS[sp.motivo]}</p>}
       {sp.erro && <p role="alert" className="mt-2 rounded-xl bg-red-50 p-3 text-red-900">O link é inválido ou expirou. Entre ou peça um novo link.</p>}
       <div className="card mt-4 p-5"><LoginForm next={next} /></div>
+      <p className="mt-4 text-center text-stone-700"><Link href="/" className="text-brand-700 underline">Conheça o que tem no Próximo</Link></p>
     </div>
   );
 }

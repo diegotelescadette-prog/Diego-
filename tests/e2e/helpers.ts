@@ -34,6 +34,22 @@ export async function login(page: Page, email: string, password = PASSWORD) {
   await page.getByRole('button', { name: 'Entrar' }).click();
 }
 
+/** Desde o v3 todo o app exige conta: abre `path` já entrando com uma conta (por padrão, a de quem só lê). */
+export async function enter(page: Page, path: string, local = 'leitor') {
+  await page.goto(`/entrar?next=${encodeURIComponent(path)}`);
+  await login(page, demoEmail(local));
+  await expect(page).not.toHaveURL(/\/entrar/);
+}
+
+/** Preenche os dados do cadastro (os mesmos no "Criar conta" e no "Complete seu cadastro"). */
+export async function fillSignup(page: Page, o: { nome?: string; publico?: string; celular?: string; bairro?: string } = {}) {
+  await page.getByLabel('Nome completo').fill(o.nome ?? 'Maria Teste da Silva');
+  await page.getByLabel('Nome público').fill(o.publico ?? 'Maria do Centro');
+  await page.getByLabel('Celular com WhatsApp').fill(o.celular ?? '(67) 99876-5432');
+  await page.getByLabel('Bairro de Campo Grande').selectOption({ label: o.bairro ?? 'Centro' });
+  await page.getByLabel(/Li e aceito/).check();
+}
+
 export async function lastMailLink(to: string, kind: 'signup' | 'recovery'): Promise<string> {
   for (let i = 0; i < 20; i++) {
     const mails: { to: string[]; raw: string }[] = await (await fetch('http://localhost:54321/_mail')).json();

@@ -1,5 +1,5 @@
 import { test, type Page } from '@playwright/test';
-import { admin, demoEmail, expect, login, reseed } from './helpers';
+import { admin, demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
@@ -12,9 +12,14 @@ async function fillWhere(page: Page) {
 }
 
 test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem links repetidos no menu', async ({ page, isMobile }) => {
-  await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^(Bom dia|Boa tarde|Boa noite)\.$/);
+  await enter(page, '/');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/^(Bom dia|Boa tarde|Boa noite), Léo\.$/);
   await expect(page.getByText('Gente de confiança, perto de você.')).toBeVisible();
+  // foto real do céu conforme o horário, carregada e com o crédito da licença
+  const foto = page.getByTestId('home-dawn').locator('img');
+  await expect(foto).toHaveAttribute('alt', /Céu|Pôr do sol/);
+  await expect.poll(() => foto.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
+  await expect(page.getByTestId('foto-credito')).toHaveAttribute('href', /commons\.wikimedia\.org/);
   await expect(page.getByTestId('home-servico').getByRole('heading', { name: 'Preciso de um serviço' })).toBeVisible();
   await expect(page.getByTestId('cta-hoje')).toHaveText(/Preciso para hoje/);
   await expect(page.getByTestId('home-trabalho')).toContainText('Procuro trabalho');
@@ -23,32 +28,27 @@ test('tela inicial: amanhecer, atalhos principais, sem seções vazias e sem lin
   await expect(most.getByTestId('package-card').filter({ hasText: 'Trocar chuveiro' })).toContainText('R$ 90');
   await expect(page.getByTestId('guarantee')).toContainText('Preço combinado é preço pago');
   await expect(page.getByTestId('home-quote')).toHaveText('Servir bem é a nossa forma de cuidar do próximo.');
-  // sem login não há agenda; seções sem dados não aparecem
+  // sem compromisso marcado não há agenda; seções sem dados não aparecem
   await expect(page.getByTestId('next-meeting')).toHaveCount(0);
   for (const empty of ['Indicados pela sua rede', 'Palestras esta semana', 'Ninguém confirmou ainda hoje', 'Nenhuma vaga aberta agora']) {
     await expect(page.getByText(empty)).toHaveCount(0);
   }
-  if (isMobile) {
-    const bottom = page.getByRole('navigation', { name: 'Navegação rápida' });
-    await expect(bottom.getByRole('link')).toHaveText(['Início', 'Serviços', 'Trabalho', 'Agenda', 'Perfil']);
-    await page.getByRole('button', { name: /^Menu/ }).click();
-  }
-  const hrefs = await page.getByRole('navigation', { name: 'Menu principal' }).getByRole('link').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+  // sem menu lateral: a mesma navegação na barra inferior (celular) e na superior (computador), sem repetição
+  const nav = page.getByRole('navigation', { name: isMobile ? 'Navegação rápida' : 'Principal' });
+  await expect(nav.getByRole('link')).toHaveText(['Início', 'Comunidade', 'Criar', 'Agenda', 'Perfil']);
+  await expect(page.locator('aside')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Menu/ })).toHaveCount(0);
+  const hrefs = await nav.getByRole('link').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
   expect(new Set(hrefs).size).toBe(hrefs.length);
-  expect(hrefs.filter((h) => h === '/')).toHaveLength(1);
 });
 
 test('cliente agenda "Trocar chuveiro" pelo preço fixo e acompanha até concluir', async ({ page, browser }) => {
-  await page.goto('/');
+  await enter(page, '/', 'cliente');
   await page.getByTestId('most-requested').getByTestId('package-card').filter({ hasText: 'Trocar chuveiro' }).getByTestId('agendar').click();
   await expect(page).toHaveURL(/\/agendar\/trocar-chuveiro$/);
   await expect(page.getByTestId('price').first()).toHaveText('R$ 90');
   await expect(page.getByTestId('includes')).toContainText('Instalação e teste do novo');
   await expect(page.getByTestId('excludes')).toContainText('Chuveiro novo');
-  await page.getByTestId('login-to-book').click();
-  await expect(page.getByText('Entre ou crie sua conta para agendar.')).toBeVisible();
-  await login(page, demoEmail('cliente'));
-  await expect(page).toHaveURL(/\/agendar\/trocar-chuveiro$/);
 
   // o primeiro dia livre já vem escolhido (hoje, enquanto houver faixa)
   const hour = Number(new Intl.DateTimeFormat('pt-BR', { hour: 'numeric', hourCycle: 'h23', timeZone: 'America/Campo_Grande' }).format(new Date()));

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = {
   width: 'device-width', initialScale: 1,
-  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#f6f5f1' }, { media: '(prefers-color-scheme: dark)', color: '#16141f' }],
+  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#faf7f2' }, { media: '(prefers-color-scheme: dark)', color: '#17150f' }],
 };
 
 /** No modo Automático, aplica o tema do aparelho antes de pintar (sem piscar) e acompanha a troca. */
@@ -46,6 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <div className="mx-auto flex max-w-7xl flex-wrap gap-x-6 gap-y-2 px-4 py-6 text-sm text-stone-600">
         <span>© {new Date().getFullYear()} {APP_NAME} · Piloto em Campo Grande–MS</span>
         <Link href="/privacidade" className="underline">Privacidade</Link>
+        <Link href="/termos" className="underline">Termos de uso</Link>
         <form action={setTheme} className="flex flex-wrap items-center gap-x-3" aria-label="Aparência" data-testid="theme-picker">
           <span>Aparência:</span>
           {([['auto', 'Automático'], ['claro', 'Claro'], ['escuro', 'Escuro']] as const).map(([v, label]) => (

@@ -181,3 +181,39 @@ admin adiciona sinônimo e desativa serviço mantendo vínculos.
 - Administração → Palavras bloqueadas: a equipe adiciona e remove; ninguém mais vê a lista.
 - Notificações (sino no topo e /notificacoes): reação, comentário, resposta e novo seguidor. Só a própria pessoa vê; ninguém cria aviso na mão; reagir de novo no mesmo post não repete o aviso; ao abrir a lista, tudo fica como lido.
 - As três atualizações do banco (`2026-11-26-rede-social.sql`, `2026-11-26-dia-a-dia-momentos.sql`, `2026-11-26-moderacao-notificacoes.sql`) aplicam sem erro, nessa ordem, num banco igual ao de produção.
+
+## Rodada 14 (26/11/2026): prompt v3, itens 1 e 2 (paleta Canteiro e navegação sem menu lateral)
+
+- Unidade 26/26, e2e 122/122 (computador e celular).
+- Paleta "Canteiro" no claro e no escuro: laranja #F47B20 sempre com texto grafite, nunca branco; nova ilustração do início (sol, prédios e guindaste).
+- Sem menu lateral e sem botão "Menu". Celular: barra inferior Início · Comunidade · (+) Criar · Agenda · Perfil. Computador: os mesmos cinco no topo, com o sino.
+- Criar (/criar): post do dia a dia, Momento, trabalho feito (ou "Ofereço meus serviços"), pedido de indicação e vaga.
+- Perfil (/perfil): conta, pedidos, currículo, candidaturas, vagas, painel de prestador, publicações, favoritos, Administração (só para a equipe), aparência e Sair.
+- Painel do prestador e Administração: abas no topo do conteúdo, com a atual destacada.
+
+## Rodada 15 (26/11/2026): prompt v3, item 3 (cadastro obrigatório)
+
+- Unidade 26/26, integração 65/65, e2e 128/128 (computador e celular).
+- Sem conta, só abrem a página de entrada, entrar, criar conta, senha, confirmação de e-mail, Privacidade e Termos. Qualquer outro link (perfil, publicação, vaga) leva ao login com `next=` seguro e volta para o link depois de entrar ou criar a conta. As APIs respondem 401.
+- No banco, o visitante deixou de ler feed, perfis, vagas, Momentos, busca e "Preciso para hoje"; catálogo, cidades e bairros continuam abertos para o cadastro e a página de entrada.
+- Criar conta (uma tela): nome completo, nome público, celular com WhatsApp, bairro, e-mail, senha e aceite dos Termos e do Aviso de privacidade, com o resumo de como os dados são usados. Erro ao lado do campo, ofensa no nome pede carinho, o que foi escrito continua no formulário.
+- Depois de confirmar o e-mail: "O que você quer fazer primeiro?" com as seis áreas (opcional, só define o primeiro destino).
+- Conta antiga sem esses dados completa o cadastro uma vez (/completar-cadastro) e segue para onde ia; Minha conta (excluir a conta) continua aberta.
+- Celular guardado só para a própria pessoa e a equipe; nunca aparece no app. Campo pronto para a confirmação por código no WhatsApp (fase 7).
+- Atualização do banco `2026-11-26-cadastro-obrigatorio.sql` aplica sem erro num banco igual ao de produção, depois das três da fase 3.
+
+## Rodada 16 (26/11/2026): fotos reais do céu no topo da Início
+
+- Pedido do Diego: trocar a ilustração por fotos reais do céu de Campo Grande. Manhã (5h às 12h): céu azul sobre os prédios; tarde (12h às 18h): pôr do sol no lago; noite: anoitecer na Praça Nazareth. O período segue o horário de Campo Grande.
+- Fotos do Wikimedia Commons, em WebP e sem metadados: Rodrigo Santos (CC BY 3.0), Camilo Carromeu (domínio público) e bigfield767 (CC BY-SA 3.0). O crédito com link para a página da foto fica no canto, como a licença pede.
+- Camada escura por cima da foto para o texto branco ficar legível; conferido no computador e no celular nos três períodos.
+- Arquivos estáticos (fotos e ícones) abrem sem conta, para a página de entrada poder usar.
+- e2e: a foto carrega e o crédito aponta para o Commons.
+
+## Rodada 17 (26/11/2026): prompt v3, item 4 (página de entrada)
+
+- Integração 66/66, e2e 130/130 (computador e celular).
+- Sem conta, `/` é a página de entrada: foto do céu com "Gente de confiança, perto de você.", Criar conta grátis e Entrar; as seis áreas com uma frase cada (cada uma leva ao cadastro e depois à área); sem a barra do app.
+- Vitrine de vagas: "Qual vaga você procura?" mostra quantas vagas abertas combinam e até 5 (cargo, bairro e tipo). Empresa, salário e contato nunca aparecem; a consulta é uma função do banco que só devolve esses campos.
+- Números de confiança só quando não são zero (hoje: profissionais verificados e vagas abertas). Bloco "Como mantemos você seguro".
+- Atualização do banco `2026-11-26-pagina-entrada.sql` aplica sem erro depois de `2026-11-26-cadastro-obrigatorio.sql`.

@@ -1,34 +1,41 @@
 import { test } from '@playwright/test';
-import { demoEmail, expect, login, reseed } from './helpers';
+import { demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
 test.afterAll(async () => { await reseed(); });
 
-test('menu: destaca a opção em uso, navega com teclado e abre o destino certo', async ({ page, isMobile }) => {
-  await page.goto('/buscar?q=encanador');
-  if (isMobile) {
-    const menu = page.getByRole('button', { name: /^Menu/ });
-    await menu.click();
-    const drawer = page.getByRole('dialog', { name: 'Menu' });
-    await expect(drawer.getByRole('link', { name: /Buscar profissional/ })).toHaveAttribute('aria-current', 'page');
-    await expect(drawer.getByRole('link', { name: /Buscar profissional/ })).toContainText('atual'); // não só pela cor
-    await page.keyboard.press('Escape');
-    await expect(drawer).toHaveCount(0);
-    await expect(menu).toBeFocused(); // foco volta ao botão
-    await menu.click();
-    await page.getByRole('dialog', { name: 'Menu' }).getByRole('link', { name: 'Preciso para hoje' }).click();
-    await expect(page.getByRole('dialog', { name: 'Menu' })).toHaveCount(0); // fecha ao navegar
-  } else {
-    const nav = page.getByRole('navigation', { name: 'Menu principal' });
-    await expect(nav.getByRole('link', { name: /Buscar profissional/ })).toHaveAttribute('aria-current', 'page');
-    await nav.getByRole('link', { name: /Buscar profissional/ }).focus();
-    await page.keyboard.press('Shift+Tab');
-    await expect(nav.getByRole('link', { name: 'Preciso para hoje' })).toBeFocused();
+test('navegação: destaca o item em uso, navega com teclado, Criar e Perfil reúnem os atalhos', async ({ page, isMobile }) => {
+  await page.goto('/entrar?next=/comunidade');
+  await login(page, demoEmail('prestador-carlos'));
+  await expect(page).toHaveURL(/\/comunidade$/);
+  const nav = page.getByRole('navigation', { name: isMobile ? 'Navegação rápida' : 'Principal' });
+  await expect(nav.getByRole('link', { name: 'Comunidade' })).toHaveAttribute('aria-current', 'page');
+  if (!isMobile) {
+    await nav.getByRole('link', { name: 'Comunidade' }).focus();
+    await page.keyboard.press('Tab');
+    await expect(nav.getByRole('link', { name: 'Criar' })).toBeFocused();
     await page.keyboard.press('Enter');
+  } else {
+    await nav.getByRole('link', { name: 'Criar' }).click();
   }
-  await expect(page).toHaveURL(/\/hoje$/);
-  await expect(page.getByRole('heading', { name: 'Preciso para hoje' })).toBeVisible();
+  await expect(page).toHaveURL(/\/criar$/);
+  await expect(page.getByTestId('criar-opcoes').getByRole('link')).toHaveCount(5);
+  await expect(page.getByTestId('criar-trabalho')).toHaveAttribute('href', '/publicar?tipo=trabalho');
+  await nav.getByRole('link', { name: 'Perfil' }).click();
+  await expect(page).toHaveURL(/\/perfil$/);
+  const links = page.getByTestId('perfil-links');
+  for (const t of ['Minha conta', 'Meus pedidos', 'Meu currículo', 'Minhas candidaturas', 'Minhas vagas', 'Meu painel de prestador', 'Favoritos e salvos']) {
+    await expect(links.getByRole('link', { name: new RegExp(t) })).toBeVisible();
+  }
+  await expect(links.getByRole('link', { name: /Administração/ })).toHaveCount(0);
+  // painel do prestador: abas no topo, sem coluna lateral
+  await links.getByTestId('perfil-painel').click();
+  const tabs = page.getByRole('navigation', { name: 'Painel do prestador' });
+  await expect(tabs.getByRole('link', { name: /Visão geral/ })).toHaveAttribute('aria-current', 'page');
+  await tabs.getByRole('link', { name: /Disponibilidade/ }).click();
+  await expect(page).toHaveURL(/\/painel\/disponibilidade$/);
+  await expect(tabs.getByRole('link', { name: /Disponibilidade/ })).toHaveAttribute('aria-current', 'page');
 });
 
 test('acesso: visitante vai ao login; usuário comum recebe acesso restrito no admin', async ({ page }) => {
@@ -41,7 +48,7 @@ test('acesso: visitante vai ao login; usuário comum recebe acesso restrito no a
   await expect(page.getByText('Frio Bom Climatização')).toHaveCount(0);
 });
 
-test('prestador: ajusta o dia, confere na busca e pausa; Ver perfil abre só o perfil', async ({ page, isMobile }) => {
+test('prestador: ajusta o dia, confere na busca e pausa; Ver perfil abre só o perfil', async ({ page }) => {
   await page.goto('/entrar?next=/painel');
   await login(page, demoEmail('prestador-carlos'));
   await expect(page.getByTestId('status')).toHaveText('Publicado');
@@ -61,7 +68,7 @@ test('prestador: ajusta o dia, confere na busca e pausa; Ver perfil abre só o p
   await expect(page.getByTestId('today-active')).not.toContainText('Amambaí');
 
   const visitor = await page.context().browser()!.newPage();
-  await visitor.goto('/hoje?servico=encanador&bairro=amambai');
+  await enter(visitor, '/hoje?servico=encanador&bairro=amambai');
   await expect(visitor.getByTestId('urgent-result').filter({ hasText: 'Carlos Hidráulica' })).toHaveCount(0);
   await visitor.goto('/hoje?servico=encanador&bairro=centro');
   const card = visitor.getByTestId('urgent-result').filter({ hasText: 'Carlos Hidráulica' });
@@ -72,8 +79,7 @@ test('prestador: ajusta o dia, confere na busca e pausa; Ver perfil abre só o p
   await expect(visitor).toHaveURL(/\/hoje\?servico=encanador&bairro=centro$/);
 
   // Pausar: some da busca; painel mostra o estado confirmado pelo servidor
-  if (isMobile) await page.getByRole('button', { name: /^Menu/ }).click();
-  await page.getByRole('link', { name: 'Visão geral' }).click();
+  await page.getByRole('navigation', { name: 'Painel do prestador' }).getByRole('link', { name: 'Visão geral' }).click();
   await page.getByRole('button', { name: 'Pausar publicação' }).click();
   await expect(page.getByTestId('status')).toHaveText('Pausado');
   await page.reload();

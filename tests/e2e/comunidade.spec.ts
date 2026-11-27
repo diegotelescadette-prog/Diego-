@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import path from 'node:path';
 import sharp from 'sharp';
-import { admin, demoEmail, expect, login, reseed } from './helpers';
+import { admin, demoEmail, expect, login, reseed, enter } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeAll(async () => { await reseed(); });
@@ -10,9 +10,12 @@ test.afterAll(async () => { await reseed(); });
 const FIX = path.join(process.cwd(), 'tests/e2e/fixtures');
 const png = (color: string) => sharp({ create: { width: 300, height: 200, channels: 3, background: color } }).png().toBuffer();
 
-test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volta ao post', async ({ page }) => {
-  // a comunidade fica em /comunidade (pelo menu e pelo Perfil), fora da tela inicial
+test('quem entra lê a comunidade, filtra, abre o post e salva', async ({ page }) => {
+  // sem conta, o link leva ao login e volta para a comunidade
   await page.goto('/comunidade');
+  await expect(page).toHaveURL(/\/entrar\?next=%2Fcomunidade$/);
+  await login(page, demoEmail('cliente'));
+  await expect(page).toHaveURL(/\/comunidade$/);
   await expect(page.getByRole('heading', { name: 'Comunidade de Campo Grande' })).toBeVisible();
   const posts = page.getByTestId('post');
   await expect(posts).toHaveCount(4);
@@ -38,15 +41,9 @@ test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volt
   await expect(page.getByTestId('feed-empty-filter')).toBeVisible();
   await page.getByRole('link', { name: 'Tirar os filtros' }).click();
   await expect(posts).toHaveCount(4);
-  // abrir o post e salvar sem conta
+  // abrir o post e salvar
   await posts.filter({ hasText: 'Carlos Hidráulica' }).getByRole('link', { name: /Comentar/ }).click();
   await expect(page).toHaveURL(/\/comunidade\/[0-9a-f-]+#comentar$/);
-  const postPath = new URL(page.url()).pathname;
-  await page.getByRole('button', { name: /Salvar/ }).click();
-  await expect(page).toHaveURL(/\/entrar\?motivo=salvar/);
-  await expect(page.getByText('Entre para salvar a publicação.')).toBeVisible();
-  await login(page, demoEmail('cliente'));
-  await expect(page).toHaveURL(new RegExp(`${postPath}$`));
   const save = page.waitForResponse((r) => r.request().method() === 'POST');
   await page.getByRole('button', { name: /Salvar/ }).click();
   await expect(page.getByRole('button', { name: /Salvo/ })).toHaveAttribute('aria-pressed', 'true');
@@ -56,7 +53,7 @@ test('visitante lê a comunidade, filtra, abre o post e, ao salvar, entra e volt
 });
 
 test('galeria: antes e depois na ordem escolhida, com setas e teclado', async ({ page }) => {
-  await page.goto('/comunidade?tipo=trabalho');
+  await enter(page, '/comunidade?tipo=trabalho');
   const carlos = page.getByTestId('post').filter({ hasText: 'Carlos Hidráulica' });
   await expect(carlos.locator('.ba-tag')).toHaveText(['Antes', 'Depois']);
   await carlos.getByRole('button', { name: /Abrir foto 1 de 3/ }).click();
@@ -125,6 +122,9 @@ test('vídeo curto: limite de duração avisado e vídeo publicado', async ({ pa
 });
 
 test('morador pede indicação, recebe indicação de perfil e marca "Indicação encontrada"', async ({ page, browser }) => {
+  // conta antiga, ainda sem nome público
+  const cand = (await admin.auth.admin.listUsers({ perPage: 1000 })).data.users.find((u) => u.email === demoEmail('candidata'))!;
+  await admin.from('member_names').delete().eq('user_id', cand.id);
   await page.goto('/entrar?next=%2Fpublicar%3Ftipo%3Dpedido%26categoria%3Dconstrucao-e-reformas');
   await login(page, demoEmail('candidata'));
   await expect(page.getByLabel('Categoria', { exact: true })).toHaveValue(/\d+/); // sugerida pelo filtro
@@ -166,13 +166,12 @@ test('morador pede indicação, recebe indicação de perfil e marca "Indicaçã
 });
 
 test('denúncia vai para a moderação; ocultar tira o post e a mídia do ar', async ({ page, browser }) => {
-  await page.goto('/comunidade?tipo=divulgacao');
+  await enter(page, '/comunidade?tipo=divulgacao', 'cliente');
   await page.getByTestId('post').filter({ hasText: 'Bia Faxina' }).getByRole('link', { name: /Comentar/ }).click();
   await expect(page).toHaveURL(/\/comunidade\/[0-9a-f-]+#comentar$/);
   const postUrl = page.url().split('#')[0];
   const img = await page.getByTestId('post').locator('.gallery img').first().getAttribute('src');
-  await page.goto(`/entrar?next=${encodeURIComponent(new URL(postUrl).pathname)}`);
-  await login(page, demoEmail('cliente'));
+  await page.goto(postUrl);
   await page.getByText('Denunciar esta publicação').click();
   await page.getByLabel('Motivo da denúncia').selectOption({ label: 'Propaganda repetida (spam)' });
   await page.getByRole('button', { name: 'Enviar denúncia' }).click();
@@ -189,7 +188,7 @@ test('denúncia vai para a moderação; ocultar tira o post e a mídia do ar', a
   await adm.close();
 
   const v = await (await browser.newContext()).newPage();
-  await v.goto(postUrl);
+  await enter(v, new URL(postUrl).pathname);
   await expect(v.getByTestId('post-unavailable')).toBeVisible();
   await v.getByRole('link', { name: 'Voltar à comunidade' }).click();
   await expect(v.getByTestId('post').filter({ hasText: 'Bia Faxina' })).toHaveCount(0);
